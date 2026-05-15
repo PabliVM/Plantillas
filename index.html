@@ -115,6 +115,20 @@ button,input,select,textarea{font-family:inherit}
 .player-chip.por{border-color:#ffd400 !important;border-width:3px;border-style:solid;}
 .player-chip.dragging{cursor:grabbing;box-shadow:0 6px 18px rgba(0,0,0,.6);transform:scale(1.07);}
 .player-chip.sel{outline:none;}
+/* botón × sacar del campo */
+.chip-remove-btn{
+  position:absolute;top:-6px;left:-6px;
+  width:16px;height:16px;border-radius:50%;
+  background:#dc2626;color:#fff;
+  border:1.5px solid #fff;
+  font-size:11px;line-height:1;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  z-index:10;opacity:0;transition:opacity .15s;
+  padding:0;
+}
+.player-pos:hover .chip-remove-btn{opacity:1;}
+/* ocultar en captura */
+.capturing .chip-remove-btn{display:none!important;}
 .player-chip.residencia::after{
   content:"R";position:absolute;top:-7px;right:-7px;
   width:16px;height:16px;border-radius:50%;
@@ -555,7 +569,18 @@ function renderCampo(){
     chip.className='player-chip'+(p.isPor?' por':'')+(p.residence?' residencia':'')+(p.id===selectedId?' sel':'');
     chip.setAttribute('style',chipSt(p.status,p.isPor));
     chip.innerHTML='<span class="pchip-text">'+esc(p.name||'')+'</span>';
+    /* Botón × para sacar del campo */
+    var xBtn=document.createElement('button');
+    xBtn.className='chip-remove-btn';
+    xBtn.textContent='\u00d7';
+    xBtn.title='Sacar del campo';
+    xBtn.addEventListener('pointerdown',function(ev){ev.stopPropagation();});
+    xBtn.addEventListener('click',function(ev){
+      ev.stopPropagation();
+      p.onPitch=false;persist();renderCampo();renderRoster();renderCounter();renderPlist();
+    });
     pos.appendChild(chip);
+    pos.appendChild(xBtn);
     chip.addEventListener('pointerdown',function(ev){dragOnCampo(ev,p.id)});
     cont.appendChild(pos);
   });
