@@ -111,7 +111,7 @@ button,input,select{font-family:inherit}
 
 .campo-card{
   width:100%;
-  max-width:420px;
+  max-width:546px;
   background:#111827;
   border-radius:14px;
   overflow:hidden;
@@ -156,6 +156,17 @@ button,input,select{font-family:inherit}
   overflow:hidden;
 }
 .campo-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+.campo-shield{
+  position:absolute;
+  top:50%;left:50%;
+  width:52%;
+  transform:translate(-50%,-50%) translateY(-6%);
+  opacity:.18;
+  pointer-events:none;
+  z-index:1;
+  mix-blend-mode:screen;
+  filter:drop-shadow(0 0 8px rgba(255,255,255,.15));
+}
 .campo-players{position:absolute;inset:0;z-index:2;}
 
 /* =============================================
@@ -333,6 +344,13 @@ button,input,select{font-family:inherit}
             <circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>
             <circle cx="50" cy="59" r="1" fill="rgba(255,255,255,.35)"/>
           </svg>
+          <!-- ESCUDO DE FONDO -->
+          <img
+            class="campo-shield"
+            src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png"
+            alt=""
+            onerror="this.style.display='none'"
+          />
           <!-- FICHAS EN CAMPO -->
           <div class="campo-players" id="campoPlayers"></div>
         </div>
