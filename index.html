@@ -1267,6 +1267,13 @@ function doCapture(){
 /* ══════════════════════════
    BOOT
 ══════════════════════════ */
+
+/* Renderizar UI básica inmediatamente sin esperar a Firebase */
+restoreDark();
+buildStatusBtns();
+renderSeasonSel();
+renderTeamBar();
+
 setSync('connecting');
 firebase.auth().signInAnonymously().then(function(){
   /* Cargar config global (colores + temporadas) desde Firestore */
@@ -1292,9 +1299,7 @@ firebase.auth().signInAnonymously().then(function(){
   buildStatusBtns();
   bindEditor();
   bindSeasons();
-  renderSeasonSel();
   renderColors();
-  restoreDark();
   loadTeam();
   renderAll();
   bindFoto();
@@ -1302,13 +1307,10 @@ firebase.auth().signInAnonymously().then(function(){
 }).catch(function(e){
   console.error('Firebase init error',e);
   setSync('error','Error Firebase');
-  /* Continuar offline con datos locales */
   buildStatusBtns();
   bindEditor();
   bindSeasons();
-  renderSeasonSel();
   renderColors();
-  restoreDark();
   state={players:[]};
   renderAll();
   bindFoto();
