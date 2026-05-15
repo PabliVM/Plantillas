@@ -124,14 +124,14 @@ button,input,select,textarea{font-family:inherit}
 }
 .pchip-text{
   width:100%;
-  font-size:10px;
-  font-weight:900;
+  font-size:10.5px;
+  font-weight:500;
   white-space:normal;
   word-break:break-word;
-  hyphens:auto;
-  line-height:1.15;
-  text-shadow:0 1px 0 rgba(0,0,0,.6),0 0 6px rgba(0,0,0,.4);
-  letter-spacing:.4px;
+  line-height:1.2;
+  letter-spacing:.2px;
+  font-family:'Arial Narrow','Arial','Helvetica Neue',sans-serif;
+  text-shadow:0 1px 2px rgba(0,0,0,.55);
   -webkit-font-smoothing:antialiased;
 }
 
@@ -326,6 +326,10 @@ body.dark .status-btn.active{box-shadow:0 0 0 2px #e4e6ea;}
           <div class="card-b"><div class="rlist" id="rosterFuturible"></div></div>
         </div>
         <div class="card">
+          <div class="card-h">Bajas <span class="cnt" id="cntBaja">0</span></div>
+          <div class="card-b"><div class="rlist" id="rosterBaja"></div></div>
+        </div>
+        <div class="card">
           <div class="card-h">Ficha seleccionada</div>
           <div class="card-b">
             <div class="eempty" id="edEmpty">Selecciona o crea una ficha.</div>
@@ -403,7 +407,8 @@ var STATUS_DEF={
   actual:   {label:'En plantilla', bg:'#f1f5f9',text:'#1e293b',border:'#cbd5e1'},
   nuevo:    {label:'Nuevo fichado',bg:'#77ED85', text:'#003300',border:'#4ade80'},
   futurible:{label:'Futurible',    bg:'#3b82f6', text:'#ffffff',border:'#2563eb'},
-  baja:     {label:'Baja',         bg:'#e53e3e', text:'#ffffff',border:'#c53030'}
+  baja:     {label:'Baja',         bg:'#e53e3e', text:'#ffffff',border:'#c53030'},
+  portero:  {label:'Portero',      bg:'#f59e0b', text:'#1a1d23',border:'#ffd400'}
 };
 var STATUS_ORDER=['actual','nuevo','futurible','baja'];
 
@@ -411,18 +416,19 @@ var STATUS_ORDER=['actual','nuevo','futurible','baja'];
    COLORES GLOBALES
 ══════════════════════════ */
 var COL_KEY='campograma_colors';
+var ALL_COLOR_KEYS=['actual','nuevo','futurible','baja','portero'];
 var colors=(function(){
   try{var s=localStorage.getItem(COL_KEY);var saved=s?JSON.parse(s):{};var o={};
-    STATUS_ORDER.forEach(function(k){o[k]=Object.assign({},STATUS_DEF[k],saved[k]||{});});return o;}
-  catch(e){var o={};STATUS_ORDER.forEach(function(k){o[k]=Object.assign({},STATUS_DEF[k]);});return o;}
+    ALL_COLOR_KEYS.forEach(function(k){o[k]=Object.assign({},STATUS_DEF[k],saved[k]||{});});return o;}
+  catch(e){var o={};ALL_COLOR_KEYS.forEach(function(k){o[k]=Object.assign({},STATUS_DEF[k]);});return o;}
 })();
 function saveColors(){
-  var m={};STATUS_ORDER.forEach(function(k){m[k]={bg:colors[k].bg,text:colors[k].text,border:colors[k].border};});
+  var m={};ALL_COLOR_KEYS.forEach(function(k){m[k]={bg:colors[k].bg,text:colors[k].text,border:colors[k].border};});
   try{localStorage.setItem(COL_KEY,JSON.stringify(m))}catch(e){}
 }
 function chipSt(status,isPor){
-  var c=colors[status]||STATUS_DEF.actual;
-  var borderColor=isPor?'#ffd400':c.border;
+  var c=isPor?(colors.portero||STATUS_DEF.portero):(colors[status]||STATUS_DEF.actual);
+  var borderColor=isPor?(colors.portero||STATUS_DEF.portero).border:c.border;
   var borderWidth=isPor?'3px':'2px';
   return'background:'+c.bg+';color:'+c.text+';border-color:'+borderColor+';border-style:solid;border-width:'+borderWidth+';';
 }
@@ -557,15 +563,30 @@ function renderCampo(){
 
 /* ══════════════════════════
    RENDER ROSTER
+   - En plantilla: actual+nuevo SIN los que ya están en campo
+   - Futuribles: futurible SIN los que ya están en campo
+   - Bajas: status=baja (no se pueden arrastrar al campo)
 ══════════════════════════ */
 function renderRoster(){
-  var ab=document.getElementById('rosterActual'),fb=document.getElementById('rosterFuturible');
-  ab.innerHTML='';fb.innerHTML='';
-  var actual=[],fut=[];
-  state.players.forEach(function(p){if(p.status==='futurible')fut.push(p);else actual.push(p)});
-  function mkItem(p){
+  var ab=document.getElementById('rosterActual');
+  var fb=document.getElementById('rosterFuturible');
+  var bb=document.getElementById('rosterBaja');
+  ab.innerHTML='';fb.innerHTML='';bb.innerHTML='';
+
+  var actual=[],fut=[],baja=[];
+  state.players.forEach(function(p){
+    if(p.status==='baja') baja.push(p);
+    else if(p.status==='futurible') fut.push(p);
+    else actual.push(p);
+  });
+
+  /* Solo muestra los que NO están en el campo */
+  var actualFuera=actual.filter(function(p){return !p.onPitch;});
+  var futFuera=fut.filter(function(p){return !p.onPitch;});
+
+  function mkItem(p, canDrag){
     var item=document.createElement('div');
-    item.className='ritem'+(p.id===selectedId?' sel':'')+(p.onPitch?' onpitch':'');
+    item.className='ritem'+(p.id===selectedId?' sel':'');
     var mini=document.createElement('div');
     mini.className='chip-mini'+(p.isPor?' por':'')+(p.residence?' residencia':'');
     mini.setAttribute('style',chipSt(p.status,p.isPor));
@@ -573,18 +594,28 @@ function renderRoster(){
     var info=document.createElement('div');info.className='ritem-info';
     var lbl=(colors[p.status]||STATUS_DEF.actual).label;
     info.innerHTML='<div class="ritem-name">'+esc(p.name||'(sin nombre)')+'</div>'
-                  +'<div class="ritem-meta">'+lbl+(p.isPor?' \xb7 Portero':'')+(p.residence?' \xb7 R':'')+(p.onPitch?' \xb7 en campo':'')+'</div>';
+                  +'<div class="ritem-meta">'+lbl+(p.isPor?' \xb7 Portero':'')+(p.residence?' \xb7 R':'')+'</div>';
     item.appendChild(mini);item.appendChild(info);
     item.addEventListener('click',function(){selectedId=p.id;renderRoster();renderEditor();renderCampo();renderPlist();});
-    mini.addEventListener('pointerdown',function(ev){dragFromRoster(ev,p.id)});
+    if(canDrag) mini.addEventListener('pointerdown',function(ev){dragFromRoster(ev,p.id)});
     return item;
   }
-  if(!actual.length)ab.innerHTML='<div class="rempty">Sin jugadores. Carga desde Config y Plantillas.</div>';
-  else actual.forEach(function(p){ab.appendChild(mkItem(p))});
-  if(!fut.length)fb.innerHTML='<div class="rempty">Sin futuribles.</div>';
-  else fut.forEach(function(p){fb.appendChild(mkItem(p))});
-  document.getElementById('cntActual').textContent=actual.length;
-  document.getElementById('cntFuturible').textContent=fut.length;
+
+  if(!actualFuera.length)
+    ab.innerHTML='<div class="rempty">'+(actual.length?'Todos en el campo \u2713':'Sin jugadores. Carga desde Config y Plantillas.')+'</div>';
+  else actualFuera.forEach(function(p){ab.appendChild(mkItem(p,true))});
+
+  if(!futFuera.length)
+    fb.innerHTML='<div class="rempty">'+(fut.length?'Todos en el campo \u2713':'Sin futuribles.')+'</div>';
+  else futFuera.forEach(function(p){fb.appendChild(mkItem(p,true))});
+
+  if(!baja.length)
+    bb.innerHTML='<div class="rempty">Sin bajas.</div>';
+  else baja.forEach(function(p){bb.appendChild(mkItem(p,false))});
+
+  document.getElementById('cntActual').textContent=actualFuera.length+'/'+actual.length;
+  document.getElementById('cntFuturible').textContent=futFuera.length+'/'+fut.length;
+  document.getElementById('cntBaja').textContent=baja.length;
 }
 
 /* ══════════════════════════
@@ -842,45 +873,42 @@ function renderCfgPlantillas(body){
 
 /* TAB COLORES */
 function renderCfgColores(body){
-  var title=document.createElement('div');title.className='cfg-section-title';title.textContent='Colores de las fichas por tipo de jugador (se aplican a todos los equipos)';body.appendChild(title);
-  STATUS_ORDER.forEach(function(k){
+  var title=document.createElement('div');title.className='cfg-section-title';
+  title.textContent='Colores de las fichas (se aplican a todos los equipos)';body.appendChild(title);
+
+  /* Tipos normales + portero */
+  var allKeys=STATUS_ORDER.concat(['portero']);
+  allKeys.forEach(function(k){
     var c=colors[k];
     var row=document.createElement('div');row.className='color-type-row';
     var preview=document.createElement('div');
-    preview.className='color-type-preview';
-    preview.setAttribute('style',chipSt(k,false));
-    preview.textContent=c.label.split(' ')[0].toUpperCase();
+    preview.className='color-type-preview'+(k==='portero'?' por':'');
+    preview.setAttribute('style',k==='portero'?chipSt('actual',true):chipSt(k,false));
+    preview.textContent=k==='portero'?'POR':c.label.split(' ')[0].toUpperCase();
     var label=document.createElement('div');label.className='color-type-label';label.textContent=c.label;
     var inputs=document.createElement('div');inputs.className='color-type-inputs';
     inputs.innerHTML='<span>Fondo</span><input type="color" value="'+c.bg+'" data-k="'+k+'" data-p="bg">'
-                    +'<span>Texto</span><input type="color" value="'+c.text+'" data-k="'+k+'" data-p="text">';
+                    +'<span>Texto</span><input type="color" value="'+c.text+'" data-k="'+k+'" data-p="text">'
+                    +'<span>Borde</span><input type="color" value="'+c.border+'" data-k="'+k+'" data-p="border">';
     row.appendChild(preview);row.appendChild(label);row.appendChild(inputs);
     body.appendChild(row);
   });
+
   var rst=document.createElement('button');rst.className='btn-reset-colors';rst.textContent='Restablecer colores por defecto';
   body.appendChild(rst);
-
-  /* Preview portero */
-  var ptitle=document.createElement('div');ptitle.className='cfg-section-title';ptitle.style.marginTop='20px';ptitle.textContent='Portero — borde discontinuo';body.appendChild(ptitle);
-  var prow=document.createElement('div');prow.className='color-type-row';
-  var pprev=document.createElement('div');pprev.className='color-type-preview por';pprev.setAttribute('style',chipSt('actual',true));pprev.textContent='POR';
-  var ptext=document.createElement('div');ptext.className='color-type-label';ptext.textContent='Los porteros tienen borde discontinuo (---). El color es el del tipo de jugador que corresponda.';
-  ptext.style.fontSize='11px';ptext.style.color='var(--text-mut)';
-  prow.appendChild(pprev);prow.appendChild(ptext);body.appendChild(prow);
 
   body.querySelectorAll('input[type=color]').forEach(function(inp){
     inp.addEventListener('input',function(){
       var k=this.dataset.k,prop=this.dataset.p;
-      colors[k][prop]=this.value;if(prop==='bg')colors[k].border=this.value;
+      colors[k][prop]=this.value;
       saveColors();buildStatusBtns();renderEditor();renderCampo();renderRoster();renderPlist();renderCfg();
     });
   });
   rst.addEventListener('click',function(){
-    STATUS_ORDER.forEach(function(k){colors[k]=Object.assign({},STATUS_DEF[k]);});
+    ALL_COLOR_KEYS.forEach(function(k){colors[k]=Object.assign({},STATUS_DEF[k]);});
     saveColors();buildStatusBtns();renderEditor();renderCampo();renderRoster();renderPlist();renderCfg();
   });
 }
-
 /* ══════════════════════════
    DRAG ON CAMPO
 ══════════════════════════ */
