@@ -247,7 +247,6 @@ body.dark .status-btn.active{box-shadow:0 0 0 2px #e4e6ea;}
   <div class="hlogo"><img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" onerror="this.parentNode.textContent='RM'"></div>
   <span class="htitle">Campograma</span>
   <div class="hnav">
-    <button class="hbtn active" id="btnViewCampo">&#9917; Campo</button>
     <button class="hbtn" id="btnViewCfg">&#9881; Config y Plantillas</button>
   </div>
   <span class="hspacer"></span>
@@ -661,10 +660,6 @@ function closeCfg(){document.getElementById('cfgOverlay').classList.remove('open
 document.getElementById('cfgClose').addEventListener('click',closeCfg);
 document.getElementById('cfgOverlay').addEventListener('click',function(e){if(e.target===this)closeCfg();});
 document.getElementById('btnViewCfg').addEventListener('click',openCfg);
-document.getElementById('btnViewCampo').addEventListener('click',function(){
-  document.getElementById('btnViewCampo').classList.add('active');
-  document.getElementById('btnViewCfg').classList.remove('active');
-});
 
 document.querySelectorAll('.cfg-tab').forEach(function(tab){
   tab.addEventListener('click',function(){
