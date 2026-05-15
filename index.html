@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Campograma - Cantera RM</title>
+<title>Confección de Plantillas - Cantera RM</title>
 <style>
 :root{
   --bg:#f0f2f5;--surface:#fff;--surface-alt:#fafbfc;
@@ -245,7 +245,7 @@ body.dark .status-btn.active{box-shadow:0 0 0 2px #e4e6ea;}
 <!-- ══ HEADER ══ -->
 <header class="header">
   <div class="hlogo"><img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" onerror="this.parentNode.textContent='RM'"></div>
-  <span class="htitle">Campograma</span>
+  <span class="htitle">Confecci&oacute;n de Plantillas</span>
   <div class="hnav">
     <button class="hbtn" id="btnViewCfg">&#9881; Config y Plantillas</button>
   </div>
@@ -337,7 +337,7 @@ body.dark .status-btn.active{box-shadow:0 0 0 2px #e4e6ea;}
       <!-- COL 3: LISTA -->
       <div class="col">
         <div class="card">
-          <div class="card-h">Lista del equipo <span class="cnt" id="plistTotal">0</span></div>
+          <div class="card-h">Lista del equipo <span class="cnt" id="plistTotal">0+0</span></div>
           <div class="card-b" id="plistBody"><div class="plist-empty">Sin jugadores a&uacute;n.</div></div>
         </div>
       </div>
@@ -364,7 +364,7 @@ body.dark .status-btn.active{box-shadow:0 0 0 2px #e4e6ea;}
   </div>
 </div>
 
-<footer class="app-footer">Cantera del Real Madrid CF &middot; Campograma</footer>
+<footer class="app-footer">Cantera del Real Madrid CF &middot; Confecci&oacute;n de Plantillas</footer>
 
 <script>
 /* ══════════════════════════
@@ -619,33 +619,75 @@ function bindEditor(){
 
 /* ══════════════════════════
    LISTA COL 3
+   - Total en formato C+P
+   - Jugadores que faltan por poner en el campo
 ══════════════════════════ */
 function renderPlist(){
   var body=document.getElementById('plistBody');body.innerHTML='';
-  var total=state.players.length;
-  document.getElementById('plistTotal').textContent=total;
-  if(!total){body.innerHTML='<div class="plist-empty">Sin jugadores a\xfan.</div>';return}
-  STATUS_ORDER.forEach(function(st){
-    var grp=state.players.filter(function(p){return p.status===st});if(!grp.length)return;
+
+  /* Calcular en campo */
+  var enCampo=state.players.filter(function(p){return p.onPitch&&p.status!=='baja'});
+  var enCampoC=enCampo.filter(function(p){return!(p.isPor&&inGoal(p.x,p.y))}).length;
+  var enCampoP=enCampo.filter(function(p){return p.isPor&&inGoal(p.x,p.y)}).length;
+
+  /* Jugadores que NO están en el campo y no son baja */
+  var fuera=state.players.filter(function(p){return !p.onPitch&&p.status!=='baja'});
+
+  /* Contador total en formato C+P */
+  var totalC=state.players.filter(function(p){return !p.isPor&&p.status!=='baja'}).length;
+  var totalP=state.players.filter(function(p){return p.isPor&&p.status!=='baja'}).length;
+  document.getElementById('plistTotal').textContent=totalC+'+'+totalP;
+
+  if(!state.players.length){body.innerHTML='<div class="plist-empty">Sin jugadores a\xfan.</div>';return}
+
+  /* Sección: faltan por poner */
+  if(fuera.length){
     var lbl=document.createElement('div');lbl.className='plist-group-label';
-    lbl.textContent=(colors[st]||STATUS_DEF[st]).label+' ('+grp.length+')';body.appendChild(lbl);
-    grp.forEach(function(p){
+    lbl.textContent='Faltan por poner ('+fuera.length+')';body.appendChild(lbl);
+    fuera.forEach(function(p){
       var row=document.createElement('div');
-      row.className='plist-item'+(p.id===selectedId?' sel':'')+(p.onPitch?' onpitch':'');
+      row.className='plist-item'+(p.id===selectedId?' sel':'');
       var badge=document.createElement('div');badge.className='plist-badge'+(p.isPor?' por':'');
       badge.setAttribute('style',chipSt(p.status,p.isPor));badge.textContent=p.isPor?'POR':'CAM';
       var name=document.createElement('div');name.className='plist-name';name.textContent=esc(p.name||'(sin nombre)');
-      var addBtn=document.createElement('button');addBtn.className='plist-addbtn'+(p.onPitch?' in':'');
-      addBtn.textContent=p.onPitch?'En campo':'+ Campo';
+      var addBtn=document.createElement('button');addBtn.className='plist-addbtn';
+      addBtn.textContent='+ Campo';
       addBtn.addEventListener('click',function(e){
-        e.stopPropagation();if(p.status==='baja')return;
-        if(!p.onPitch){p.onPitch=true;selectedId=p.id;persist();renderAll();}
+        e.stopPropagation();
+        p.onPitch=true;selectedId=p.id;persist();renderAll();
       });
       row.appendChild(badge);row.appendChild(name);row.appendChild(addBtn);
       row.addEventListener('click',function(){selectedId=p.id;renderRoster();renderEditor();renderCampo();renderPlist();});
       body.appendChild(row);
     });
-  });
+  } else {
+    var allIn=document.createElement('div');allIn.className='plist-empty';
+    allIn.textContent='\u2713 Todos en el campo';body.appendChild(allIn);
+  }
+
+  /* Sección: ya en campo */
+  var dentro=state.players.filter(function(p){return p.onPitch&&p.status!=='baja'});
+  if(dentro.length){
+    var lbl2=document.createElement('div');lbl2.className='plist-group-label';
+    lbl2.style.marginTop='10px';
+    lbl2.textContent='En campo ('+enCampoC+'+'+enCampoP+'P)';body.appendChild(lbl2);
+    dentro.forEach(function(p){
+      var row=document.createElement('div');
+      row.className='plist-item onpitch'+(p.id===selectedId?' sel':'');
+      var badge=document.createElement('div');badge.className='plist-badge'+(p.isPor?' por':'');
+      badge.setAttribute('style',chipSt(p.status,p.isPor));badge.textContent=p.isPor?'POR':'CAM';
+      var name=document.createElement('div');name.className='plist-name';name.textContent=esc(p.name||'(sin nombre)');
+      var outBtn=document.createElement('button');outBtn.className='plist-addbtn in';
+      outBtn.textContent='Sacar';
+      outBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        p.onPitch=false;persist();renderAll();
+      });
+      row.appendChild(badge);row.appendChild(name);row.appendChild(outBtn);
+      row.addEventListener('click',function(){selectedId=p.id;renderRoster();renderEditor();renderCampo();renderPlist();});
+      body.appendChild(row);
+    });
+  }
 }
 
 /* ══════════════════════════
