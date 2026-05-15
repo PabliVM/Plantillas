@@ -1,8 +1,10 @@
 <!-- =====================================================
   CAMPOGRAMA POR EQUIPO - REAL MADRID CANTERA
   Sistema: MAESTRO CORPORATIVO RM
-  Stack: HTML + CSS + JS puro (sin frameworks, sin canvas)
-  Persistencia: localStorage (capa abstracta lista para Firebase)
+  Stack: HTML + CSS + JS puro
+  Persistencia: Firestore (con caché offline IndexedDB)
+  Auth: anónima
+  Concurrencia: optimistic locking con campo `version` + transaction
 ===================================================== -->
 <!DOCTYPE html>
 <html lang="es">
@@ -38,8 +40,6 @@
   --rl:12px;
   --font:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;
   --tr:.2s ease;
-
-  /* CAMPO */
   --pitch-grass:#3a8a3f;
   --pitch-grass-alt:#338539;
   --pitch-line:rgba(255,255,255,.85);
@@ -84,12 +84,8 @@ input,select{font-family:inherit}
 .header{
   background:var(--rm-blue);
   padding:12px 24px;
-  display:flex;
-  align-items:center;
-  gap:14px;
-  position:sticky;
-  top:0;
-  z-index:100;
+  display:flex;align-items:center;gap:14px;
+  position:sticky;top:0;z-index:100;
   box-shadow:0 2px 8px rgba(0,0,0,.15);
 }
 .header-logo{
@@ -101,6 +97,25 @@ input,select{font-family:inherit}
 .header-title-wrap{display:flex;align-items:baseline;gap:10px;min-width:0;flex:1}
 .doc-title{font-size:17px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px}
 .doc-season{font-size:13px;font-weight:500;color:rgba(255,255,255,.72);white-space:nowrap}
+
+.sync-indicator{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:500;color:rgba(255,255,255,.85);
+  padding:4px 10px;border-radius:14px;
+  background:rgba(255,255,255,.12);
+  white-space:nowrap;flex-shrink:0;
+  transition:background var(--tr);cursor:default;
+}
+.sync-indicator.is-saving{background:rgba(255,255,255,.2)}
+.sync-indicator.is-error  {background:rgba(220,38,38,.85);color:#fff}
+.sync-indicator.is-conflict{background:rgba(234,88,12,.9);color:#fff;cursor:pointer}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0}
+.sync-indicator.is-saving .sync-dot{background:#fbbf24;animation:pulse 1s ease-in-out infinite}
+.sync-indicator.is-error   .sync-dot{background:#fff}
+.sync-indicator.is-conflict .sync-dot{background:#fff}
+.sync-indicator.is-offline .sync-dot{background:#fbbf24}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
 .btn-dark{
   width:28px;height:28px;border-radius:50%;
   border:1px solid rgba(255,255,255,.2);
@@ -130,6 +145,7 @@ input,select{font-family:inherit}
 }
 .team-btn:hover{border-color:var(--rm-blue);color:var(--rm-blue)}
 .team-btn.active{background:var(--rm-blue);color:#fff;border-color:var(--rm-blue)}
+.team-btn:disabled{opacity:.4;cursor:wait}
 
 /* =====================================================
   5. MAIN LAYOUT
@@ -137,46 +153,29 @@ input,select{font-family:inherit}
 .main{max-width:1600px;margin:0 auto;padding:16px 24px}
 
 .team-summary{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--r);
-  padding:12px 16px;
-  margin-bottom:14px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:12px 16px;margin-bottom:14px;
   display:flex;align-items:center;justify-content:space-between;
-  gap:14px;flex-wrap:wrap;
-  box-shadow:var(--sh-sm);
+  gap:14px;flex-wrap:wrap;box-shadow:var(--sh-sm);
 }
 .team-summary-name{font-size:15px;font-weight:700;color:var(--text)}
 .team-summary-name small{display:block;font-size:11px;font-weight:500;color:var(--text-mut);margin-top:2px}
-.counter{
-  font-size:13px;font-weight:600;color:var(--text-sec);
-  display:flex;align-items:center;gap:8px;
-}
+.counter{font-size:13px;font-weight:600;color:var(--text-sec);display:flex;align-items:center;gap:8px}
 .counter-pill{
   background:var(--rm-blue-bg);color:var(--rm-blue);
   padding:4px 10px;border-radius:14px;font-weight:700;
   font-variant-numeric:tabular-nums;
 }
 
-.layout{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 320px;
-  gap:16px;
-  align-items:start;
-}
-@media(max-width:980px){
-  .layout{grid-template-columns:1fr}
-}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+@media(max-width:980px){.layout{grid-template-columns:1fr}}
 
 /* =====================================================
-  6. CAMPO (PITCH)
+  6. CAMPO
 ===================================================== */
 .pitch-wrap{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--r);
-  padding:14px;
-  box-shadow:var(--sh-sm);
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px;box-shadow:var(--sh-sm);
   display:flex;flex-direction:column;align-items:center;gap:10px;
 }
 .pitch-toolbar{
@@ -184,140 +183,78 @@ input,select{font-family:inherit}
   font-size:11px;color:var(--text-mut);
 }
 .pitch-toolbar .hint{font-style:italic}
-
 .pitch{
-  position:relative;
-  width:100%;
-  max-width:520px;
-  aspect-ratio:2/3;
+  position:relative;width:100%;max-width:520px;aspect-ratio:2/3;
   background:linear-gradient(180deg,
-    var(--pitch-grass) 0%,
-    var(--pitch-grass-alt) 12.5%,
-    var(--pitch-grass) 25%,
-    var(--pitch-grass-alt) 37.5%,
-    var(--pitch-grass) 50%,
-    var(--pitch-grass-alt) 62.5%,
-    var(--pitch-grass) 75%,
-    var(--pitch-grass-alt) 87.5%,
-    var(--pitch-grass) 100%
-  );
-  border-radius:var(--rs);
-  overflow:hidden;
-  touch-action:none;
-  user-select:none;
-  -webkit-user-select:none;
+    var(--pitch-grass) 0%,var(--pitch-grass-alt) 12.5%,
+    var(--pitch-grass) 25%,var(--pitch-grass-alt) 37.5%,
+    var(--pitch-grass) 50%,var(--pitch-grass-alt) 62.5%,
+    var(--pitch-grass) 75%,var(--pitch-grass-alt) 87.5%,
+    var(--pitch-grass) 100%);
+  border-radius:var(--rs);overflow:hidden;
+  touch-action:none;user-select:none;-webkit-user-select:none;
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.6);
 }
 .pitch.drop-target{outline:3px dashed var(--rm-blue);outline-offset:-3px}
-
-.pitch-svg{
-  position:absolute;inset:0;width:100%;height:100%;
-  pointer-events:none;
-}
+.pitch.is-locked{opacity:.5;pointer-events:none}
+.pitch-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 
 /* =====================================================
-  7. FICHAS (CHIPS)
+  7. FICHAS
 ===================================================== */
 .chip{
-  position:absolute;
-  width:11%;
-  aspect-ratio:1/1;
-  border-radius:50%;
-  background:var(--chip-color,#2563eb);
-  color:#fff;
+  position:absolute;width:11%;aspect-ratio:1/1;border-radius:50%;
+  background:var(--chip-color,#2563eb);color:#fff;
   display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:700;
-  border:2px solid #fff;
+  font-size:11px;font-weight:700;border:2px solid #fff;
   box-shadow:0 2px 6px rgba(0,0,0,.35);
-  cursor:grab;
-  touch-action:none;
+  cursor:grab;touch-action:none;
   transform:translate(-50%,-50%);
-  transition:box-shadow var(--tr), transform .1s ease;
+  transition:box-shadow var(--tr),transform .1s ease;
   z-index:1;
 }
 .chip.dragging{cursor:grabbing;z-index:10;box-shadow:0 6px 14px rgba(0,0,0,.45);transform:translate(-50%,-50%) scale(1.08)}
 .chip.selected{outline:3px solid #ffd400;outline-offset:1px;z-index:5}
 .chip.is-baja{opacity:.45;filter:grayscale(.4)}
-.chip-text{
-  pointer-events:none;
-  text-shadow:0 1px 2px rgba(0,0,0,.4);
-  max-width:90%;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
+.chip-text{pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.4);max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chip-r{
-  position:absolute;
-  top:-3px;right:-3px;
-  width:42%;height:42%;
-  background:#fff;
-  color:#1a1d23;
-  border-radius:50%;
-  font-size:9px;font-weight:800;
+  position:absolute;top:-3px;right:-3px;
+  width:42%;height:42%;background:#fff;color:#1a1d23;
+  border-radius:50%;font-size:9px;font-weight:800;
   display:flex;align-items:center;justify-content:center;
-  border:1.5px solid var(--chip-color,#2563eb);
-  pointer-events:none;
+  border:1.5px solid var(--chip-color,#2563eb);pointer-events:none;
 }
 .chip-role-por::after{
-  content:'';
-  position:absolute;inset:-4px;
-  border:2px dashed rgba(255,255,255,.7);
-  border-radius:50%;
-  pointer-events:none;
+  content:'';position:absolute;inset:-4px;
+  border:2px dashed rgba(255,255,255,.7);border-radius:50%;pointer-events:none;
 }
-
-/* Chip dentro del panel lateral */
-.roster-chip{
-  position:relative;
-  width:36px;height:36px;
-  flex-shrink:0;
-}
+.roster-chip{position:relative;width:36px;height:36px;flex-shrink:0}
 
 /* =====================================================
-  8. PANEL LATERAL (ROSTER + CONTROLES)
+  8. PANEL LATERAL
 ===================================================== */
-.side-panel{
-  display:flex;flex-direction:column;gap:12px;
-  min-width:0;
-}
-.card{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--r);
-  box-shadow:var(--sh-sm);
-  overflow:hidden;
-}
+.side-panel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-sm);overflow:hidden}
 .card-h{
-  padding:10px 14px;
-  background:var(--surface-alt);
+  padding:10px 14px;background:var(--surface-alt);
   border-bottom:1px solid var(--border);
   font-size:12px;font-weight:700;color:var(--text-sec);
   letter-spacing:.3px;text-transform:uppercase;
   display:flex;justify-content:space-between;align-items:center;
 }
 .card-h .count{
-  background:var(--surface);
-  color:var(--text-sec);
-  padding:1px 7px;border-radius:10px;
-  font-size:10px;font-weight:700;
+  background:var(--surface);color:var(--text-sec);
+  padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;
   border:1px solid var(--border);
 }
 .card-b{padding:10px 12px}
 
-.roster-list{
-  display:flex;flex-direction:column;gap:6px;
-  max-height:240px;overflow-y:auto;
-  min-height:50px;
-}
-.roster-list.drop-target{
-  outline:2px dashed var(--rm-blue);
-  outline-offset:-2px;border-radius:var(--rs);
-}
+.roster-list{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;min-height:50px}
 .roster-item{
   display:flex;align-items:center;gap:10px;
   padding:6px;border-radius:var(--rs);
-  background:var(--surface-alt);
-  border:1px solid var(--border-light);
-  cursor:pointer;
-  transition:background var(--tr),border-color var(--tr);
+  background:var(--surface-alt);border:1px solid var(--border-light);
+  cursor:pointer;transition:background var(--tr),border-color var(--tr);
 }
 .roster-item:hover{background:var(--rm-blue-bg);border-color:var(--rm-blue)}
 .roster-item.selected{border-color:var(--rm-blue);box-shadow:0 0 0 1px var(--rm-blue)}
@@ -325,23 +262,16 @@ input,select{font-family:inherit}
 .roster-item-info{flex:1;min-width:0}
 .roster-item-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .roster-item-meta{font-size:10px;color:var(--text-mut);margin-top:1px}
-.roster-empty{
-  text-align:center;font-size:11px;color:var(--text-mut);
-  padding:14px 6px;font-style:italic;
-}
+.roster-empty{text-align:center;font-size:11px;color:var(--text-mut);padding:14px 6px;font-style:italic}
 
-/* Controles de edición */
 .form-row{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
 .form-row label{font-size:10px;font-weight:700;color:var(--text-mut);letter-spacing:.3px;text-transform:uppercase}
-.form-row input[type="text"],
-.form-row select{
+.form-row input[type="text"],.form-row select{
   width:100%;padding:6px 8px;font-size:12px;
   border:1px solid var(--border);border-radius:var(--rs);
-  background:var(--surface);color:var(--text);
-  transition:border-color var(--tr);
+  background:var(--surface);color:var(--text);transition:border-color var(--tr);
 }
-.form-row input[type="text"]:focus,
-.form-row select:focus{outline:none;border-color:var(--rm-blue)}
+.form-row input[type="text"]:focus,.form-row select:focus{outline:none;border-color:var(--rm-blue)}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .toggle-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .toggle-row input{width:16px;height:16px;accent-color:var(--rm-blue)}
@@ -355,6 +285,7 @@ input,select{font-family:inherit}
   transition:all var(--tr);
 }
 .btn:hover{border-color:var(--rm-blue);color:var(--rm-blue)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
 .btn-primary{background:var(--rm-blue);color:#fff;border-color:var(--rm-blue)}
 .btn-primary:hover{background:var(--rm-blue-lt);color:#fff;border-color:var(--rm-blue-lt)}
 .btn-danger{color:var(--red);border-color:var(--border)}
@@ -362,16 +293,9 @@ input,select{font-family:inherit}
 .btn-ghost{background:transparent;border-color:transparent;color:var(--text-mut)}
 .btn-ghost:hover{color:var(--rm-blue);background:var(--rm-blue-bg)}
 
-.empty-state{
-  font-size:11px;color:var(--text-mut);font-style:italic;
-  text-align:center;padding:8px 4px;
-}
+.empty-state{font-size:11px;color:var(--text-mut);font-style:italic;text-align:center;padding:8px 4px}
 
-/* Color config */
-.color-row{
-  display:flex;align-items:center;gap:8px;margin-bottom:6px;
-  font-size:11px;
-}
+.color-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px}
 .color-row label{flex:1;color:var(--text-sec);font-weight:500}
 .color-row input[type="color"]{
   width:30px;height:24px;border:1px solid var(--border);
@@ -384,12 +308,20 @@ input,select{font-family:inherit}
   9. FOOTER
 ===================================================== */
 .app-footer{
-  background:var(--rm-blue);
-  color:rgba(255,255,255,.5);
+  background:var(--rm-blue);color:rgba(255,255,255,.5);
   font-size:10px;letter-spacing:.3px;text-align:center;
-  padding:12px 24px;
-  position:fixed;left:0;right:0;bottom:0;z-index:50;
+  padding:12px 24px;position:fixed;left:0;right:0;bottom:0;z-index:50;
 }
+
+/* Modal de conflicto */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);
+  z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.modal{background:var(--surface);border-radius:var(--r);max-width:420px;width:100%;box-shadow:var(--sh-lg);overflow:hidden}
+.modal-h{padding:14px 18px;background:var(--orange);color:#fff;font-weight:700;font-size:14px}
+.modal-b{padding:16px 18px;color:var(--text);font-size:13px;line-height:1.5}
+.modal-f{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
 
 /* =====================================================
   10. RESPONSIVE
@@ -399,6 +331,7 @@ input,select{font-family:inherit}
   .header-logo{width:34px;height:34px}
   .doc-title{font-size:14px}
   .doc-season{font-size:11px}
+  .sync-indicator{font-size:10px;padding:3px 8px}
   .team-bar{padding:8px 12px;top:54px}
   .main{padding:10px 12px}
   .app-footer{padding:10px 12px;font-size:9px}
@@ -409,26 +342,21 @@ input,select{font-family:inherit}
 </head>
 <body>
 
-<!-- =====================================================
-  HEADER
-===================================================== -->
 <header class="header">
   <div class="header-logo">RM</div>
   <div class="header-title-wrap">
     <h1 class="doc-title">Campograma</h1>
     <span class="doc-season">2026/2027</span>
   </div>
+  <div class="sync-indicator" id="syncIndicator" title="Estado de sincronización">
+    <span class="sync-dot"></span>
+    <span id="syncLabel">Conectando…</span>
+  </div>
   <button class="btn-dark" onclick="toggleDark()" id="darkBtn">☾</button>
 </header>
 
-<!-- =====================================================
-  BARRA DE EQUIPOS
-===================================================== -->
 <div class="team-bar" id="teamBar"></div>
 
-<!-- =====================================================
-  CONTENIDO PRINCIPAL
-===================================================== -->
 <main class="main">
   <div class="team-summary">
     <div class="team-summary-name" id="teamName">—<small id="teamKeyLabel">—</small></div>
@@ -439,99 +367,54 @@ input,select{font-family:inherit}
   </div>
 
   <div class="layout">
-    <!-- CAMPO -->
     <div class="pitch-wrap">
       <div class="pitch-toolbar">
-        <span class="hint">Arrastra fichas para moverlas · Toca para seleccionar</span>
+        <span class="hint">Arrastra fichas para moverlas · Doble clic para sacar del campo</span>
       </div>
       <div class="pitch" id="pitch">
         <svg class="pitch-svg" viewBox="0 0 200 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Borde -->
           <rect x="2" y="2" width="196" height="296" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5"/>
-          <!-- Línea de medio campo -->
           <line x1="2" y1="150" x2="198" y2="150" stroke="rgba(255,255,255,.85)" stroke-width="1.5"/>
-          <!-- Círculo central -->
           <circle cx="100" cy="150" r="22" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5"/>
           <circle cx="100" cy="150" r="1.5" fill="rgba(255,255,255,.85)"/>
-
-          <!-- Área grande SUPERIOR (0-17% en Y, 21-79% en X) -->
           <rect x="42" y="2" width="116" height="49" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5"/>
-          <!-- Área pequeña superior -->
           <rect x="68" y="2" width="64" height="18" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5"/>
-          <!-- Punto de penalti superior -->
           <circle cx="100" cy="35" r="1.5" fill="rgba(255,255,255,.85)"/>
-          <!-- Semicírculo del área superior -->
           <path d="M 84 51 A 16 16 0 0 0 116 51" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5"/>
-          <!-- Portería superior (referencia visual) -->
           <rect x="86" y="0" width="28" height="3" fill="rgba(255,255,255,.5)"/>
-
-          <!-- Área grande INFERIOR (83-100% en Y) -->
           <rect x="42" y="249" width="116" height="49" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5"/>
-          <!-- Área pequeña inferior -->
           <rect x="68" y="280" width="64" height="18" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5"/>
-          <!-- Punto de penalti inferior -->
           <circle cx="100" cy="265" r="1.5" fill="rgba(255,255,255,.85)"/>
-          <!-- Semicírculo del área inferior -->
           <path d="M 84 249 A 16 16 0 0 1 116 249" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5"/>
-          <!-- Portería inferior -->
           <rect x="86" y="297" width="28" height="3" fill="rgba(255,255,255,.5)"/>
-
-          <!-- Córners -->
           <path d="M 2 5 A 3 3 0 0 1 5 2" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1"/>
           <path d="M 195 2 A 3 3 0 0 1 198 5" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1"/>
           <path d="M 2 295 A 3 3 0 0 0 5 298" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1"/>
           <path d="M 195 298 A 3 3 0 0 0 198 295" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1"/>
         </svg>
-        <!-- Las fichas se inyectan aquí dinámicamente -->
       </div>
     </div>
 
-    <!-- PANEL LATERAL -->
     <aside class="side-panel">
-
-      <!-- Plantilla actual -->
       <div class="card">
-        <div class="card-h">
-          Plantilla actual
-          <span class="count" id="countActual">0</span>
-        </div>
-        <div class="card-b">
-          <div class="roster-list" id="rosterActual" data-bucket="actual"></div>
-        </div>
+        <div class="card-h">Plantilla actual<span class="count" id="countActual">0</span></div>
+        <div class="card-b"><div class="roster-list" id="rosterActual" data-bucket="actual"></div></div>
       </div>
-
-      <!-- Futuribles -->
       <div class="card">
-        <div class="card-h">
-          Futuribles
-          <span class="count" id="countFuturible">0</span>
-        </div>
-        <div class="card-b">
-          <div class="roster-list" id="rosterFuturible" data-bucket="futurible"></div>
-        </div>
+        <div class="card-h">Futuribles<span class="count" id="countFuturible">0</span></div>
+        <div class="card-b"><div class="roster-list" id="rosterFuturible" data-bucket="futurible"></div></div>
       </div>
-
-      <!-- Editor de ficha -->
       <div class="card">
         <div class="card-h">Ficha</div>
         <div class="card-b" id="editorBody">
           <div class="empty-state" id="editorEmpty">Selecciona una ficha para editar o crea una nueva.</div>
           <div id="editorForm" style="display:none">
-            <div class="form-row">
-              <label>Nombre</label>
-              <input type="text" id="fName" maxlength="40">
-            </div>
+            <div class="form-row"><label>Nombre</label><input type="text" id="fName" maxlength="40"></div>
             <div class="form-grid">
-              <div class="form-row">
-                <label>Dorsal / texto</label>
-                <input type="text" id="fShort" maxlength="3">
-              </div>
+              <div class="form-row"><label>Dorsal / texto</label><input type="text" id="fShort" maxlength="3"></div>
               <div class="form-row">
                 <label>Rol</label>
-                <select id="fRole">
-                  <option value="CAMPO">CAMPO</option>
-                  <option value="POR">POR</option>
-                </select>
+                <select id="fRole"><option value="CAMPO">CAMPO</option><option value="POR">POR</option></select>
               </div>
             </div>
             <div class="form-row">
@@ -543,10 +426,7 @@ input,select{font-family:inherit}
                 <option value="baja">Baja</option>
               </select>
             </div>
-            <div class="toggle-row">
-              <input type="checkbox" id="fResidence">
-              <label for="fResidence">Residencia (R)</label>
-            </div>
+            <div class="toggle-row"><input type="checkbox" id="fResidence"><label for="fResidence">Residencia (R)</label></div>
             <div class="btn-row">
               <button class="btn btn-danger" id="btnDelete">Eliminar</button>
               <button class="btn btn-ghost" id="btnDeselect">Deseleccionar</button>
@@ -557,52 +437,61 @@ input,select{font-family:inherit}
           </div>
         </div>
       </div>
-
-      <!-- Configuración de colores (global) -->
       <div class="card">
         <div class="card-h">Colores por estado</div>
         <div class="card-b" id="colorConfig"></div>
       </div>
-
     </aside>
   </div>
 </main>
 
-<!-- =====================================================
-  FOOTER
-===================================================== -->
-<footer class="app-footer">
-  Cantera del Real Madrid CF · Campograma
-</footer>
+<footer class="app-footer">Cantera del Real Madrid CF · Campograma</footer>
+
+<!-- Firebase SDK (compat, un solo HTML) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
 /* =====================================================
+  FIREBASE
+===================================================== */
+var firebaseConfig = {
+  apiKey: "AIzaSyARi1f_HNmn5qjTmalYsAFVyIFLq77yM1w",
+  authDomain: "plantillas-cd261.firebaseapp.com",
+  databaseURL: "https://plantillas-cd261-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "plantillas-cd261",
+  storageBucket: "plantillas-cd261.firebasestorage.app",
+  messagingSenderId: "56900116092",
+  appId: "1:56900116092:web:4d12b15b00f1d5a6a3b3f9"
+};
+
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+
+// Caché offline (IndexedDB). Si fallan dos pestañas a la vez, lo ignoramos.
+db.enablePersistence({ synchronizeTabs: false })
+  .catch(function(err){
+    console.warn('Firestore persistence no disponible:', err && err.code);
+  });
+
+window.addEventListener('online',  function(){ if(syncState.status !== 'conflict' && syncState.status !== 'error') setSync('saved'); });
+window.addEventListener('offline', function(){ setSync('offline'); });
+
+/* =====================================================
   CONFIGURACIÓN
 ===================================================== */
-
-// Lista de equipos (idéntica al maestro de botones)
 var TEAMS = [
-  {key:'CAS',name:'Castilla'},
-  {key:'RMC',name:'Real Madrid C'},
-  {key:'JA', name:'Juvenil A'},
-  {key:'JB', name:'Juvenil B'},
-  {key:'JC', name:'Juvenil C'},
-  {key:'CA', name:'Cadete A'},
-  {key:'CB', name:'Cadete B'},
-  {key:'IA', name:'Infantil A'},
-  {key:'IB', name:'Infantil B'},
-  {key:'AA', name:'Alevín A'},
-  {key:'AB', name:'Alevín B'},
-  {key:'AC', name:'Alevín C'},
-  {key:'BA', name:'Benjamín A'},
-  {key:'BB', name:'Benjamín B'},
-  {key:'PA', name:'Prebenjamín A'},
-  {key:'PB', name:'Prebenjamín B'},
+  {key:'CAS',name:'Castilla'},{key:'RMC',name:'Real Madrid C'},
+  {key:'JA', name:'Juvenil A'},{key:'JB', name:'Juvenil B'},{key:'JC', name:'Juvenil C'},
+  {key:'CA', name:'Cadete A'},{key:'CB', name:'Cadete B'},
+  {key:'IA', name:'Infantil A'},{key:'IB', name:'Infantil B'},
+  {key:'AA', name:'Alevín A'},{key:'AB', name:'Alevín B'},{key:'AC', name:'Alevín C'},
+  {key:'BA', name:'Benjamín A'},{key:'BB', name:'Benjamín B'},
+  {key:'PA', name:'Prebenjamín A'},{key:'PB', name:'Prebenjamín B'},
   {key:'DB', name:'Debutante'}
 ];
 
-// Estados de jugador. Modifica labels o colores aquí.
-// NOTA: los colores se sobreescriben con la config global guardada.
 var PLAYER_STATUS_DEFAULT = {
   actual:        { label:'Jugador actual', color:'#2563eb' },
   nuevo_fichado: { label:'Nuevo fichado',  color:'#16a34a' },
@@ -610,109 +499,256 @@ var PLAYER_STATUS_DEFAULT = {
   baja:          { label:'Baja',           color:'#dc2626' }
 };
 
-// ZONAS DEL CAMPO en porcentaje (x,y de 0 a 100).
-// Una única fuente de verdad: el SVG arriba dibuja con estos mismos rangos
-// y la lógica de conteo de porteros los usa para detectar si una ficha
-// está dentro de un área grande.
 var PITCH_ZONES = {
-  topGoalBox:    { x1: 21, y1: 0,  x2: 79, y2: 17 },   // área grande superior
-  bottomGoalBox: { x1: 21, y1: 83, x2: 79, y2: 100 }   // área grande inferior
+  topGoalBox:    { x1:21, y1:0,  x2:79, y2:17 },
+  bottomGoalBox: { x1:21, y1:83, x2:79, y2:100 }
 };
 
 /* =====================================================
-  CAPA DE PERSISTENCIA
-  -----------------------------------------------------
-  Hoy: localStorage.
-  Mañana: Firebase Firestore.
-  Para migrar, sólo hay que reescribir el cuerpo de estas 4 funciones.
-  El resto de la app NO debe tocarse.
+  ESTADO
 ===================================================== */
+var activeTeam    = localStorage.getItem('campograma_active_team') || 'CAS';
+var state         = null;
+var statusColors  = null;
+var selectedId    = null;
+var teamLoading   = false;
+var saveTimer     = null;
+var saveInFlight  = false;
+var pendingSave   = false;
+var conflictModal = null;
+var SAVE_DEBOUNCE_MS = 500;
 
-var STORAGE_PREFIX_TEAM   = 'campograma_estado_';      // + teamKey
-var STORAGE_KEY_CONFIG    = 'campograma_config_global';
-var STORAGE_KEY_ACTIVE    = 'campograma_active_team';
-
-function saveTeamState(teamKey, state){
-  // FIREBASE TODO:
-  //   db.collection('campogramas').doc(teamKey).set(state);
-  try {
-    localStorage.setItem(STORAGE_PREFIX_TEAM + teamKey, JSON.stringify(state));
-  } catch(e){ console.warn('saveTeamState failed', e); }
+/* =====================================================
+  INDICADOR DE SYNC
+===================================================== */
+var syncState = { status:'connecting' };
+function setSync(status, msg){
+  syncState.status = status;
+  var el  = document.getElementById('syncIndicator');
+  var lbl = document.getElementById('syncLabel');
+  el.classList.remove('is-saving','is-error','is-conflict','is-offline');
+  var labels = {
+    connecting:'Conectando…', saved:'Guardado',
+    saving:'Guardando…', offline:'Sin conexión',
+    error:'Error', conflict:'Conflicto'
+  };
+  lbl.textContent = msg || labels[status] || status;
+  if(status === 'saving')    el.classList.add('is-saving');
+  if(status === 'error')     el.classList.add('is-error');
+  if(status === 'conflict')  el.classList.add('is-conflict');
+  if(status === 'offline')   el.classList.add('is-offline');
 }
 
-function loadTeamState(teamKey){
-  // FIREBASE TODO:
-  //   return db.collection('campogramas').doc(teamKey).get().then(...)
-  try {
-    var raw = localStorage.getItem(STORAGE_PREFIX_TEAM + teamKey);
-    if(!raw) return null;
-    return JSON.parse(raw);
-  } catch(e){ return null; }
-}
+/* =====================================================
+  PERSISTENCIA
+  -----------------------------------------------------
+  campogramas/{teamKey} = { teamKey, players[], version, updatedAt, updatedBy }
+  config/global         = { colors:{...}, updatedAt }
 
-function saveGlobalConfig(config){
-  // FIREBASE TODO: db.collection('config').doc('global').set(config);
-  try { localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config)); }
-  catch(e){ console.warn('saveGlobalConfig failed', e); }
-}
+  Concurrencia: optimistic locking con `version` + transaction.
+===================================================== */
+function teamDoc(teamKey){ return db.collection('campogramas').doc(teamKey); }
+function configDoc(){      return db.collection('config').doc('global'); }
 
 function loadGlobalConfig(){
-  // FIREBASE TODO: db.collection('config').doc('global').get().then(...)
-  try {
-    var raw = localStorage.getItem(STORAGE_KEY_CONFIG);
-    if(!raw) return null;
-    return JSON.parse(raw);
-  } catch(e){ return null; }
+  return configDoc().get().then(function(snap){
+    if(snap.exists){
+      var data = snap.data();
+      return (data && data.colors) || null;
+    }
+    return null;
+  });
 }
-
-/* =====================================================
-  ESTADO EN MEMORIA
-===================================================== */
-
-var activeTeam = localStorage.getItem(STORAGE_KEY_ACTIVE) || 'CAS';
-var state = null;          // estado del equipo activo
-var statusColors = null;   // colores globales (compartidos por todos los equipos)
-var selectedId = null;     // id de la ficha seleccionada
-
-/* =====================================================
-  INICIALIZACIÓN
-===================================================== */
-
-function initStatusColors(){
-  var saved = loadGlobalConfig();
-  statusColors = {};
-  Object.keys(PLAYER_STATUS_DEFAULT).forEach(function(k){
-    statusColors[k] = (saved && saved[k]) ? saved[k] : PLAYER_STATUS_DEFAULT[k].color;
+function saveGlobalConfig(colors){
+  return configDoc().set({
+    colors: colors,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+function loadTeamState(teamKey){
+  return teamDoc(teamKey).get().then(function(snap){
+    if(!snap.exists) return null;
+    return snap.data();
+  });
+}
+// Devuelve { ok:true, version:N } o { ok:false, reason:'conflict', remote }
+function saveTeamStateTx(localState){
+  var docRef = teamDoc(localState.teamKey);
+  var expectedVersion = localState.version || 0;
+  return db.runTransaction(function(tx){
+    return tx.get(docRef).then(function(snap){
+      var remoteVersion = snap.exists ? (snap.data().version || 0) : 0;
+      if(remoteVersion !== expectedVersion){
+        return { ok:false, reason:'conflict', remote: snap.exists ? snap.data() : null };
+      }
+      var newVersion = expectedVersion + 1;
+      var payload = {
+        teamKey:   localState.teamKey,
+        players:   localState.players || [],
+        version:   newVersion,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: (firebase.auth().currentUser && firebase.auth().currentUser.uid) || 'anon'
+      };
+      tx.set(docRef, payload);
+      return { ok:true, version:newVersion };
+    });
   });
 }
 
-function getDefaultTeamState(teamKey){
-  return {
-    teamKey: teamKey,
-    players: []   // empezamos vacíos. El usuario añade con "+ Añadir ficha".
-  };
+/* =====================================================
+  GUARDADO CON DEBOUNCE
+===================================================== */
+function scheduleSave(){
+  if(!state) return;
+  setSync('saving');
+  if(saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushSave, SAVE_DEBOUNCE_MS);
 }
-
-function loadActiveTeam(){
-  var loaded = loadTeamState(activeTeam);
-  state = loaded || getDefaultTeamState(activeTeam);
-  if(!state.players) state.players = [];
-  selectedId = null;
-}
-
-function persistState(){
-  saveTeamState(activeTeam, state);
+function flushSave(){
+  if(!state) return;
+  if(saveInFlight){ pendingSave = true; return; }
+  saveInFlight = true;
+  var snapshot = JSON.parse(JSON.stringify(state));
+  saveTeamStateTx(snapshot).then(function(res){
+    saveInFlight = false;
+    if(res.ok){
+      state.version = res.version;
+      setSync('saved');
+      if(pendingSave){ pendingSave = false; scheduleSave(); }
+    } else if(res.reason === 'conflict'){
+      setSync('conflict');
+      handleConflict(res.remote);
+    }
+  }).catch(function(err){
+    saveInFlight = false;
+    console.error('saveTeamState failed', err);
+    if(!navigator.onLine){
+      setSync('offline');
+    } else {
+      setSync('error', 'Error: ' + (err.code || 'desconocido'));
+    }
+    if(pendingSave){ pendingSave = false; scheduleSave(); }
+  });
 }
 
 /* =====================================================
-  BARRA DE EQUIPOS
+  CONFLICTO
 ===================================================== */
+function handleConflict(remote){
+  if(conflictModal) return;
+  var backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML =
+    '<div class="modal">' +
+      '<div class="modal-h">⚠ Conflicto detectado</div>' +
+      '<div class="modal-b">' +
+        'Otra persona ha editado este equipo mientras tú trabajabas. ' +
+        'Para evitar pisar su trabajo, elige una opción:' +
+      '</div>' +
+      '<div class="modal-f">' +
+        '<button class="btn" id="btnForceMine">Forzar mi versión</button>' +
+        '<button class="btn btn-primary" id="btnTakeRemote">Cargar versión actualizada</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(backdrop);
+  conflictModal = backdrop;
 
+  document.getElementById('btnTakeRemote').addEventListener('click', function(){
+    state = {
+      teamKey: (remote && remote.teamKey) || activeTeam,
+      players: (remote && remote.players) || [],
+      version: (remote && remote.version) || 0
+    };
+    selectedId = null;
+    closeConflictModal();
+    setSync('saved');
+    renderAll();
+  });
+  document.getElementById('btnForceMine').addEventListener('click', function(){
+    state.version = (remote && remote.version) || state.version;
+    closeConflictModal();
+    scheduleSave();
+  });
+}
+function closeConflictModal(){
+  if(conflictModal && conflictModal.parentNode){
+    conflictModal.parentNode.removeChild(conflictModal);
+  }
+  conflictModal = null;
+}
+
+/* =====================================================
+  ARRANQUE
+===================================================== */
+function bootstrap(){
+  setSync('connecting');
+  firebase.auth().signInAnonymously().then(function(){
+    return loadGlobalConfig();
+  }).then(function(savedColors){
+    statusColors = {};
+    Object.keys(PLAYER_STATUS_DEFAULT).forEach(function(k){
+      statusColors[k] = (savedColors && savedColors[k]) ? savedColors[k] : PLAYER_STATUS_DEFAULT[k].color;
+    });
+    renderColorConfig();
+    bindEditor();
+    restoreDark();
+    renderTeamBar();
+    renderTeamSummary();
+    return switchTeam(activeTeam);
+  }).catch(function(err){
+    console.error('Bootstrap fallido', err);
+    setSync('error', 'Error al iniciar (¿reglas Firestore?)');
+  });
+}
+
+function switchTeam(teamKey){
+  if(teamLoading) return Promise.resolve();
+  teamLoading = true;
+  activeTeam = teamKey;
+  localStorage.setItem('campograma_active_team', teamKey);
+  selectedId = null;
+  renderTeamBar();
+  renderTeamSummary();
+
+  state = null;
+  document.getElementById('pitch').classList.add('is-locked');
+  renderRoster(true);
+  renderPitchChips();
+  renderEditor();
+  renderCounter();
+
+  setSync('saving', 'Cargando…');
+  return loadTeamState(teamKey).then(function(loaded){
+    if(loaded){
+      state = {
+        teamKey: loaded.teamKey || teamKey,
+        players: loaded.players || [],
+        version: loaded.version || 0
+      };
+    } else {
+      state = { teamKey:teamKey, players:[], version:0 };
+    }
+    teamLoading = false;
+    document.getElementById('pitch').classList.remove('is-locked');
+    setSync('saved');
+    renderAll();
+  }).catch(function(err){
+    teamLoading = false;
+    document.getElementById('pitch').classList.remove('is-locked');
+    console.error('loadTeamState failed', err);
+    setSync('error', 'Error al cargar');
+  });
+}
+
+/* =====================================================
+  EQUIPOS
+===================================================== */
 function renderTeamBar(){
   var html = '';
   TEAMS.forEach(function(t){
     html += '<button class="team-btn ' + (t.key === activeTeam ? 'active' : '') + '"'
-         +  ' data-team="' + t.key + '" title="' + t.name + '">'
+         +  ' data-team="' + t.key + '" title="' + t.name + '"'
+         +  (teamLoading ? ' disabled' : '') + '>'
          +  t.key + '</button>';
   });
   var bar = document.getElementById('teamBar');
@@ -720,15 +756,12 @@ function renderTeamBar(){
   bar.querySelectorAll('.team-btn').forEach(function(btn){
     btn.addEventListener('click', function(){
       var key = this.getAttribute('data-team');
-      if(key === activeTeam) return;
-      activeTeam = key;
-      localStorage.setItem(STORAGE_KEY_ACTIVE, activeTeam);
-      loadActiveTeam();
-      renderAll();
+      if(key === activeTeam || teamLoading) return;
+      if(saveTimer){ clearTimeout(saveTimer); flushSave(); }
+      switchTeam(key);
     });
   });
 }
-
 function renderTeamSummary(){
   var t = TEAMS.find(function(x){ return x.key === activeTeam; });
   document.getElementById('teamName').firstChild.textContent = t ? t.name : '—';
@@ -736,14 +769,12 @@ function renderTeamSummary(){
 }
 
 /* =====================================================
-  FICHAS - CREACIÓN / EDICIÓN / ELIMINACIÓN
+  FICHAS
 ===================================================== */
-
-function uid(){
-  return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7);
-}
+function uid(){ return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7); }
 
 function createPlayer(){
+  if(!state) return;
   var p = {
     id: uid(),
     name: 'Jugador',
@@ -752,107 +783,88 @@ function createPlayer(){
     status: 'actual',
     residence: false,
     onPitch: false,
-    x: 50,
-    y: 50
+    x: 50, y: 50
   };
   state.players.push(p);
   selectedId = p.id;
-  persistState();
-  renderRoster();
-  renderPitchChips();
-  renderEditor();
-  renderCounter();
+  scheduleSave();
+  renderRoster(); renderPitchChips(); renderEditor(); renderCounter();
 }
-
 function deletePlayer(id){
+  if(!state) return;
   state.players = state.players.filter(function(p){ return p.id !== id; });
   if(selectedId === id) selectedId = null;
-  persistState();
-  renderRoster();
-  renderPitchChips();
-  renderEditor();
-  renderCounter();
+  scheduleSave();
+  renderRoster(); renderPitchChips(); renderEditor(); renderCounter();
 }
-
 function getPlayer(id){
+  if(!state) return null;
   return state.players.find(function(p){ return p.id === id; });
 }
-
 function updatePlayer(id, patch){
   var p = getPlayer(id);
   if(!p) return;
   Object.keys(patch).forEach(function(k){ p[k] = patch[k]; });
-
-  // Regla: una baja no puede estar en el campo. Vuelve al panel.
-  if(p.status === 'baja' && p.onPitch){
-    p.onPitch = false;
-  }
-  persistState();
-  renderRoster();
-  renderPitchChips();
-  renderCounter();
+  if(p.status === 'baja' && p.onPitch) p.onPitch = false;
+  scheduleSave();
+  renderRoster(); renderPitchChips(); renderCounter();
 }
 
 /* =====================================================
-  ZONAS DEL CAMPO - LÓGICA DE PORTERO
+  ÁREAS Y CONTADOR
 ===================================================== */
-
 function isInGoalArea(x, y){
-  var t = PITCH_ZONES.topGoalBox;
-  var b = PITCH_ZONES.bottomGoalBox;
+  var t = PITCH_ZONES.topGoalBox, b = PITCH_ZONES.bottomGoalBox;
   if(x >= t.x1 && x <= t.x2 && y >= t.y1 && y <= t.y2) return true;
   if(x >= b.x1 && x <= b.x2 && y >= b.y1 && y <= b.y2) return true;
   return false;
 }
-
 function countOnPitch(){
   var campo = 0, por = 0;
+  if(!state) return { campo:0, por:0 };
   state.players.forEach(function(p){
-    if(!p.onPitch) return;
-    if(p.status === 'baja') return;
-    if(p.role === 'POR' && isInGoalArea(p.x, p.y)){
-      por++;
-    } else {
-      campo++;
-    }
+    if(!p.onPitch || p.status === 'baja') return;
+    if(p.role === 'POR' && isInGoalArea(p.x, p.y)) por++;
+    else campo++;
   });
-  return { campo: campo, por: por };
+  return { campo:campo, por:por };
 }
-
 function renderCounter(){
   var c = countOnPitch();
   document.getElementById('counterPill').textContent = c.campo + ' + ' + c.por;
 }
 
 /* =====================================================
-  RENDER: PANEL LATERAL
+  RENDER: ROSTER
 ===================================================== */
-
-function renderRoster(){
+function renderRoster(isLoading){
   var actualBox = document.getElementById('rosterActual');
   var futurBox  = document.getElementById('rosterFuturible');
   actualBox.innerHTML = '';
   futurBox.innerHTML  = '';
 
-  // Agrupar
-  var actual = [];
-  var futurible = [];
+  if(isLoading || !state){
+    actualBox.innerHTML = '<div class="roster-empty">Cargando…</div>';
+    futurBox.innerHTML  = '<div class="roster-empty">Cargando…</div>';
+    document.getElementById('countActual').textContent = '–';
+    document.getElementById('countFuturible').textContent = '–';
+    return;
+  }
+
+  var actual = [], futurible = [];
   state.players.forEach(function(p){
     if(p.status === 'futurible') futurible.push(p);
-    else actual.push(p);  // actual + nuevo_fichado + baja
+    else actual.push(p);
   });
 
   function renderItem(p){
     var item = document.createElement('div');
     item.className = 'roster-item' + (p.id === selectedId ? ' selected' : '') + (p.onPitch ? ' on-pitch' : '');
     item.dataset.id = p.id;
-    item.draggable = false;
 
     var chip = document.createElement('div');
     chip.className = 'roster-chip chip' + (p.role === 'POR' ? ' chip-role-por' : '') + (p.status === 'baja' ? ' is-baja' : '');
     chip.style.position = 'relative';
-    chip.style.left = '';
-    chip.style.top = '';
     chip.style.transform = 'none';
     chip.style.setProperty('--chip-color', statusColors[p.status]);
     chip.style.background = statusColors[p.status];
@@ -864,50 +876,35 @@ function renderRoster(){
     var statusLabel = PLAYER_STATUS_DEFAULT[p.status].label;
     info.innerHTML = '<div class="roster-item-name">' + escapeHtml(p.name) + '</div>'
                    + '<div class="roster-item-meta">' + p.role + ' · ' + statusLabel + (p.onPitch ? ' · en campo' : '') + '</div>';
-
     item.appendChild(chip);
     item.appendChild(info);
 
-    // Click = seleccionar
     item.addEventListener('click', function(){
       selectedId = p.id;
-      renderRoster();
-      renderEditor();
-      renderPitchChips();  // para mostrar contorno amarillo
+      renderRoster(); renderEditor(); renderPitchChips();
     });
-
-    // Drag desde panel → campo
     chip.addEventListener('pointerdown', function(ev){
       startDragFromRoster(ev, p.id);
     });
-
     return item;
   }
 
-  if(actual.length === 0){
-    actualBox.innerHTML = '<div class="roster-empty">Sin jugadores. Pulsa "+ Añadir ficha".</div>';
-  } else {
-    actual.forEach(function(p){ actualBox.appendChild(renderItem(p)); });
-  }
-  if(futurible.length === 0){
-    futurBox.innerHTML = '<div class="roster-empty">Sin futuribles.</div>';
-  } else {
-    futurible.forEach(function(p){ futurBox.appendChild(renderItem(p)); });
-  }
+  if(actual.length === 0) actualBox.innerHTML = '<div class="roster-empty">Sin jugadores. Pulsa "+ Añadir ficha".</div>';
+  else actual.forEach(function(p){ actualBox.appendChild(renderItem(p)); });
+  if(futurible.length === 0) futurBox.innerHTML = '<div class="roster-empty">Sin futuribles.</div>';
+  else futurible.forEach(function(p){ futurBox.appendChild(renderItem(p)); });
 
   document.getElementById('countActual').textContent = actual.length;
   document.getElementById('countFuturible').textContent = futurible.length;
 }
 
 /* =====================================================
-  RENDER: FICHAS EN EL CAMPO
+  RENDER: CHIPS EN EL CAMPO
 ===================================================== */
-
 function renderPitchChips(){
   var pitch = document.getElementById('pitch');
-  // Quitar chips antiguos (sin tocar el SVG)
   pitch.querySelectorAll('.chip').forEach(function(c){ c.remove(); });
-
+  if(!state) return;
   state.players.forEach(function(p){
     if(!p.onPitch) return;
     var chip = document.createElement('div');
@@ -919,14 +916,11 @@ function renderPitchChips(){
     chip.style.setProperty('--chip-color', statusColors[p.status]);
     chip.style.background = statusColors[p.status];
     chip.dataset.id = p.id;
-
     chip.innerHTML = '<span class="chip-text">' + escapeHtml(p.shortText || '') + '</span>'
                    + (p.residence ? '<span class="chip-r">R</span>' : '');
-
     chip.addEventListener('pointerdown', function(ev){
       startDragOnPitch(ev, p.id);
     });
-
     pitch.appendChild(chip);
   });
 }
@@ -934,72 +928,55 @@ function renderPitchChips(){
 /* =====================================================
   RENDER: EDITOR
 ===================================================== */
-
 function renderEditor(){
   var empty = document.getElementById('editorEmpty');
   var form  = document.getElementById('editorForm');
-  if(!selectedId){
-    empty.style.display = 'block';
-    form.style.display  = 'none';
+  if(!selectedId || !state){
+    empty.style.display = 'block'; form.style.display = 'none';
     return;
   }
   var p = getPlayer(selectedId);
   if(!p){
     selectedId = null;
-    empty.style.display = 'block';
-    form.style.display  = 'none';
+    empty.style.display = 'block'; form.style.display = 'none';
     return;
   }
-  empty.style.display = 'none';
-  form.style.display  = 'block';
-
-  document.getElementById('fName').value      = p.name;
-  document.getElementById('fShort').value     = p.shortText;
-  document.getElementById('fRole').value      = p.role;
-  document.getElementById('fStatus').value    = p.status;
-  document.getElementById('fResidence').checked = !!p.residence;
+  empty.style.display = 'none'; form.style.display = 'block';
+  document.getElementById('fName').value         = p.name;
+  document.getElementById('fShort').value        = p.shortText;
+  document.getElementById('fRole').value         = p.role;
+  document.getElementById('fStatus').value       = p.status;
+  document.getElementById('fResidence').checked  = !!p.residence;
 }
-
 function bindEditor(){
   document.getElementById('fName').addEventListener('input', function(){
-    if(!selectedId) return;
-    updatePlayer(selectedId, { name: this.value });
+    if(!selectedId) return; updatePlayer(selectedId, { name: this.value });
   });
   document.getElementById('fShort').addEventListener('input', function(){
-    if(!selectedId) return;
-    updatePlayer(selectedId, { shortText: this.value });
+    if(!selectedId) return; updatePlayer(selectedId, { shortText: this.value });
   });
   document.getElementById('fRole').addEventListener('change', function(){
-    if(!selectedId) return;
-    updatePlayer(selectedId, { role: this.value });
+    if(!selectedId) return; updatePlayer(selectedId, { role: this.value });
   });
   document.getElementById('fStatus').addEventListener('change', function(){
-    if(!selectedId) return;
-    updatePlayer(selectedId, { status: this.value });
+    if(!selectedId) return; updatePlayer(selectedId, { status: this.value });
   });
   document.getElementById('fResidence').addEventListener('change', function(){
-    if(!selectedId) return;
-    updatePlayer(selectedId, { residence: this.checked });
+    if(!selectedId) return; updatePlayer(selectedId, { residence: this.checked });
   });
   document.getElementById('btnDelete').addEventListener('click', function(){
     if(!selectedId) return;
     if(confirm('¿Eliminar esta ficha?')) deletePlayer(selectedId);
   });
   document.getElementById('btnDeselect').addEventListener('click', function(){
-    selectedId = null;
-    renderRoster();
-    renderPitchChips();
-    renderEditor();
+    selectedId = null; renderRoster(); renderPitchChips(); renderEditor();
   });
-  document.getElementById('btnNew').addEventListener('click', function(){
-    createPlayer();
-  });
+  document.getElementById('btnNew').addEventListener('click', createPlayer);
 }
 
 /* =====================================================
-  RENDER: COLORES
+  COLORES GLOBALES
 ===================================================== */
-
 function renderColorConfig(){
   var box = document.getElementById('colorConfig');
   box.innerHTML = '';
@@ -1019,36 +996,26 @@ function renderColorConfig(){
     inp.addEventListener('input', function(){
       var s = this.getAttribute('data-status');
       statusColors[s] = this.value;
-      saveGlobalConfig(statusColors);
-      renderRoster();
-      renderPitchChips();
+      saveGlobalConfig(statusColors).catch(function(e){ console.warn('saveGlobalConfig', e); });
+      renderRoster(); renderPitchChips();
     });
   });
   reset.addEventListener('click', function(){
     Object.keys(PLAYER_STATUS_DEFAULT).forEach(function(k){
       statusColors[k] = PLAYER_STATUS_DEFAULT[k].color;
     });
-    saveGlobalConfig(statusColors);
-    renderColorConfig();
-    renderRoster();
-    renderPitchChips();
+    saveGlobalConfig(statusColors).catch(function(e){ console.warn(e); });
+    renderColorConfig(); renderRoster(); renderPitchChips();
   });
 }
 
 /* =====================================================
-  DRAG & DROP (Pointer Events: ratón + dedo unificado)
-  -----------------------------------------------------
-  Estrategia:
-   - umbral de 5px para distinguir click de drag
-   - drag dentro del campo: actualiza x,y (%)
-   - drag desde panel: si suelta sobre el campo → entra al campo
-   - drag desde campo hacia fuera del campo: NO sale, queda en borde
-   - botón "deseleccionar" + click sobre roster maneja "sacar del campo"
+  DRAG & DROP (Pointer Events)
 ===================================================== */
-
-var DRAG_THRESHOLD = 5; // px
+var DRAG_THRESHOLD = 5;
 
 function startDragOnPitch(ev, playerId){
+  if(!state) return;
   ev.preventDefault();
   var p = getPlayer(playerId);
   if(!p) return;
@@ -1056,31 +1023,25 @@ function startDragOnPitch(ev, playerId){
   var chip = pitch.querySelector('.chip[data-id="'+playerId+'"]');
   if(!chip) return;
 
-  var startX = ev.clientX;
-  var startY = ev.clientY;
+  var startX = ev.clientX, startY = ev.clientY;
   var moved = false;
   var pointerId = ev.pointerId;
   try { chip.setPointerCapture(pointerId); } catch(e){}
 
   function onMove(e){
-    var dx = e.clientX - startX;
-    var dy = e.clientY - startY;
+    var dx = e.clientX - startX, dy = e.clientY - startY;
     if(!moved && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)){
-      moved = true;
-      chip.classList.add('dragging');
+      moved = true; chip.classList.add('dragging');
     }
     if(moved){
       var rect = pitch.getBoundingClientRect();
       var x = ((e.clientX - rect.left) / rect.width) * 100;
       var y = ((e.clientY - rect.top)  / rect.height) * 100;
-      // Clamp dentro del campo
       x = Math.max(2, Math.min(98, x));
       y = Math.max(2, Math.min(98, y));
-      p.x = x;
-      p.y = y;
-      chip.style.left = x + '%';
-      chip.style.top  = y + '%';
-      renderCounter();  // recalcular si entró/salió de área grande
+      p.x = x; p.y = y;
+      chip.style.left = x + '%'; chip.style.top = y + '%';
+      renderCounter();
     }
   }
   function onUp(e){
@@ -1089,15 +1050,11 @@ function startDragOnPitch(ev, playerId){
     chip.removeEventListener('pointermove', onMove);
     chip.removeEventListener('pointerup', onUp);
     chip.removeEventListener('pointercancel', onUp);
-
     if(!moved){
-      // click puro → seleccionar
       selectedId = playerId;
-      renderRoster();
-      renderEditor();
-      renderPitchChips();
+      renderRoster(); renderEditor(); renderPitchChips();
     } else {
-      persistState();
+      scheduleSave();
     }
   }
   chip.addEventListener('pointermove', onMove);
@@ -1106,49 +1063,41 @@ function startDragOnPitch(ev, playerId){
 }
 
 function startDragFromRoster(ev, playerId){
+  if(!state) return;
   ev.preventDefault();
   ev.stopPropagation();
   var p = getPlayer(playerId);
   if(!p) return;
-  // Bajas no se pueden meter al campo
   if(p.status === 'baja') return;
 
   var pitch = document.getElementById('pitch');
-  var startX = ev.clientX;
-  var startY = ev.clientY;
+  var startX = ev.clientX, startY = ev.clientY;
   var moved = false;
   var pointerId = ev.pointerId;
 
-  // Ghost que sigue al puntero
   var ghost = document.createElement('div');
   ghost.className = 'chip';
   ghost.style.position = 'fixed';
   ghost.style.left = ev.clientX + 'px';
   ghost.style.top  = ev.clientY + 'px';
-  ghost.style.width = '44px';
-  ghost.style.height = '44px';
+  ghost.style.width = '44px'; ghost.style.height = '44px';
   ghost.style.pointerEvents = 'none';
   ghost.style.setProperty('--chip-color', statusColors[p.status]);
   ghost.style.background = statusColors[p.status];
-  ghost.style.opacity = '0.85';
-  ghost.style.zIndex = '9999';
+  ghost.style.opacity = '0.85'; ghost.style.zIndex = '9999';
   ghost.innerHTML = '<span class="chip-text">' + escapeHtml(p.shortText || '') + '</span>';
 
   var source = ev.target;
   try { source.setPointerCapture(pointerId); } catch(e){}
 
   function onMove(e){
-    var dx = e.clientX - startX;
-    var dy = e.clientY - startY;
+    var dx = e.clientX - startX, dy = e.clientY - startY;
     if(!moved && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)){
-      moved = true;
-      document.body.appendChild(ghost);
+      moved = true; document.body.appendChild(ghost);
     }
     if(moved){
       ghost.style.left = e.clientX + 'px';
       ghost.style.top  = e.clientY + 'px';
-
-      // Resaltar campo si el puntero está dentro
       var rect = pitch.getBoundingClientRect();
       var inside = e.clientX >= rect.left && e.clientX <= rect.right
                 && e.clientY >= rect.top  && e.clientY <= rect.bottom;
@@ -1162,17 +1111,11 @@ function startDragFromRoster(ev, playerId){
     source.removeEventListener('pointercancel', onUp);
     pitch.classList.remove('drop-target');
     if(ghost.parentNode) ghost.parentNode.removeChild(ghost);
-
     if(!moved){
-      // click puro sobre el chip del panel → seleccionar
       selectedId = playerId;
-      renderRoster();
-      renderEditor();
-      renderPitchChips();
+      renderRoster(); renderEditor(); renderPitchChips();
       return;
     }
-
-    // Drop sobre el campo?
     var rect = pitch.getBoundingClientRect();
     var inside = e.clientX >= rect.left && e.clientX <= rect.right
               && e.clientY >= rect.top  && e.clientY <= rect.bottom;
@@ -1181,15 +1124,10 @@ function startDragFromRoster(ev, playerId){
       var y = ((e.clientY - rect.top)  / rect.height) * 100;
       x = Math.max(2, Math.min(98, x));
       y = Math.max(2, Math.min(98, y));
-      p.onPitch = true;
-      p.x = x;
-      p.y = y;
+      p.onPitch = true; p.x = x; p.y = y;
       selectedId = p.id;
-      persistState();
-      renderRoster();
-      renderPitchChips();
-      renderEditor();
-      renderCounter();
+      scheduleSave();
+      renderRoster(); renderPitchChips(); renderEditor(); renderCounter();
     }
   }
   source.addEventListener('pointermove', onMove);
@@ -1197,13 +1135,7 @@ function startDragFromRoster(ev, playerId){
   source.addEventListener('pointercancel', onUp);
 }
 
-/* =====================================================
-  DROP DESDE CAMPO HACIA PANEL (sacar ficha del campo)
-  -----------------------------------------------------
-  Implementación simple: doble click sobre una ficha en el campo
-  la devuelve al panel. Más predecible en móvil que un drop-zone.
-===================================================== */
-
+// Doble clic en ficha del campo → sacar al panel
 document.addEventListener('dblclick', function(ev){
   var chip = ev.target.closest('.pitch .chip');
   if(!chip) return;
@@ -1211,29 +1143,31 @@ document.addEventListener('dblclick', function(ev){
   var p = getPlayer(id);
   if(!p) return;
   p.onPitch = false;
-  persistState();
-  renderPitchChips();
-  renderRoster();
-  renderCounter();
+  scheduleSave();
+  renderPitchChips(); renderRoster(); renderCounter();
+});
+
+/* =====================================================
+  ANTES DE CERRAR
+===================================================== */
+window.addEventListener('beforeunload', function(){
+  if(saveTimer){ clearTimeout(saveTimer); flushSave(); }
 });
 
 /* =====================================================
   UTILIDADES
 ===================================================== */
-
 function escapeHtml(s){
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-
 function toggleDark(){
   document.body.classList.toggle('dark');
   var dark = document.body.classList.contains('dark');
   document.getElementById('darkBtn').innerHTML = dark ? '☀' : '☾';
   localStorage.setItem('campograma_dark', dark ? '1' : '0');
 }
-
 function restoreDark(){
   if(localStorage.getItem('campograma_dark') === '1'){
     document.body.classList.add('dark');
@@ -1244,7 +1178,6 @@ function restoreDark(){
 /* =====================================================
   RENDER GLOBAL
 ===================================================== */
-
 function renderAll(){
   renderTeamBar();
   renderTeamSummary();
@@ -1255,16 +1188,9 @@ function renderAll(){
 }
 
 /* =====================================================
-  BOOT
+  ARRANQUE
 ===================================================== */
-
-initStatusColors();
-loadActiveTeam();
-renderColorConfig();
-bindEditor();
-restoreDark();
-renderAll();
-
+bootstrap();
 </script>
 </body>
 </html>
