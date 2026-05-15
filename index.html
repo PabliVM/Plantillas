@@ -268,6 +268,31 @@ body.dark .status-btn.active{box-shadow:0 0 0 2px #e4e6ea;}
 
 /* FOOTER */
 .app-footer{background:var(--rm-blue);color:rgba(255,255,255,.5);font-size:10px;text-align:center;padding:10px;position:fixed;left:0;right:0;bottom:0;z-index:50;}
+
+/* SYNC */
+.sync-indicator{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:rgba(255,255,255,.8);padding:3px 9px;border-radius:12px;background:rgba(255,255,255,.1);white-space:nowrap;flex-shrink:0;}
+.sync-indicator.saving{background:rgba(255,255,255,.18);}
+.sync-indicator.error{background:rgba(220,38,38,.7);color:#fff;}
+.sync-indicator.offline{background:rgba(180,120,0,.6);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;}
+.sync-indicator.saving .sync-dot{background:#fbbf24;animation:blink 1s ease-in-out infinite;}
+.sync-indicator.error .sync-dot,.sync-indicator.offline .sync-dot{background:#fff;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── MODAL EDICIÓN JUGADOR ── */
+.ed-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;}
+.ed-modal{background:var(--surface);border-radius:var(--r);width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.25);overflow:hidden;animation:modalIn .18s ease;}
+@keyframes modalIn{from{transform:scale(.93);opacity:0}to{transform:scale(1);opacity:1}}
+.ed-modal-h{background:var(--rm-blue);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
+.ed-modal-h span{font-size:14px;font-weight:700;color:#fff;}
+.ed-modal-close{width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.ed-modal-close:hover{background:rgba(255,255,255,.25)}
+.ed-modal-b{padding:16px;}
+.ed-modal-f{padding:10px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+/* lápiz en roster items */
+.ritem-edit{opacity:0;flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--text-mut);font-size:13px;padding:2px 4px;border-radius:4px;transition:all var(--tr);}
+.ritem:hover .ritem-edit{opacity:1;}
+.ritem-edit:hover{color:var(--rm-blue);background:var(--rm-blue-bg);}
 </style>
 </head>
 <body>
@@ -279,8 +304,11 @@ body.dark .status-btn.active{box-shadow:0 0 0 2px #e4e6ea;}
   <div class="hnav">
     <button class="hbtn" id="btnViewCfg">&#9881; Config y Plantillas</button>
   </div>
+  <div class="sync-indicator" id="syncIndicator">
+    <span class="sync-dot" id="syncDot"></span>
+    <span id="syncLabel">Conectando&hellip;</span>
+  </div>
   <span class="hspacer"></span>
-  <!-- Temporadas: extremo derecho -->
   <div class="season-group">
     <select id="seasonSel" class="season-sel"></select>
     <button class="season-add" id="btnSeasonAdd" title="Nueva temporada">+</button>
@@ -343,33 +371,43 @@ body.dark .status-btn.active{box-shadow:0 0 0 2px #e4e6ea;}
           <div class="card-h">Bajas <span class="cnt" id="cntBaja">0</span></div>
           <div class="card-b"><div class="rlist" id="rosterBaja"></div></div>
         </div>
-        <div class="card">
-          <div class="card-h">Ficha seleccionada</div>
-          <div class="card-b">
-            <div class="eempty" id="edEmpty">Selecciona o crea una ficha.</div>
-            <div id="edForm" style="display:none">
-              <div class="frow">
-                <label>Nombre / texto de la ficha</label>
-                <input type="text" id="fName" maxlength="30" placeholder="Ej: GARC&#205;A o 7...">
-              </div>
-              <div class="frow"><label>Estado</label>
-                <div class="frow-status" id="statusBtns"></div>
-              </div>
-              <div class="toggle-checks">
-                <div class="tcheck"><input type="checkbox" id="fPor"><label for="fPor">Portero</label></div>
-                <div class="tcheck"><input type="checkbox" id="fRes"><label for="fRes">Residencia (R)</label></div>
-              </div>
-              <div class="brow">
-                <button class="btn dan sm" id="btnDelete">Eliminar</button>
-                <button class="btn gho sm" id="btnDesel">Deseleccionar</button>
-              </div>
-            </div>
-            <div class="brow" style="margin-top:8px">
-              <button class="btn pri sm" id="btnNew">+ A&ntilde;adir ficha</button>
-            </div>
-          </div>
+        <div class="card-b" style="padding:8px 11px">
+          <button class="btn pri" id="btnNew" style="width:100%;justify-content:center;display:flex;gap:6px;font-size:12px;padding:8px;">
+            <span>+</span> A&ntilde;adir jugador
+          </button>
         </div>
       </div>
+
+      </div>
+
+<!-- MODAL EDICIÓN JUGADOR -->
+<div id="edModal" class="ed-modal-backdrop" style="display:none">
+  <div class="ed-modal">
+    <div class="ed-modal-h">
+      <span id="edModalTitle">Nuevo jugador</span>
+      <button class="ed-modal-close" id="edModalClose">&times;</button>
+    </div>
+    <div class="ed-modal-b">
+      <div class="frow">
+        <label>Nombre / texto de la ficha</label>
+        <input type="text" id="fName" maxlength="30" placeholder="Ej: GARC&#205;A o 7..." autofocus>
+      </div>
+      <div class="frow"><label>Estado</label>
+        <div class="frow-status" id="statusBtns"></div>
+      </div>
+      <div class="toggle-checks">
+        <div class="tcheck"><input type="checkbox" id="fPor"><label for="fPor">&#9650; Portero</label></div>
+        <div class="tcheck"><input type="checkbox" id="fRes"><label for="fRes">&#127968; Residencia (R)</label></div>
+      </div>
+    </div>
+    <div class="ed-modal-f">
+      <button class="btn dan sm" id="btnDelete">Eliminar</button>
+      <div style="flex:1"></div>
+      <button class="btn gho sm" id="edModalClose2">Cancelar</button>
+      <button class="btn pri" id="btnSavePlayer">Guardar</button>
+    </div>
+  </div>
+</div>
 
       <!-- COL 3: LISTA -->
       <div class="col">
@@ -403,6 +441,9 @@ body.dark .status-btn.active{box-shadow:0 0 0 2px #e4e6ea;}
 
 <footer class="app-footer">Cantera del Real Madrid CF &middot; Confecci&oacute;n de Plantillas</footer>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 /* ══════════════════════════
    EQUIPOS Y ESTADOS
@@ -448,20 +489,122 @@ function chipSt(status,isPor){
 }
 
 /* ══════════════════════════
+   FIREBASE
+══════════════════════════ */
+var FB_CFG={
+  apiKey:"AIzaSyARi1f_HNmn5qjTmalYsAFVyIFLq77yM1w",
+  authDomain:"plantillas-cd261.firebaseapp.com",
+  projectId:"plantillas-cd261",
+  storageBucket:"plantillas-cd261.firebasestorage.app",
+  messagingSenderId:"56900116092",
+  appId:"1:56900116092:web:4d12b15b00f1d5a6a3b3f9"
+};
+firebase.initializeApp(FB_CFG);
+var db=firebase.firestore();
+db.enablePersistence({synchronizeTabs:false}).catch(function(){});
+window.addEventListener('online', function(){if(syncSt!=='saving')setSync('saved');});
+window.addEventListener('offline',function(){setSync('offline');});
+
+/* Sync indicator */
+var syncSt='connecting';
+function setSync(st,msg){
+  syncSt=st;
+  var el=document.getElementById('syncIndicator');
+  var lbl=document.getElementById('syncLabel');
+  el.classList.remove('saving','error','offline');
+  var map={connecting:'Conectando\u2026',saved:'Guardado',saving:'Guardando\u2026',offline:'Sin conexi\u00f3n',error:'Error'};
+  lbl.textContent=msg||map[st]||st;
+  if(st==='saving') el.classList.add('saving');
+  if(st==='error')  el.classList.add('error');
+  if(st==='offline')el.classList.add('offline');
+}
+
+/* ══════════════════════════
    TEMPORADAS
 ══════════════════════════ */
-var SZN_KEY='campograma_seasons',ASZN_KEY='campograma_aszn';
+var SZN_KEY='plantillas_seasons',ASZN_KEY='plantillas_aszn';
 var seasons=(function(){
   try{var s=localStorage.getItem(SZN_KEY);if(s)return JSON.parse(s);}catch(e){}
   var y=new Date().getFullYear();return[y+'/'+(y+1)];
 })();
 var activeSzn=localStorage.getItem(ASZN_KEY)||seasons[seasons.length-1];
 if(seasons.indexOf(activeSzn)===-1)activeSzn=seasons[seasons.length-1];
-
 function saveSeasons(){try{localStorage.setItem(SZN_KEY,JSON.stringify(seasons))}catch(e){}}
-function sznPfx(){return'campograma_'+activeSzn.replace('/','_')+'_';}
-function saveState(k,s){try{localStorage.setItem(sznPfx()+k,JSON.stringify(s))}catch(e){}}
-function loadState(k){try{var r=localStorage.getItem(sznPfx()+k);return r?JSON.parse(r):null}catch(e){return null}}
+
+/* ══════════════════════════
+   PERSISTENCIA FIRESTORE
+   Colección: plantillas/{szn_teamKey}
+   Config global: config/plantillas_global
+══════════════════════════ */
+var saveTimer=null,saveInFlight=false,pendingSave=null;
+var DEBOUNCE=600;
+
+function docId(teamKey){return activeSzn.replace('/','_')+'_'+teamKey;}
+function teamDoc(teamKey){return db.collection('plantillas').doc(docId(teamKey));}
+function cfgDoc(){return db.collection('config').doc('plantillas_global');}
+
+/* Guardar estado de un equipo (con debounce) */
+function persist(){
+  if(!state)return;
+  setSync('saving');
+  if(saveTimer)clearTimeout(saveTimer);
+  saveTimer=setTimeout(flushSave,DEBOUNCE);
+}
+function flushSave(){
+  if(!state)return;
+  if(saveInFlight){pendingSave=true;return;}
+  saveInFlight=true;
+  var snap=JSON.parse(JSON.stringify(state));
+  teamDoc(activeTeam).set({players:snap.players||[],updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(){
+    saveInFlight=false;setSync('saved');
+    if(pendingSave){pendingSave=false;persist();}
+  }).catch(function(e){
+    saveInFlight=false;
+    setSync(navigator.onLine?'error':'offline');
+    if(pendingSave){pendingSave=false;persist();}
+  });
+}
+
+/* Cargar estado de un equipo */
+function loadTeamFB(teamKey){
+  return teamDoc(teamKey).get().then(function(snap){
+    if(!snap.exists)return{players:[]};
+    var d=snap.data();return{players:d.players||[]};
+  });
+}
+
+/* Guardar colores globales en Firestore */
+function saveColors(){
+  var m={};ALL_COLOR_KEYS.forEach(function(k){m[k]={bg:colors[k].bg,text:colors[k].text,border:colors[k].border};});
+  try{localStorage.setItem(COL_KEY,JSON.stringify(m))}catch(e){}
+  cfgDoc().set({colors:m,updatedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(function(){});
+}
+
+/* Guardar temporadas en Firestore */
+function saveSeasonsFB(){
+  saveSeasons();
+  cfgDoc().set({seasons:seasons,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
+}
+
+/* Cargar estado de equipo para panel Plantillas (solo lectura) */
+function loadState(teamKey){
+  /* Primero intenta localStorage como caché rápida,
+     pero la fuente de verdad es Firestore (cargado en loadTeamFB) */
+  if(teamKey===activeTeam&&state)return state;
+  try{
+    var r=localStorage.getItem('plt_cache_'+docId(teamKey));
+    return r?JSON.parse(r):null;
+  }catch(e){return null;}
+}
+function saveState(teamKey,s){
+  try{localStorage.setItem('plt_cache_'+docId(teamKey),JSON.stringify(s))}catch(e){}
+  if(teamKey===activeTeam){state=s;persist();}
+  else{
+    teamDoc(teamKey).set({players:s.players||[],updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
+    .then(function(){setSync('saved');}).catch(function(){setSync('error');});
+  }
+}
 
 function renderSeasonSel(){
   var sel=document.getElementById('seasonSel');sel.innerHTML='';
@@ -480,16 +623,16 @@ function bindSeasons(){
     var last=seasons[seasons.length-1];var y=parseInt(last.split('/')[1]||last)+1;
     var next=y+'/'+(y+1);
     if(seasons.indexOf(next)!==-1){alert('Ya existe: '+next);return}
-    seasons.push(next);activeSzn=next;saveSeasons();localStorage.setItem(ASZN_KEY,activeSzn);
+    seasons.push(next);activeSzn=next;saveSeasonsFB();localStorage.setItem(ASZN_KEY,activeSzn);
     loadTeam();renderSeasonSel();renderAll();
   });
   document.getElementById('btnSeasonDel').addEventListener('click',function(){
     if(seasons.length<=1){alert('Debe haber al menos una temporada.');return}
-    if(!confirm('\xbfEliminar la temporada "'+activeSzn+'"? Los datos quedar\xe1n en el backup de Firebase pero se borrar\xe1n localmente.'))return;
+    if(!confirm('\xbfEliminar la temporada "'+activeSzn+'"?\nLos datos quedan en Firebase como backup.'))return;
     var idx=seasons.indexOf(activeSzn);
     seasons.splice(idx,1);
     activeSzn=seasons[Math.min(idx,seasons.length-1)];
-    saveSeasons();localStorage.setItem(ASZN_KEY,activeSzn);
+    saveSeasonsFB();localStorage.setItem(ASZN_KEY,activeSzn);
     loadTeam();renderSeasonSel();renderAll();
   });
 }
@@ -497,7 +640,7 @@ function bindSeasons(){
 /* ══════════════════════════
    ESTADO APLICACIÓN
 ══════════════════════════ */
-var ATM_KEY='campograma_atm';
+var ATM_KEY='plantillas_atm';
 var activeTeam=localStorage.getItem(ATM_KEY)||'CAS';
 var state=null;
 var selectedId=null;
@@ -506,9 +649,22 @@ var activePtTeam=activeTeam;
 var DRAG_T=5;
 
 function uid(){return'p_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
-function loadTeam(){var l=loadState(activeTeam);state=l||{players:[]};if(!state.players)state.players=[];selectedId=null;}
-function persist(){saveState(activeTeam,state)}
-function getPlayer(id){return state.players.find(function(p){return p.id===id})}
+
+function loadTeam(){
+  /* Carga desde Firestore (con fallback a caché local) */
+  var cached=null;
+  try{var r=localStorage.getItem('plt_cache_'+docId(activeTeam));if(r)cached=JSON.parse(r);}catch(e){}
+  state=cached||{players:[]};
+  selectedId=null;
+  /* Luego actualiza desde Firestore en background */
+  loadTeamFB(activeTeam).then(function(loaded){
+    state=loaded;
+    try{localStorage.setItem('plt_cache_'+docId(activeTeam),JSON.stringify(loaded));}catch(e){}
+    renderAll();
+    setSync('saved');
+  }).catch(function(){setSync(navigator.onLine?'error':'offline');});
+}
+function getPlayer(id){return state&&state.players?state.players.find(function(p){return p.id===id}):null}
 
 /* ══════════════════════════
    TEAM BAR
@@ -621,7 +777,11 @@ function renderRoster(){
     info.innerHTML='<div class="ritem-name">'+esc(p.name||'(sin nombre)')+'</div>'
                   +'<div class="ritem-meta">'+lbl+(p.isPor?' \xb7 Portero':'')+(p.residence?' \xb7 R':'')+'</div>';
     item.appendChild(mini);item.appendChild(info);
-    item.addEventListener('click',function(){selectedId=p.id;renderRoster();renderEditor();renderCampo();renderPlist();});
+    /* lápiz editar */
+    var pencil=document.createElement('button');pencil.className='ritem-edit';pencil.title='Editar';pencil.textContent='✏';
+    pencil.addEventListener('click',function(e){e.stopPropagation();openEdModal(p.id);});
+    item.appendChild(pencil);
+    item.addEventListener('click',function(){openEdModal(p.id);});
     if(canDrag) mini.addEventListener('pointerdown',function(ev){dragFromRoster(ev,p.id)});
     return item;
   }
@@ -653,43 +813,88 @@ function buildStatusBtns(){
     var btn=document.createElement('button');
     btn.className='status-btn';btn.dataset.status=k;btn.textContent=c.label;
     btn.style.cssText='background:'+c.bg+';color:'+c.text+';border-color:'+c.border+';';
-    btn.addEventListener('click',function(){if(selectedId)updatePlayer(selectedId,{status:k});});
+    btn.addEventListener('click',function(){
+      if(!selectedId)return;
+      updatePlayer(selectedId,{status:k});
+    });
     cont.appendChild(btn);
   });
 }
+/* ══════════════════════════
+   MODAL EDITOR
+══════════════════════════ */
+function openEdModal(pid){
+  /* pid = id de jugador existente, o null para nuevo */
+  var modal=document.getElementById('edModal');
+  var titleEl=document.getElementById('edModalTitle');
+  var delBtn=document.getElementById('btnDelete');
+
+  if(pid){
+    selectedId=pid;
+    titleEl.textContent='Editar jugador';
+    delBtn.style.display='inline-flex';
+  } else {
+    /* Crear jugador nuevo vacío */
+    var p={id:uid(),name:'',status:'actual',isPor:false,residence:false,onPitch:false,x:50,y:59};
+    state.players.push(p);selectedId=p.id;persist();
+    titleEl.textContent='Nuevo jugador';
+    delBtn.style.display='none';
+  }
+  renderEditor();
+  modal.style.display='flex';
+  setTimeout(function(){var fn=document.getElementById('fName');if(fn)fn.focus();},80);
+}
+function closeEdModal(){
+  document.getElementById('edModal').style.display='none';
+  selectedId=null;
+  renderRoster();renderCampo();renderPlist();
+}
+
 function renderEditor(){
-  var empty=document.getElementById('edEmpty'),form=document.getElementById('edForm');
-  if(!selectedId){empty.style.display='block';form.style.display='none';return}
-  var p=getPlayer(selectedId);
-  if(!p){selectedId=null;empty.style.display='block';form.style.display='none';return}
-  empty.style.display='none';form.style.display='block';
+  if(!selectedId)return;
+  var p=getPlayer(selectedId);if(!p)return;
   document.getElementById('fName').value=p.name||'';
   document.getElementById('fPor').checked=!!p.isPor;
   document.getElementById('fRes').checked=!!p.residence;
-  document.querySelectorAll('.status-btn').forEach(function(b){b.classList.toggle('active',b.dataset.status===p.status);});
+  document.querySelectorAll('.status-btn').forEach(function(b){
+    b.classList.toggle('active',b.dataset.status===p.status);
+  });
 }
 function updatePlayer(id,patch){
   var p=getPlayer(id);if(!p)return;
   Object.keys(patch).forEach(function(k){p[k]=patch[k]});
   if(p.status==='baja'&&p.onPitch)p.onPitch=false;
-  persist();renderRoster();renderCampo();renderCounter();renderPlist();renderEditor();
+  persist();
+  /* refrescar preview dentro del modal en tiempo real */
+  document.querySelectorAll('.status-btn').forEach(function(b){
+    b.classList.toggle('active',b.dataset.status===p.status);
+  });
 }
 function bindEditor(){
+  /* inputs reactivos */
   document.getElementById('fName').addEventListener('input',function(){if(selectedId)updatePlayer(selectedId,{name:this.value})});
   document.getElementById('fPor').addEventListener('change',function(){if(selectedId)updatePlayer(selectedId,{isPor:this.checked})});
   document.getElementById('fRes').addEventListener('change',function(){if(selectedId)updatePlayer(selectedId,{residence:this.checked})});
+
+  /* botón guardar */
+  document.getElementById('btnSavePlayer').addEventListener('click',closeEdModal);
+
+  /* botón eliminar */
   document.getElementById('btnDelete').addEventListener('click',function(){
     if(!selectedId||!confirm('\xbfEliminar esta ficha?'))return;
     state.players=state.players.filter(function(p){return p.id!==selectedId});
-    selectedId=null;persist();renderAll();
+    selectedId=null;persist();
+    document.getElementById('edModal').style.display='none';
+    renderAll();
   });
-  document.getElementById('btnDesel').addEventListener('click',function(){
-    selectedId=null;renderRoster();renderCampo();renderEditor();renderPlist();
-  });
-  document.getElementById('btnNew').addEventListener('click',function(){
-    var p={id:uid(),name:'',status:'actual',isPor:false,residence:false,onPitch:false,x:50,y:59};
-    state.players.push(p);selectedId=p.id;persist();renderAll();
-  });
+
+  /* cerrar modal */
+  document.getElementById('edModalClose').addEventListener('click',closeEdModal);
+  document.getElementById('edModalClose2').addEventListener('click',closeEdModal);
+  document.getElementById('edModal').addEventListener('click',function(e){if(e.target===this)closeEdModal();});
+
+  /* botón añadir jugador */
+  document.getElementById('btnNew').addEventListener('click',function(){openEdModal(null);});
 }
 
 /* ══════════════════════════
@@ -957,7 +1162,7 @@ function dragOnCampo(ev,pid){
   function up(){
     chip.classList.remove('dragging');try{chip.releasePointerCapture(ptr)}catch(e){}
     chip.removeEventListener('pointermove',mv);chip.removeEventListener('pointerup',up);chip.removeEventListener('pointercancel',up);
-    if(!moved){selectedId=pid;renderRoster();renderEditor();renderCampo();renderPlist();}else persist();
+    if(!moved){selectedId=pid;openEdModal(pid);}else persist();
   }
   chip.addEventListener('pointermove',mv);chip.addEventListener('pointerup',up);chip.addEventListener('pointercancel',up);
 }
@@ -988,7 +1193,7 @@ function dragFromRoster(ev,pid){
     try{src.releasePointerCapture(ptr)}catch(err){}
     src.removeEventListener('pointermove',mv);src.removeEventListener('pointerup',up);src.removeEventListener('pointercancel',up);
     wrap.classList.remove('drop-ok');if(ghost.parentNode)ghost.parentNode.removeChild(ghost);
-    if(!moved){selectedId=pid;renderRoster();renderEditor();renderCampo();renderPlist();return}
+    if(!moved){selectedId=pid;openEdModal(pid);return}
     var r=wrap.getBoundingClientRect();
     if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
       var x=Math.max(2,Math.min(98,((e.clientX-r.left)/r.width)*100));
@@ -1062,14 +1267,52 @@ function doCapture(){
 /* ══════════════════════════
    BOOT
 ══════════════════════════ */
-loadTeam();
-bindEditor();
-bindSeasons();
-buildStatusBtns();
-renderSeasonSel();
-restoreDark();
-renderAll();
-bindFoto();
+setSync('connecting');
+firebase.auth().signInAnonymously().then(function(){
+  /* Cargar config global (colores + temporadas) desde Firestore */
+  return cfgDoc().get().then(function(snap){
+    if(snap.exists){
+      var d=snap.data();
+      /* Colores */
+      if(d.colors){
+        ALL_COLOR_KEYS.forEach(function(k){
+          if(d.colors[k])colors[k]=Object.assign({},STATUS_DEF[k],d.colors[k]);
+        });
+        try{localStorage.setItem(COL_KEY,JSON.stringify(d.colors));}catch(e){}
+      }
+      /* Temporadas */
+      if(d.seasons&&d.seasons.length){
+        seasons=d.seasons;
+        try{localStorage.setItem(SZN_KEY,JSON.stringify(seasons));}catch(e){}
+        if(seasons.indexOf(activeSzn)===-1)activeSzn=seasons[seasons.length-1];
+      }
+    }
+  });
+}).then(function(){
+  buildStatusBtns();
+  bindEditor();
+  bindSeasons();
+  renderSeasonSel();
+  renderColors();
+  restoreDark();
+  loadTeam();
+  renderAll();
+  bindFoto();
+  setSync('saved');
+}).catch(function(e){
+  console.error('Firebase init error',e);
+  setSync('error','Error Firebase');
+  /* Continuar offline con datos locales */
+  buildStatusBtns();
+  bindEditor();
+  bindSeasons();
+  renderSeasonSel();
+  renderColors();
+  restoreDark();
+  state={players:[]};
+  renderAll();
+  bindFoto();
+});
 </script>
 </body>
 </html>
