@@ -98,6 +98,14 @@ button,input,select,textarea{font-family:inherit}
 .player-chip.residencia::after{content:"R";position:absolute;top:-7px;right:-7px;width:16px;height:16px;border-radius:50%;background:var(--residencia-bg);color:#111827;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;border:1px solid #111827;}
 .pchip-text{width:100%;font-size:10.5px;font-weight:500;white-space:normal;word-break:break-word;line-height:1.2;letter-spacing:.2px;font-family:'Arial Narrow','Arial','Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;}
 .pchip-proc{width:100%;font-size:8.5px;font-weight:400;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Arial Narrow','Arial','Helvetica Neue',sans-serif;margin-top:1px;font-style:italic;}
+.pchip-foot{position:absolute;bottom:2px;font-size:9px;opacity:.85;line-height:1;pointer-events:none;}
+.pchip-foot.right{right:2px;}
+.pchip-foot.left{left:2px;}
+.pchip-foot.both{right:2px;letter-spacing:-2px;}
+/* botones lateralidad */
+.lat-btn{padding:4px 8px;font-size:10px;font-weight:600;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-mut);cursor:pointer;transition:all var(--tr);}
+.lat-btn:hover{border-color:var(--rm-blue);color:var(--rm-blue)}
+.lat-btn.active{background:var(--rm-blue);color:#fff;border-color:var(--rm-blue);}
 .chip-remove-btn{position:absolute;top:-6px;left:-6px;width:16px;height:16px;border-radius:50%;background:#dc2626;color:#fff;border:1.5px solid #fff;font-size:11px;line-height:1;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;opacity:0;transition:opacity .15s;padding:0;}
 .player-pos:hover .chip-remove-btn{opacity:1;}
 
@@ -364,6 +372,15 @@ button,input,select,textarea{font-family:inherit}
       <div class="frow" id="fProcRow" style="display:none">
         <label>Procedencia</label>
         <input type="text" id="fProc" maxlength="30" placeholder="Ej: Atl&eacute;tico, Valencia B...">
+      </div>
+      <div class="frow">
+        <label>Lateralidad</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="lat-btn" data-lat="">— Ninguna</button>
+          <button class="lat-btn" data-lat="diestro">&#x1F9B6; Diestro</button>
+          <button class="lat-btn" data-lat="zurdo">&#x1F9B6; Zurdo</button>
+          <button class="lat-btn" data-lat="ambidiestro">&#x1F9B6;&#x1F9B6; Ambidiestro</button>
+        </div>
       </div>
     </div>
     <div class="ed-modal-f">
@@ -680,8 +697,13 @@ function renderCampo(){
     var chip=document.createElement('div');
     chip.className='player-chip'+(p.isPor?' por':'')+(p.residence?' residencia':'');
     chip.setAttribute('style',chipSt(p.status,p.isPor));
+    var footHtml='';
+    if(p.lat==='diestro') footHtml='<span class="pchip-foot right">🦶</span>';
+    else if(p.lat==='zurdo') footHtml='<span class="pchip-foot left">🦶</span>';
+    else if(p.lat==='ambidiestro') footHtml='<span class="pchip-foot both">🦶🦶</span>';
     chip.innerHTML='<span class="pchip-text">'+esc(p.name||'')+'</span>'
-                  +((p.proc&&(p.status==='fichaje'||p.status==='futurible'))?'<span class="pchip-proc">'+esc(p.proc)+'</span>':'');
+                  +((p.proc&&(p.status==='fichaje'||p.status==='futurible'))?'<span class="pchip-proc">'+esc(p.proc)+'</span>':'')
+                  +footHtml;
     var xBtn=document.createElement('button');xBtn.className='chip-remove-btn';xBtn.textContent='\xd7';
     xBtn.addEventListener('pointerdown',function(e){e.stopPropagation();});
     xBtn.addEventListener('click',function(e){e.stopPropagation();p.onPitch=false;persist();renderCampo();renderRoster();renderCounter();renderPlist();});
@@ -800,6 +822,8 @@ function openModal(pid){
   document.getElementById('fRes').checked=!!p.residence;
   document.getElementById('fProc').value=p.proc||'';
   showProcRow(p.status);
+  /* lateralidad */
+  document.querySelectorAll('.lat-btn').forEach(function(b){b.classList.toggle('active',b.dataset.lat===(p.lat||''));});
   document.querySelectorAll('.status-btn').forEach(function(b){b.classList.toggle('active',b.dataset.status===p.status);});
   document.getElementById('edModal').style.display='flex';
   setTimeout(function(){document.getElementById('fName').focus();},80);
@@ -809,6 +833,13 @@ function closeModal(){
   selectedId=null;renderRoster();renderCampo();renderPlist();
 }
 function bindModal(){
+  document.querySelectorAll('.lat-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var p=getPlayer(selectedId);if(!p)return;
+      p.lat=this.dataset.lat;persist();
+      document.querySelectorAll('.lat-btn').forEach(function(b){b.classList.toggle('active',b.dataset.lat===p.lat);});
+    });
+  });
   document.getElementById('fProc').addEventListener('input',function(){
     var p=getPlayer(selectedId);if(p){p.proc=this.value;persist();}
   });
