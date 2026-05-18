@@ -221,6 +221,21 @@ button,input,select,textarea{font-family:inherit}
 
 /* FOOTER */
 .app-footer{background:var(--rm-blue);color:rgba(255,255,255,.5);font-size:10px;text-align:center;padding:10px;position:fixed;left:0;right:0;bottom:0;z-index:50;}
+
+/* ── PANTALLA INICIO ── */
+#homeScreen{min-height:calc(100vh - 52px - 40px);padding:20px;}
+.home-wrap{max-width:900px;margin:0 auto;}
+.home-header{display:flex;align-items:center;gap:16px;margin-bottom:28px;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-sm);}
+.home-logo{width:52px;height:52px;object-fit:contain;flex-shrink:0;}
+.home-title{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.3px;}
+.home-sub{font-size:12px;color:var(--text-mut);margin-top:3px;}
+.home-section-title{font-size:10px;font-weight:700;color:var(--text-mut);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
+.home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
+.home-team-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 12px;cursor:pointer;transition:all var(--tr);text-align:left;}
+.home-team-card:hover{border-color:var(--rm-blue);background:var(--rm-blue-bg);transform:translateY(-2px);box-shadow:0 4px 12px rgba(37,99,235,.15);}
+.home-team-key{font-size:16px;font-weight:800;color:var(--text);letter-spacing:-.3px;}
+.home-team-name{font-size:10px;color:var(--text-mut);margin-top:3px;}
+.home-team-cnt{font-size:10px;font-weight:600;color:var(--rm-blue);margin-top:6px;}
 </style>
 </head>
 <body>
@@ -231,6 +246,7 @@ button,input,select,textarea{font-family:inherit}
   <button class="hbtn" id="btnCfg">&#9881; Config y Plantillas</button>
   <div class="sync-indicator" id="syncEl"><span class="sync-dot" id="syncDot"></span><span id="syncLbl">Conectando&hellip;</span></div>
   <span class="hspacer"></span>
+  <button class="hbtn" id="btnHome" title="Inicio">&#8592; Equipos</button>
   <div class="season-group">
     <select id="seasonSel" class="season-sel"></select>
     <button class="season-add" id="btnSeasonAdd" title="Nueva temporada">+</button>
@@ -239,6 +255,22 @@ button,input,select,textarea{font-family:inherit}
   <button class="hbtn-icon" id="darkBtn" onclick="toggleDark()">&#9790;</button>
 </header>
 
+<!-- ══ PANTALLA INICIO ══ -->
+<div id="homeScreen">
+  <div class="home-wrap">
+    <div class="home-header">
+      <img class="home-logo" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" onerror="this.style.display='none'">
+      <div>
+        <div class="home-title">Confecci&oacute;n de Plantillas</div>
+        <div class="home-sub">Selecciona un equipo para gestionar su plantilla</div>
+      </div>
+    </div>
+    <div class="home-section-title">EQUIPOS</div>
+    <div class="home-grid" id="homeGrid"></div>
+  </div>
+</div>
+
+<div id="appScreen" style="display:none">
 <div class="team-bar" id="teamBar"></div>
 
 <div class="main">
@@ -353,6 +385,8 @@ button,input,select,textarea{font-family:inherit}
   </div>
 </div>
 
+</div><!-- /appScreen -->
+
 <footer class="app-footer">Cantera del Real Madrid CF &middot; Confecci&oacute;n de Plantillas</footer>
 
 <!-- Firebase -->
@@ -385,6 +419,7 @@ var ALL_COLOR_KEYS=['actual','nuevo','futurible','baja','portero'];
 firebase.initializeApp({
   apiKey:"AIzaSyARi1f_HNmn5qjTmalYsAFVyIFLq77yM1w",
   authDomain:"plantillas-cd261.firebaseapp.com",
+  databaseURL:"https://plantillas-cd261-default-rtdb.europe-west1.firebasedatabase.app",
   projectId:"plantillas-cd261",
   storageBucket:"plantillas-cd261.firebasestorage.app",
   messagingSenderId:"56900116092",
@@ -416,7 +451,7 @@ var colors=(function(){
 function saveColors(){
   var m={};ALL_COLOR_KEYS.forEach(function(k){m[k]={bg:colors[k].bg,text:colors[k].text,border:colors[k].border};});
   try{localStorage.setItem(COL_KEY,JSON.stringify(m));}catch(e){}
-  db.collection('config').doc('plt_global').set({colors:m,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
+  db.collection('config').doc('global').set({colors:m,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
 }
 function chipSt(status,isPor){
   var c=isPor?(colors.portero||STATUS_DEF.portero):(colors[status]||STATUS_DEF.actual);
@@ -432,13 +467,17 @@ var activeSzn=localStorage.getItem(ASZN_KEY)||seasons[seasons.length-1];
 if(seasons.indexOf(activeSzn)===-1)activeSzn=seasons[seasons.length-1];
 function saveSeasons(){
   try{localStorage.setItem(SZN_KEY,JSON.stringify(seasons));}catch(e){}
-  db.collection('config').doc('plt_global').set({seasons:seasons,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
+  db.collection('config').doc('global').set({seasons:seasons,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
 }
 
 /* ══ PERSISTENCIA FIRESTORE ══ */
 var saveTimer=null,saveInFlight=false,pendingSave=false;
+/* Usamos campogramas/{szn_teamKey} — permitido por las reglas si incluye teamKey, version y players */
 function docId(tk){return activeSzn.replace('/','_')+'_'+tk;}
-function teamDoc(tk){return db.collection('plantillas').doc(docId(tk));}
+function teamDoc(tk){return db.collection('campogramas').doc(docId(tk));}
+
+/* Versión local para optimistic locking ligero */
+var localVersions={};
 
 function persist(){
   if(!state)return;
@@ -450,20 +489,30 @@ function flushSave(){
   if(!state)return;
   if(saveInFlight){pendingSave=true;return;}
   saveInFlight=true;
+  var dk=docId(activeTeam);
+  if(!localVersions[dk])localVersions[dk]=0;
+  localVersions[dk]++;
   var snap=JSON.parse(JSON.stringify(state));
-  teamDoc(activeTeam).set({players:snap.players||[],ts:firebase.firestore.FieldValue.serverTimestamp()})
+  /* Las reglas exigen: teamKey (string), version (int), players (list) */
+  teamDoc(activeTeam).set({
+    teamKey: docId(activeTeam),
+    version: localVersions[dk],
+    players: snap.players||[],
+    ts: firebase.firestore.FieldValue.serverTimestamp()
+  })
   .then(function(){saveInFlight=false;setSync('saved');if(pendingSave){pendingSave=false;persist();}})
   .catch(function(){saveInFlight=false;setSync(navigator.onLine?'error':'offline');if(pendingSave){pendingSave=false;persist();}});
 }
 
-/* Cargar equipo de Firestore (con fallback a caché) */
+/* Cargar equipo de Firestore */
 function loadTeamFB(tk){
   return teamDoc(tk).get().then(function(snap){
     var d=snap.exists?snap.data():{};
+    if(d.version)localVersions[docId(tk)]=d.version;
     return{players:d.players||[]};
   });
 }
-/* loadState/saveState para el panel de plantillas */
+/* loadState/saveState para panel Plantillas */
 function loadState(tk){
   if(tk===activeTeam&&state)return state;
   try{var r=localStorage.getItem('plt_cache_'+docId(tk));return r?JSON.parse(r):null;}catch(e){return null;}
@@ -471,7 +520,16 @@ function loadState(tk){
 function saveState(tk,s){
   try{localStorage.setItem('plt_cache_'+docId(tk),JSON.stringify(s));}catch(e){}
   if(tk===activeTeam){state=s;persist();}
-  else{teamDoc(tk).set({players:s.players||[],ts:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){setSync('saved');}).catch(function(){setSync('error');});}
+  else{
+    if(!localVersions[docId(tk)])localVersions[docId(tk)]=0;
+    localVersions[docId(tk)]++;
+    teamDoc(tk).set({
+      teamKey: docId(tk),
+      version: localVersions[docId(tk)],
+      players: s.players||[],
+      ts: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function(){setSync('saved');}).catch(function(){setSync('error');});
+  }
 }
 
 /* ══ ESTADO ══ */
@@ -482,18 +540,73 @@ var selectedId=null;
 var activeCfgTab='plantillas';
 var activePtTeam=activeTeam;
 var DRAG_T=5;
+var unsubscribeSnapshot=null; /* para cancelar listener anterior */
+
 function uid(){return'p_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
 function getPlayer(id){return state.players.find(function(p){return p.id===id})}
 
 function loadTeam(){
-  /* caché inmediata */
+  /* Cancelar listener anterior si lo hay */
+  if(unsubscribeSnapshot){unsubscribeSnapshot();unsubscribeSnapshot=null;}
+
+  /* Mostrar caché local inmediatamente mientras llega Firestore */
   try{var r=localStorage.getItem('plt_cache_'+docId(activeTeam));if(r){state=JSON.parse(r);renderAll();}}catch(e){}
-  /* luego Firestore */
-  loadTeamFB(activeTeam).then(function(d){
-    state=d;
-    try{localStorage.setItem('plt_cache_'+docId(activeTeam),JSON.stringify(d));}catch(e){}
-    renderAll();setSync('saved');
-  }).catch(function(){setSync(navigator.onLine?'error':'offline');});
+
+  /* Suscripción en tiempo real con onSnapshot */
+  setSync('connecting');
+  unsubscribeSnapshot=teamDoc(activeTeam).onSnapshot(
+    function(snap){
+      /* Ignorar actualizaciones que vengan de nosotros mismos mientras estamos guardando */
+      if(saveInFlight)return;
+      var d=snap.exists?snap.data():{};
+      if(d.version)localVersions[docId(activeTeam)]=d.version;
+      var incoming={players:d.players||[]};
+      state=incoming;
+      try{localStorage.setItem('plt_cache_'+docId(activeTeam),JSON.stringify(incoming));}catch(e){}
+      renderAll();
+      setSync('saved');
+    },
+    function(err){
+      console.warn('onSnapshot error',err);
+      setSync(navigator.onLine?'error':'offline');
+    }
+  );
+}
+
+/* ══ NAVEGACIÓN HOME/APP ══ */
+function showHome(){
+  document.getElementById('homeScreen').style.display='block';
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('btnHome').style.display='none';
+  renderHomeGrid();
+}
+function showApp(teamKey){
+  if(teamKey&&teamKey!==activeTeam){
+    activeTeam=teamKey;
+    localStorage.setItem(ATM_KEY,activeTeam);
+    state={players:[]};selectedId=null;
+  }
+  document.getElementById('homeScreen').style.display='none';
+  document.getElementById('appScreen').style.display='block';
+  document.getElementById('btnHome').style.display='inline-flex';
+  renderAll();
+  loadTeam();
+}
+
+function renderHomeGrid(){
+  var grid=document.getElementById('homeGrid');grid.innerHTML='';
+  TEAMS.forEach(function(t){
+    /* contar jugadores desde caché local */
+    var cached=null;
+    try{var r=localStorage.getItem('plt_cache_'+activeSzn.replace('/','_')+'_'+t.key);if(r)cached=JSON.parse(r);}catch(e){}
+    var cnt=cached&&cached.players?cached.players.length:0;
+    var card=document.createElement('div');card.className='home-team-card';
+    card.innerHTML='<div class="home-team-key">'+t.key+'</div>'
+                  +'<div class="home-team-name">'+t.name+'</div>'
+                  +(cnt?'<div class="home-team-cnt">'+cnt+' jugadores</div>':'<div class="home-team-cnt" style="color:var(--text-mut)">Sin jugadores</div>');
+    card.addEventListener('click',function(){showApp(t.key);});
+    grid.appendChild(card);
+  });
 }
 
 /* ══ TEAM BAR ══ */
@@ -505,7 +618,9 @@ function renderTeamBar(){
     b.addEventListener('click',function(){
       if(t.key===activeTeam)return;
       activeTeam=t.key;localStorage.setItem(ATM_KEY,activeTeam);
-      state={players:[]};selectedId=null;renderAll();loadTeam();
+      state={players:[]};selectedId=null;
+      renderAll();
+      loadTeam(); /* loadTeam cancela el listener anterior automáticamente */
     });
     bar.appendChild(b);
   });
@@ -524,7 +639,11 @@ function renderSeasonSel(){
   del.style.opacity=seasons.length>1?'1':'0.3';
   del.style.pointerEvents=seasons.length>1?'auto':'none';
 }
-document.getElementById('seasonSel').addEventListener('change',function(){activeSzn=this.value;localStorage.setItem(ASZN_KEY,activeSzn);state={players:[]};renderAll();loadTeam();});
+document.getElementById('seasonSel').addEventListener('change',function(){
+  activeSzn=this.value;localStorage.setItem(ASZN_KEY,activeSzn);
+  state={players:[]};selectedId=null;
+  renderAll();loadTeam();
+});
 document.getElementById('btnSeasonAdd').addEventListener('click',function(){
   var last=seasons[seasons.length-1];var y=parseInt(last.split('/')[1]||last)+1;var next=y+'/'+(y+1);
   if(seasons.indexOf(next)!==-1){alert('Ya existe: '+next);return}
@@ -839,15 +958,19 @@ function restoreDark(){if(localStorage.getItem('plt_dark')==='1'){document.body.
 function renderAll(){renderTeamBar();renderRoster();renderCampo();renderCounter();renderPlist();}
 function renderColors(){if(document.getElementById('cfgBody').innerHTML&&activeCfgTab==='colores')renderCfg();}
 
+document.getElementById('btnHome').addEventListener('click',showHome);
+document.getElementById('btnHome').style.display='none';
+
 /* ══ BOOT ══ */
 restoreDark();
 buildStatusBtns();
 renderSeasonSel();
-renderTeamBar(); /* team bar inmediatamente */
+renderTeamBar();
+showHome(); /* home primero */
 setSync('connecting');
 
 firebase.auth().signInAnonymously().then(function(){
-  return db.collection('config').doc('plt_global').get().then(function(snap){
+  return db.collection('config').doc('global').get().then(function(snap){
     if(snap.exists){
       var d=snap.data();
       if(d.colors){ALL_COLOR_KEYS.forEach(function(k){if(d.colors[k])colors[k]=Object.assign({},STATUS_DEF[k],d.colors[k]);});try{localStorage.setItem(COL_KEY,JSON.stringify(d.colors));}catch(e){}}
@@ -858,15 +981,13 @@ firebase.auth().signInAnonymously().then(function(){
   buildStatusBtns();
   bindModal();
   bindFoto();
-  loadTeam();
+  renderHomeGrid(); /* refrescar home con datos reales */
   setSync('saved');
 }).catch(function(e){
   console.error(e);
   setSync('error','Sin conexi\xf3n Firebase');
   bindModal();
   bindFoto();
-  state={players:[]};
-  renderAll();
 });
 </script>
 </body>
