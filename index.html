@@ -348,6 +348,23 @@ button,input,select,textarea{font-family:inherit}
     </div>
 
   </div>
+
+  <!-- NECESIDADES Y OBSERVACIONES -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
+    <div class="card">
+      <div class="card-h">Necesidades del equipo</div>
+      <div class="card-b">
+        <textarea id="txtNecesidades" placeholder="Escribe las necesidades del equipo..." style="width:100%;min-height:100px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h">Observaciones</div>
+      <div class="card-b">
+        <textarea id="txtObservaciones" placeholder="Escribe observaciones..." style="width:100%;min-height:100px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- MODAL EDITOR -->
@@ -385,9 +402,9 @@ button,input,select,textarea{font-family:inherit}
         <label>Lateralidad</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
           <button class="lat-btn" data-lat="">— Ninguna</button>
-          <button class="lat-btn" data-lat="diestro" style="display:flex;align-items:center;gap:5px;">Diestro <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/Imagen1.png" style="width:14px;height:20px;"></button>
-          <button class="lat-btn" data-lat="zurdo" style="display:flex;align-items:center;gap:5px;">Zurdo <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/Imagen2.png" style="width:14px;height:20px;"></button>
-          <button class="lat-btn" data-lat="ambidiestro" style="display:flex;align-items:center;gap:3px;">Ambidiestro <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/Imagen2.png" style="width:14px;height:20px;"><img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/Imagen1.png" style="width:14px;height:20px;"></button>
+          <button class="lat-btn" data-lat="diestro">Diestro</button>
+          <button class="lat-btn" data-lat="zurdo">Zurdo</button>
+          <button class="lat-btn" data-lat="ambidiestro">Ambidiestro</button>
         </div>
       </div>
     </div>
@@ -528,6 +545,8 @@ function flushSave(){
     teamKey: docId(activeTeam),
     version: localVersions[dk],
     players: snap.players||[],
+    necesidades: snap.necesidades||'',
+    observaciones: snap.observaciones||'',
     ts: firebase.firestore.FieldValue.serverTimestamp()
   })
   .then(function(){saveInFlight=false;setSync('saved');if(pendingSave){pendingSave=false;persist();}})
@@ -590,7 +609,7 @@ function loadTeam(){
       if(saveInFlight)return;
       var d=snap.exists?snap.data():{};
       if(d.version)localVersions[docId(activeTeam)]=d.version;
-      var incoming={players:d.players||[]};
+      var incoming={players:d.players||[],necesidades:d.necesidades||'',observaciones:d.observaciones||''};
       state=incoming;
       try{localStorage.setItem('plt_cache_'+docId(activeTeam),JSON.stringify(incoming));}catch(e){}
       renderAll();
@@ -816,7 +835,7 @@ function footHtmlFor(lat){
   var stL='<img src="'+FOOT_L+'" style="width:11px;height:16px;display:block;opacity:.9;">';
   if(lat==='diestro')     return'<span class="pchip-foot right">'+stR+'</span>';
   if(lat==='zurdo')       return'<span class="pchip-foot left">'+stL+'</span>';
-  if(lat==='ambidiestro') return'<span class="pchip-foot both"><img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/ambidiestro.png" style="width:22px;height:16px;display:block;opacity:.9;"></span>';
+  if(lat==='ambidiestro') return'<span class="pchip-foot both"><img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/ambidiestro.png?v=2" style="width:22px;height:16px;display:block;opacity:.9;"></span>';
   return'';
 }
 function showProcRow(status){
@@ -1034,6 +1053,12 @@ function restoreDark(){if(localStorage.getItem('plt_dark')==='1'){document.body.
 function renderAll(){renderTeamBar();renderRoster();renderCampo();renderCounter();renderPlist();}
 function renderColors(){if(document.getElementById('cfgBody').innerHTML&&activeCfgTab==='colores')renderCfg();}
 
+document.getElementById('txtNecesidades').addEventListener('input',function(){
+  if(state){state.necesidades=this.value;persist();}
+});
+document.getElementById('txtObservaciones').addEventListener('input',function(){
+  if(state){state.observaciones=this.value;persist();}
+});
 document.getElementById('btnHome').addEventListener('click',showHome);
 document.getElementById('btnHome').style.display='none';
 
