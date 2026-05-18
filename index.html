@@ -812,7 +812,7 @@ var FOOT_R='https://raw.githubusercontent.com/PabliVM/Plantillas/main/izquierdo.
 var FOOT_L='https://raw.githubusercontent.com/PabliVM/Plantillas/main/derecho.png';
 function footHtmlFor(lat){
   if(!lat)return'';
-  var stR='<img src="'+FOOT_R+'" style="width:11px;height:16px;display:block;opacity:.9;">';
+  var stR='<img src="'+FOOT_R+'" style="width:11px;height:16px;display:block;opacity:.9;transform:scaleX(-1);">';
   var stL='<img src="'+FOOT_L+'" style="width:11px;height:16px;display:block;opacity:.9;">';
   if(lat==='diestro')     return'<span class="pchip-foot right">'+stR+'</span>';
   if(lat==='zurdo')       return'<span class="pchip-foot left">'+stL+'</span>';
