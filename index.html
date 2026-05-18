@@ -841,8 +841,8 @@ function openModal(pid){
   showProcRow(p.status);
   /* residencia */
   document.querySelectorAll('.res-btn').forEach(function(b){b.classList.toggle('active',b.dataset.res===(p.res||''));});
-  /* lateralidad */
-  document.querySelectorAll('.lat-btn').forEach(function(b){b.classList.toggle('active',b.dataset.lat===(p.lat||''));});
+  /* lateralidad — solo botones con data-lat, no res-btn */
+  document.querySelectorAll('.lat-btn[data-lat]').forEach(function(b){b.classList.toggle('active',b.dataset.lat===(p.lat||''));});
   document.querySelectorAll('.status-btn').forEach(function(b){b.classList.toggle('active',b.dataset.status===p.status);});
   document.getElementById('edModal').style.display='flex';
   setTimeout(function(){document.getElementById('fName').focus();},80);
@@ -859,11 +859,11 @@ function bindModal(){
       document.querySelectorAll('.res-btn').forEach(function(b){b.classList.toggle('active',b.dataset.res===p.res);});
     });
   });
-  document.querySelectorAll('.lat-btn').forEach(function(btn){
+  document.querySelectorAll('.lat-btn[data-lat]').forEach(function(btn){
     btn.addEventListener('click',function(){
       var p=getPlayer(selectedId);if(!p)return;
       p.lat=this.dataset.lat;persist();
-      document.querySelectorAll('.lat-btn').forEach(function(b){b.classList.toggle('active',b.dataset.lat===p.lat);});
+      document.querySelectorAll('.lat-btn[data-lat]').forEach(function(b){b.classList.toggle('active',b.dataset.lat===p.lat);});
     });
   });
   document.getElementById('fProc').addEventListener('input',function(){
