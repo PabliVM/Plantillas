@@ -605,6 +605,7 @@ function loadTeam(){
 
 /* ══ NAVEGACIÓN HOME/APP ══ */
 function showHome(){
+  localStorage.setItem('plt_last_view','home');
   document.getElementById('homeScreen').style.display='block';
   document.getElementById('appScreen').style.display='none';
   document.getElementById('btnHome').style.display='none';
@@ -616,10 +617,11 @@ function showApp(teamKey){
     localStorage.setItem(ATM_KEY,activeTeam);
     state={players:[]};selectedId=null;
   }
+  localStorage.setItem('plt_last_view','app');
   document.getElementById('homeScreen').style.display='none';
   document.getElementById('appScreen').style.display='block';
   document.getElementById('btnHome').style.display='inline-flex';
-  renderTeamBar(); /* forzar team bar visible */
+  renderTeamBar();
   renderAll();
   loadTeam();
 }
@@ -1042,7 +1044,15 @@ try{bindModal();}catch(e){console.error('bindModal',e);}
 try{bindFoto();}catch(e){}
 try{renderSeasonSel();}catch(e){}
 try{renderTeamBar();}catch(e){}
-try{showHome();}catch(e){console.error('showHome',e);}
+/* Restaurar última vista */
+try{
+  var lastView=localStorage.getItem('plt_last_view');
+  if(lastView==='app'&&activeTeam){
+    showApp(activeTeam);
+  } else {
+    showHome();
+  }
+}catch(e){showHome();}
 setSync('connecting');
 
 firebase.auth().signInAnonymously().then(function(){
