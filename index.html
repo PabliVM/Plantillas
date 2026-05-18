@@ -75,6 +75,10 @@ button,input,select,textarea{font-family:inherit}
 /* CAMPO */
 .campo-outer{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;align-items:center;gap:8px;}
 .campo-hint{width:100%;font-size:10px;color:var(--text-mut);font-style:italic;}
+.campo-filter{display:flex;flex-wrap:wrap;gap:5px;width:100%;margin-bottom:4px;}
+.cfilter-btn{padding:3px 10px;font-size:10px;font-weight:600;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-mut);cursor:pointer;transition:all var(--tr);}
+.cfilter-btn:hover{border-color:var(--rm-blue);color:var(--rm-blue);}
+.cfilter-btn.active{background:var(--rm-blue);color:#fff;border-color:var(--rm-blue);}
 .campo-card{width:100%;max-width:546px;background:#111827;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 30px rgba(0,0,0,.45);}
 .campo-hdr{background:#0a1220;padding:9px 13px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.08);}
 .campo-hdr-title{color:#fff;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;}
@@ -292,6 +296,14 @@ button,input,select,textarea{font-family:inherit}
 
     <!-- COL 1: CAMPO -->
     <div class="campo-outer">
+      <div class="campo-filter" id="campoFilter">
+        <button class="cfilter-btn active" data-filter="all">Todos</button>
+        <button class="cfilter-btn" data-filter="renovado">Renovado</button>
+        <button class="cfilter-btn" data-filter="fichaje">Fichaje</button>
+        <button class="cfilter-btn" data-filter="futurible">Futurible</button>
+        <button class="cfilter-btn" data-filter="duda">Duda</button>
+        <button class="cfilter-btn" data-filter="baja">Baja</button>
+      </div>
       <span class="campo-hint">Arrastra fichas al campo &middot; Hover para sacar (&times;)</span>
       <div class="campo-card">
         <div class="campo-hdr">
@@ -316,6 +328,21 @@ button,input,select,textarea{font-family:inherit}
           </svg>
           <img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
           <div class="campo-players" id="campoPlayers"></div>
+        </div>
+      </div>
+      <!-- Necesidades y Observaciones debajo del campo -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:546px;margin-top:10px;">
+        <div class="card">
+          <div class="card-h" style="font-size:10px;padding:7px 10px;">Necesidades</div>
+          <div class="card-b" style="padding:7px 10px;">
+            <textarea id="txtNecesidades" placeholder="Necesidades del equipo..." style="width:100%;min-height:80px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.4;font-family:var(--font);"></textarea>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h" style="font-size:10px;padding:7px 10px;">Observaciones</div>
+          <div class="card-b" style="padding:7px 10px;">
+            <textarea id="txtObservaciones" placeholder="Observaciones..." style="width:100%;min-height:80px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.4;font-family:var(--font);"></textarea>
+          </div>
         </div>
       </div>
     </div>
@@ -347,22 +374,6 @@ button,input,select,textarea{font-family:inherit}
       </div>
     </div>
 
-  </div>
-
-  <!-- NECESIDADES Y OBSERVACIONES -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
-    <div class="card">
-      <div class="card-h">Necesidades del equipo</div>
-      <div class="card-b">
-        <textarea id="txtNecesidades" placeholder="Escribe las necesidades del equipo..." style="width:100%;min-height:100px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-h">Observaciones</div>
-      <div class="card-b">
-        <textarea id="txtObservaciones" placeholder="Escribe observaciones..." style="width:100%;min-height:100px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
-      </div>
-    </div>
   </div>
 
 </div>
@@ -717,13 +728,27 @@ function inGoal(x,y){return(x>=PZ.top.x1&&x<=PZ.top.x2&&y>=PZ.top.y1&&y<=PZ.top.
 function countPitch(){var c=0,p=0;state.players.forEach(function(pl){if(!pl.onPitch||pl.status==='baja')return;if(pl.isPor&&inGoal(pl.x,pl.y))p++;else c++;});return{c:c,p:p};}
 function renderCounter(){var r=countPitch();document.getElementById('counterPill').textContent=r.c+' + '+r.p;document.getElementById('campoCount').textContent=r.c+'+'+r.p+'P';}
 
+var activeFilter='all';
+
+function bindFilter(){
+  document.querySelectorAll('.cfilter-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      activeFilter=this.dataset.filter;
+      document.querySelectorAll('.cfilter-btn').forEach(function(b){b.classList.toggle('active',b.dataset.filter===activeFilter);});
+      renderCampo();
+    });
+  });
+}
+
 /* ══ RENDER CAMPO ══ */
 function renderCampo(){
   var cont=document.getElementById('campoPlayers');cont.innerHTML='';
   state.players.forEach(function(p){
     if(!p.onPitch)return;
+    var visible=activeFilter==='all'||p.status===activeFilter;
     var pos=document.createElement('div');pos.className='player-pos';
     pos.style.left=p.x+'%';pos.style.top=p.y*(100/118)+'%';pos.dataset.id=p.id;
+    if(!visible)pos.style.opacity='0.12';
     var chip=document.createElement('div');
     chip.className='player-chip'+(p.isPor?' por':'')+(p.res?' residencia':'');
     if(p.res)chip.setAttribute('data-res-label',p.res);
@@ -735,7 +760,7 @@ function renderCampo(){
     xBtn.addEventListener('pointerdown',function(e){e.stopPropagation();});
     xBtn.addEventListener('click',function(e){e.stopPropagation();p.onPitch=false;persist();renderCampo();renderRoster();renderCounter();renderPlist();});
     pos.appendChild(chip);pos.appendChild(xBtn);
-    chip.addEventListener('pointerdown',function(ev){dragOnCampo(ev,p.id);});
+    chip.addEventListener('pointerdown',function(ev){if(visible)dragOnCampo(ev,p.id);});
     cont.appendChild(pos);
   });
 }
@@ -928,7 +953,7 @@ function dragOnCampo(ev,pid){
 /* ══ DRAG FROM ROSTER ══ */
 function dragFromRoster(ev,pid){
   ev.preventDefault();ev.stopPropagation();
-  var p=getPlayer(pid);if(!p||p.status==='baja')return;
+  var p=getPlayer(pid);if(!p)return;
   var wrap=document.getElementById('campoWrap');
   var sx=ev.clientX,sy=ev.clientY,moved=false,ptr=ev.pointerId;
   var ghost=document.createElement('div');ghost.className='player-chip'+(p.isPor?' por':'');
@@ -1066,6 +1091,7 @@ document.getElementById('btnHome').style.display='none';
 try{restoreDark();}catch(e){}
 try{buildStatusBtns();}catch(e){}
 try{bindModal();}catch(e){console.error('bindModal',e);}
+try{bindFilter();}catch(e){}
 try{bindFoto();}catch(e){}
 try{renderSeasonSel();}catch(e){}
 try{renderTeamBar();}catch(e){}
