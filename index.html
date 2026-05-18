@@ -97,6 +97,7 @@ button,input,select,textarea{font-family:inherit}
 .player-chip.dragging{cursor:grabbing;box-shadow:0 6px 18px rgba(0,0,0,.6);transform:scale(1.07);}
 .player-chip.residencia::after{content:"R";position:absolute;top:-7px;right:-7px;width:16px;height:16px;border-radius:50%;background:var(--residencia-bg);color:#111827;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;border:1px solid #111827;}
 .pchip-text{width:100%;font-size:10.5px;font-weight:500;white-space:normal;word-break:break-word;line-height:1.2;letter-spacing:.2px;font-family:'Arial Narrow','Arial','Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;}
+.pchip-proc{width:100%;font-size:8.5px;font-weight:400;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Arial Narrow','Arial','Helvetica Neue',sans-serif;margin-top:1px;font-style:italic;}
 .chip-remove-btn{position:absolute;top:-6px;left:-6px;width:16px;height:16px;border-radius:50%;background:#dc2626;color:#fff;border:1.5px solid #fff;font-size:11px;line-height:1;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;opacity:0;transition:opacity .15s;padding:0;}
 .player-pos:hover .chip-remove-btn{opacity:1;}
 
@@ -359,6 +360,10 @@ button,input,select,textarea{font-family:inherit}
       <div class="toggle-checks">
         <div class="tcheck"><input type="checkbox" id="fPor"><label for="fPor">&#9650; Portero</label></div>
         <div class="tcheck"><input type="checkbox" id="fRes"><label for="fRes">&#127968; Residencia (R)</label></div>
+      </div>
+      <div class="frow" id="fProcRow" style="display:none">
+        <label>Procedencia</label>
+        <input type="text" id="fProc" maxlength="30" placeholder="Ej: Atl&eacute;tico, Valencia B...">
       </div>
     </div>
     <div class="ed-modal-f">
@@ -675,7 +680,8 @@ function renderCampo(){
     var chip=document.createElement('div');
     chip.className='player-chip'+(p.isPor?' por':'')+(p.residence?' residencia':'');
     chip.setAttribute('style',chipSt(p.status,p.isPor));
-    chip.innerHTML='<span class="pchip-text">'+esc(p.name||'')+'</span>';
+    chip.innerHTML='<span class="pchip-text">'+esc(p.name||'')+'</span>'
+                  +((p.proc&&(p.status==='fichaje'||p.status==='futurible'))?'<span class="pchip-proc">'+esc(p.proc)+'</span>':'');
     var xBtn=document.createElement('button');xBtn.className='chip-remove-btn';xBtn.textContent='\xd7';
     xBtn.addEventListener('pointerdown',function(e){e.stopPropagation();});
     xBtn.addEventListener('click',function(e){e.stopPropagation();p.onPitch=false;persist();renderCampo();renderRoster();renderCounter();renderPlist();});
@@ -764,16 +770,22 @@ function buildStatusBtns(){
       p.status=k;if(k==='baja'&&p.onPitch)p.onPitch=false;
       persist();
       document.querySelectorAll('.status-btn').forEach(function(b){b.classList.toggle('active',b.dataset.status===k);});
+      showProcRow(k);
     });
     cont.appendChild(btn);
   });
 }
 
 /* ══ MODAL EDITOR ══ */
+function showProcRow(status){
+  var show=status==='fichaje'||status==='futurible';
+  document.getElementById('fProcRow').style.display=show?'flex':'none';
+}
+
 function openModal(pid){
   var isNew=!pid;
   if(isNew){
-    var p={id:uid(),name:'',status:'renovado',isPor:false,residence:false,onPitch:false,x:50,y:59};
+    var p={id:uid(),name:'',status:'renovado',isPor:false,residence:false,proc:'',onPitch:false,x:50,y:59};
     state.players.push(p);selectedId=p.id;persist();
     document.getElementById('edModalTitle').textContent='Nuevo jugador';
     document.getElementById('btnDelete').style.display='none';
@@ -786,6 +798,8 @@ function openModal(pid){
   document.getElementById('fName').value=p.name||'';
   document.getElementById('fPor').checked=!!p.isPor;
   document.getElementById('fRes').checked=!!p.residence;
+  document.getElementById('fProc').value=p.proc||'';
+  showProcRow(p.status);
   document.querySelectorAll('.status-btn').forEach(function(b){b.classList.toggle('active',b.dataset.status===p.status);});
   document.getElementById('edModal').style.display='flex';
   setTimeout(function(){document.getElementById('fName').focus();},80);
@@ -795,6 +809,9 @@ function closeModal(){
   selectedId=null;renderRoster();renderCampo();renderPlist();
 }
 function bindModal(){
+  document.getElementById('fProc').addEventListener('input',function(){
+    var p=getPlayer(selectedId);if(p){p.proc=this.value;persist();}
+  });
   document.getElementById('fName').addEventListener('input',function(){
     var p=getPlayer(selectedId);if(p){p.name=this.value;persist();}
   });
