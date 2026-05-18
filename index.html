@@ -98,10 +98,11 @@ button,input,select,textarea{font-family:inherit}
 .player-chip.residencia::after{content:"R";position:absolute;top:-7px;right:-7px;width:16px;height:16px;border-radius:50%;background:var(--residencia-bg);color:#111827;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;border:1px solid #111827;}
 .pchip-text{width:100%;font-size:10.5px;font-weight:500;white-space:normal;word-break:break-word;line-height:1.2;letter-spacing:.2px;font-family:'Arial Narrow','Arial','Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;}
 .pchip-proc{width:100%;font-size:8.5px;font-weight:400;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Arial Narrow','Arial','Helvetica Neue',sans-serif;margin-top:1px;font-style:italic;}
-.pchip-foot{position:absolute;bottom:2px;font-size:9px;opacity:.85;line-height:1;pointer-events:none;}
+.pchip-foot{position:absolute;bottom:2px;display:flex;align-items:flex-end;gap:1px;pointer-events:none;}
 .pchip-foot.right{right:2px;}
-.pchip-foot.left{left:2px;}
-.pchip-foot.both{right:2px;letter-spacing:-2px;}
+.pchip-foot.left{left:2px;transform:scaleX(-1);}
+.pchip-foot.both{right:2px;}
+.pchip-foot svg{width:8px;height:auto;display:block;opacity:.7;}
 /* botones lateralidad */
 .lat-btn{padding:4px 8px;font-size:10px;font-weight:600;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-mut);cursor:pointer;transition:all var(--tr);}
 .lat-btn:hover{border-color:var(--rm-blue);color:var(--rm-blue)}
@@ -375,11 +376,11 @@ button,input,select,textarea{font-family:inherit}
       </div>
       <div class="frow">
         <label>Lateralidad</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
           <button class="lat-btn" data-lat="">— Ninguna</button>
-          <button class="lat-btn" data-lat="diestro">&#x1F9B6; Diestro</button>
-          <button class="lat-btn" data-lat="zurdo">&#x1F9B6; Zurdo</button>
-          <button class="lat-btn" data-lat="ambidiestro">&#x1F9B6;&#x1F9B6; Ambidiestro</button>
+          <button class="lat-btn" data-lat="diestro" style="display:flex;align-items:center;gap:4px;">Diestro <svg width="8" height="18" viewBox="0 0 40 90" fill="#000" xmlns="http://www.w3.org/2000/svg"><ellipse cx="20" cy="68" rx="13" ry="20"/><ellipse cx="8" cy="46" rx="5" ry="7" transform="rotate(-15 8 46)"/><ellipse cx="16" cy="38" rx="5" ry="7.5" transform="rotate(-8 16 38)"/><ellipse cx="25" cy="37" rx="5" ry="7.5" transform="rotate(5 25 37)"/><ellipse cx="33" cy="40" rx="4.5" ry="6.5" transform="rotate(15 33 40)"/></svg></button>
+          <button class="lat-btn" data-lat="zurdo" style="display:flex;align-items:center;gap:4px;">Zurdo <svg width="8" height="18" viewBox="0 0 40 90" fill="#000" xmlns="http://www.w3.org/2000/svg" style="transform:scaleX(-1)"><ellipse cx="20" cy="68" rx="13" ry="20"/><ellipse cx="8" cy="46" rx="5" ry="7" transform="rotate(-15 8 46)"/><ellipse cx="16" cy="38" rx="5" ry="7.5" transform="rotate(-8 16 38)"/><ellipse cx="25" cy="37" rx="5" ry="7.5" transform="rotate(5 25 37)"/><ellipse cx="33" cy="40" rx="4.5" ry="6.5" transform="rotate(15 33 40)"/></svg></button>
+          <button class="lat-btn" data-lat="ambidiestro" style="display:flex;align-items:center;gap:2px;">Ambidiestro <svg width="8" height="18" viewBox="0 0 40 90" fill="#000" xmlns="http://www.w3.org/2000/svg" style="transform:scaleX(-1)"><ellipse cx="20" cy="68" rx="13" ry="20"/><ellipse cx="8" cy="46" rx="5" ry="7" transform="rotate(-15 8 46)"/><ellipse cx="16" cy="38" rx="5" ry="7.5" transform="rotate(-8 16 38)"/><ellipse cx="25" cy="37" rx="5" ry="7.5" transform="rotate(5 25 37)"/><ellipse cx="33" cy="40" rx="4.5" ry="6.5" transform="rotate(15 33 40)"/></svg><svg width="8" height="18" viewBox="0 0 40 90" fill="#000" xmlns="http://www.w3.org/2000/svg"><ellipse cx="20" cy="68" rx="13" ry="20"/><ellipse cx="8" cy="46" rx="5" ry="7" transform="rotate(-15 8 46)"/><ellipse cx="16" cy="38" rx="5" ry="7.5" transform="rotate(-8 16 38)"/><ellipse cx="25" cy="37" rx="5" ry="7.5" transform="rotate(5 25 37)"/><ellipse cx="33" cy="40" rx="4.5" ry="6.5" transform="rotate(15 33 40)"/></svg></button>
         </div>
       </div>
     </div>
@@ -697,13 +698,9 @@ function renderCampo(){
     var chip=document.createElement('div');
     chip.className='player-chip'+(p.isPor?' por':'')+(p.residence?' residencia':'');
     chip.setAttribute('style',chipSt(p.status,p.isPor));
-    var footHtml='';
-    if(p.lat==='diestro') footHtml='<span class="pchip-foot right">🦶</span>';
-    else if(p.lat==='zurdo') footHtml='<span class="pchip-foot left">🦶</span>';
-    else if(p.lat==='ambidiestro') footHtml='<span class="pchip-foot both">🦶🦶</span>';
     chip.innerHTML='<span class="pchip-text">'+esc(p.name||'')+'</span>'
                   +((p.proc&&(p.status==='fichaje'||p.status==='futurible'))?'<span class="pchip-proc">'+esc(p.proc)+'</span>':'')
-                  +footHtml;
+                  +footHtmlFor(p.lat||'');
     var xBtn=document.createElement('button');xBtn.className='chip-remove-btn';xBtn.textContent='\xd7';
     xBtn.addEventListener('pointerdown',function(e){e.stopPropagation();});
     xBtn.addEventListener('click',function(e){e.stopPropagation();p.onPitch=false;persist();renderCampo();renderRoster();renderCounter();renderPlist();});
@@ -799,7 +796,22 @@ function buildStatusBtns(){
 }
 
 /* ══ MODAL EDITOR ══ */
-function showProcRow(status){
+var FOOT_SVG='<svg viewBox="0 0 40 90" xmlns="http://www.w3.org/2000/svg" fill="currentColor">'
+  +'<ellipse cx="20" cy="68" rx="13" ry="20"/>'
+  +'<ellipse cx="8"  cy="46" rx="5"  ry="7" transform="rotate(-15 8 46)"/>'
+  +'<ellipse cx="16" cy="38" rx="5"  ry="7.5" transform="rotate(-8 16 38)"/>'
+  +'<ellipse cx="25" cy="37" rx="5"  ry="7.5" transform="rotate(5 25 37)"/>'
+  +'<ellipse cx="33" cy="40" rx="4.5" ry="6.5" transform="rotate(15 33 40)"/>'
+  +'</svg>';
+
+function footHtmlFor(lat){
+  if(!lat)return'';
+  var s='<span class="pchip-foot ';
+  if(lat==='diestro')   return s+'right" style="color:#000">'+FOOT_SVG+'</span>';
+  if(lat==='zurdo')     return s+'left"  style="color:#000">'+FOOT_SVG+'</span>';
+  if(lat==='ambidiestro') return s+'both"  style="color:#000">'+FOOT_SVG+FOOT_SVG+'</span>';
+  return'';
+}
   var show=status==='fichaje'||status==='futurible';
   document.getElementById('fProcRow').style.display=show?'flex':'none';
 }
