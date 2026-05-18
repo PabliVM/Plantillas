@@ -881,9 +881,6 @@ function bindModal(){
   document.getElementById('fPor').addEventListener('change',function(){
     var p=getPlayer(selectedId);if(p){p.isPor=this.checked;persist();}
   });
-  document.getElementById('fRes').addEventListener('change',function(){
-    var p=getPlayer(selectedId);if(p){p.residence=this.checked;persist();}
-  });
   document.getElementById('btnSave').addEventListener('click',closeModal);
   document.getElementById('edClose').addEventListener('click',closeModal);
   document.getElementById('edCancel').addEventListener('click',closeModal);
