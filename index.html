@@ -96,7 +96,7 @@ button,input,select,textarea{font-family:inherit}
 .player-chip.por{border-color:#ffd400!important;border-width:3px;}
 .player-chip.dragging{cursor:grabbing;box-shadow:0 6px 18px rgba(0,0,0,.6);transform:scale(1.07);}
 .player-chip.residencia::after{content:"R";position:absolute;top:-7px;right:-7px;width:16px;height:16px;border-radius:50%;background:var(--residencia-bg);color:#111827;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;border:1px solid #111827;}
-.pchip-text{width:100%;font-size:10.5px;font-weight:500;white-space:normal;word-break:break-word;line-height:1.2;letter-spacing:.2px;font-family:'Arial Narrow','Arial','Helvetica Neue',sans-serif;text-shadow:0 1px 2px rgba(0,0,0,.55);-webkit-font-smoothing:antialiased;}
+.pchip-text{width:100%;font-size:10.5px;font-weight:500;white-space:normal;word-break:break-word;line-height:1.2;letter-spacing:.2px;font-family:'Arial Narrow','Arial','Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;}
 .chip-remove-btn{position:absolute;top:-6px;left:-6px;width:16px;height:16px;border-radius:50%;background:#dc2626;color:#fff;border:1.5px solid #fff;font-size:11px;line-height:1;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;opacity:0;transition:opacity .15s;padding:0;}
 .player-pos:hover .chip-remove-btn{opacity:1;}
 
@@ -313,11 +313,11 @@ button,input,select,textarea{font-family:inherit}
     <!-- COL 2: ROSTER -->
     <div class="col">
       <div class="card">
-        <div class="card-h">En plantilla <span class="cnt" id="cntActual">0</span></div>
+        <div class="card-h">Renovados y Fichajes <span class="cnt" id="cntActual">0</span></div>
         <div class="card-b"><div class="rlist" id="rosterActual"></div></div>
       </div>
       <div class="card">
-        <div class="card-h">Futuribles <span class="cnt" id="cntFuturible">0</span></div>
+        <div class="card-h">Futuribles y Dudas <span class="cnt" id="cntFuturible">0</span></div>
         <div class="card-b"><div class="rlist" id="rosterFuturible"></div></div>
       </div>
       <div class="card">
@@ -406,14 +406,14 @@ var TEAMS=[
   {key:'DB',name:'Debutante'}
 ];
 var STATUS_DEF={
-  actual:   {label:'En plantilla', bg:'#f1f5f9',text:'#1e293b',border:'#cbd5e1'},
-  nuevo:    {label:'Nuevo fichado',bg:'#77ED85', text:'#003300',border:'#4ade80'},
-  futurible:{label:'Futurible',    bg:'#3b82f6', text:'#ffffff',border:'#2563eb'},
-  baja:     {label:'Baja',         bg:'#e53e3e', text:'#ffffff',border:'#c53030'},
-  portero:  {label:'Portero',      bg:'#f59e0b', text:'#1a1d23',border:'#ffd400'}
+  renovado: {label:'Renovado',  bg:'#f1f5f9',text:'#1e293b',border:'#cbd5e1'},
+  fichaje:  {label:'Fichaje',   bg:'#77ED85', text:'#003300',border:'#4ade80'},
+  futurible:{label:'Futurible', bg:'#3b82f6', text:'#ffffff',border:'#2563eb'},
+  duda:     {label:'Duda',      bg:'#f59e0b', text:'#1a1d23',border:'#d97706'},
+  baja:     {label:'Baja',      bg:'#e53e3e', text:'#ffffff',border:'#c53030'}
 };
-var STATUS_ORDER=['actual','nuevo','futurible','baja'];
-var ALL_COLOR_KEYS=['actual','nuevo','futurible','baja','portero'];
+var STATUS_ORDER=['renovado','fichaje','futurible','duda','baja'];
+var ALL_COLOR_KEYS=['renovado','fichaje','futurible','duda','baja'];
 
 /* ══ FIREBASE ══ */
 firebase.initializeApp({
@@ -454,9 +454,9 @@ function saveColors(){
   db.collection('config').doc('global').set({colors:m,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
 }
 function chipSt(status,isPor){
-  var c=isPor?(colors.portero||STATUS_DEF.portero):(colors[status]||STATUS_DEF.actual);
-  var bw=isPor?'3px':'2px';
-  var bc=isPor?(colors.portero||STATUS_DEF.portero).border:c.border;
+  var c=colors[status]||STATUS_DEF.renovado;
+  var bc=isPor?'#f97316':c.border; /* naranja para portero */
+  var bw=isPor?'3.5px':'2px';
   return'background:'+c.bg+';color:'+c.text+';border-color:'+bc+';border-style:solid;border-width:'+bw+';';
 }
 
@@ -690,7 +690,11 @@ function renderRoster(){
   var ab=document.getElementById('rosterActual'),fb=document.getElementById('rosterFuturible'),bb=document.getElementById('rosterBaja');
   ab.innerHTML='';fb.innerHTML='';bb.innerHTML='';
   var actual=[],fut=[],baja=[];
-  state.players.forEach(function(p){if(p.status==='baja')baja.push(p);else if(p.status==='futurible')fut.push(p);else actual.push(p);});
+  state.players.forEach(function(p){
+    if(p.status==='baja') baja.push(p);
+    else if(p.status==='futurible'||p.status==='duda') fut.push(p);
+    else actual.push(p); /* renovado + fichaje */
+  });
   var actualFuera=actual.filter(function(p){return!p.onPitch;});
   var futFuera=fut.filter(function(p){return!p.onPitch;});
   function mkItem(p,canDrag){
@@ -711,7 +715,7 @@ function renderRoster(){
   }
   if(!actualFuera.length)ab.innerHTML='<div class="rempty">'+(actual.length?'Todos en el campo \u2713':'Carga jugadores desde Config.')+'</div>';
   else actualFuera.forEach(function(p){ab.appendChild(mkItem(p,true));});
-  if(!futFuera.length)fb.innerHTML='<div class="rempty">'+(fut.length?'Todos en el campo \u2713':'Sin futuribles.')+'</div>';
+  if(!futFuera.length)fb.innerHTML='<div class="rempty">'+(fut.length?'Todos en el campo \u2713':'Sin futuribles ni dudas.')+'</div>';
   else futFuera.forEach(function(p){fb.appendChild(mkItem(p,true));});
   if(!baja.length)bb.innerHTML='<div class="rempty">Sin bajas.</div>';
   else baja.forEach(function(p){bb.appendChild(mkItem(p,false));});
@@ -724,8 +728,7 @@ function renderRoster(){
 function renderPlist(){
   var body=document.getElementById('plistBody');body.innerHTML='';
   var totalC=state.players.filter(function(p){return!p.isPor&&p.status!=='baja';}).length;
-  var totalP=state.players.filter(function(p){return p.isPor&&p.status!=='baja';}).length;
-  document.getElementById('plistTotal').textContent=totalC+'+'+totalP;
+  var totalP=state.players.filter(function(p){return p.isPor&&p.status!=='baja';}).length;  document.getElementById('plistTotal').textContent=totalC+'+'+totalP;
   if(!state.players.length){body.innerHTML='<div class="plist-empty">Sin jugadores a\xfan.</div>';return;}
   var fuera=state.players.filter(function(p){return!p.onPitch&&p.status!=='baja';});
   var dentro=state.players.filter(function(p){return p.onPitch&&p.status!=='baja';});
@@ -770,7 +773,7 @@ function buildStatusBtns(){
 function openModal(pid){
   var isNew=!pid;
   if(isNew){
-    var p={id:uid(),name:'',status:'actual',isPor:false,residence:false,onPitch:false,x:50,y:59};
+    var p={id:uid(),name:'',status:'renovado',isPor:false,residence:false,onPitch:false,x:50,y:59};
     state.players.push(p);selectedId=p.id;persist();
     document.getElementById('edModalTitle').textContent='Nuevo jugador';
     document.getElementById('btnDelete').style.display='none';
@@ -896,7 +899,7 @@ function renderCfgPlantillas(body){
     var name=(inp.value||'').trim();if(!name)return;
     var tdd=loadState(activePtTeam)||{players:[]};if(!tdd.players)tdd.players=[];
     if(tdd.players.some(function(p){return p.name===name;})){inp.select();return;}
-    tdd.players.push({id:uid(),name:name,status:'actual',isPor:false,residence:false,onPitch:false,x:50,y:59});
+    tdd.players.push({id:uid(),name:name,status:'renovado',isPor:false,residence:false,onPitch:false,x:50,y:59});
     saveState(activePtTeam,tdd);inp.value='';renderCfg();setTimeout(function(){var el=document.getElementById('ptInp');if(el)el.focus();},50);
   }
   addBtn.addEventListener('click',doAdd);inp.addEventListener('keydown',function(e){if(e.key==='Enter')doAdd();});
