@@ -95,7 +95,7 @@ button,input,select,textarea{font-family:inherit}
 .player-chip{position:relative;width:100%;min-height:32px;padding:4px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;text-align:center;text-transform:uppercase;cursor:grab;user-select:none;-webkit-user-select:none;box-shadow:0 2px 6px rgba(0,0,0,.45);border:2px solid transparent;transition:transform .1s,box-shadow .1s;}
 .player-chip.por{border-color:#ffd400!important;border-width:3px;}
 .player-chip.dragging{cursor:grabbing;box-shadow:0 6px 18px rgba(0,0,0,.6);transform:scale(1.07);}
-.player-chip.residencia::after{content:"R";position:absolute;top:-7px;right:-7px;width:16px;height:16px;border-radius:50%;background:var(--residencia-bg);color:#111827;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;border:1px solid #111827;}
+.player-chip.residencia::after{content:attr(data-res-label);position:absolute;top:-7px;right:-7px;min-width:16px;height:16px;padding:0 2px;border-radius:50px;background:#fff;color:#000;font-size:8px;font-weight:900;display:flex;align-items:center;justify-content:center;border:1.5px solid #000;font-family:'Arial Narrow','Arial',sans-serif;letter-spacing:-.3px;}
 .pchip-text{width:100%;font-size:10.5px;font-weight:500;white-space:normal;word-break:break-word;line-height:1.2;letter-spacing:.2px;font-family:'Arial Narrow','Arial','Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;}
 .pchip-proc{width:100%;font-size:8.5px;font-weight:400;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Arial Narrow','Arial','Helvetica Neue',sans-serif;margin-top:1px;font-style:italic;}
 .pchip-foot{position:absolute;bottom:2px;display:flex;align-items:flex-end;gap:1px;pointer-events:none;}
@@ -130,7 +130,7 @@ button,input,select,textarea{font-family:inherit}
 .rempty{text-align:center;font-size:11px;color:var(--text-mut);padding:12px 6px;font-style:italic}
 .chip-mini{flex-shrink:0;width:52px;min-height:22px;padding:2px 3px;border-radius:5px;display:flex;align-items:center;justify-content:center;text-align:center;text-transform:uppercase;border:2px solid transparent;cursor:grab;position:relative;}
 .chip-mini.por{border-color:#ffd400!important;}
-.chip-mini.residencia::after{content:"R";position:absolute;top:-5px;right:-5px;width:13px;height:13px;border-radius:50%;background:var(--residencia-bg);color:#111827;font-size:8px;font-weight:900;display:flex;align-items:center;justify-content:center;border:1px solid #111827;}
+.chip-mini.residencia::after{content:attr(data-res-label);position:absolute;top:-5px;right:-5px;min-width:13px;height:13px;padding:0 2px;border-radius:50px;background:#fff;color:#000;font-size:7px;font-weight:900;display:flex;align-items:center;justify-content:center;border:1.5px solid #000;font-family:'Arial Narrow','Arial',sans-serif;letter-spacing:-.3px;}
 .chip-mini-text{font-size:9px;font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;width:100%;text-align:center;}
 
 /* STATUS BTNS */
@@ -368,7 +368,14 @@ button,input,select,textarea{font-family:inherit}
       </div>
       <div class="toggle-checks">
         <div class="tcheck"><input type="checkbox" id="fPor"><label for="fPor">&#9650; Portero</label></div>
-        <div class="tcheck"><input type="checkbox" id="fRes"><label for="fRes">&#127968; Residencia (R)</label></div>
+      </div>
+      <div class="frow">
+        <label>Residencia</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <button class="lat-btn res-btn" data-res="">— Ninguna</button>
+          <button class="lat-btn res-btn" data-res="R">Residencia (R)</button>
+          <button class="lat-btn res-btn" data-res="MP">Medio Pensionista (MP)</button>
+        </div>
       </div>
       <div class="frow" id="fProcRow" style="display:none">
         <label>Procedencia</label>
@@ -612,6 +619,7 @@ function showApp(teamKey){
   document.getElementById('homeScreen').style.display='none';
   document.getElementById('appScreen').style.display='block';
   document.getElementById('btnHome').style.display='inline-flex';
+  renderTeamBar(); /* forzar team bar visible */
   renderAll();
   loadTeam();
 }
@@ -696,7 +704,8 @@ function renderCampo(){
     var pos=document.createElement('div');pos.className='player-pos';
     pos.style.left=p.x+'%';pos.style.top=p.y*(100/118)+'%';pos.dataset.id=p.id;
     var chip=document.createElement('div');
-    chip.className='player-chip'+(p.isPor?' por':'')+(p.residence?' residencia':'');
+    chip.className='player-chip'+(p.isPor?' por':'')+(p.res?' residencia':'');
+    if(p.res)chip.setAttribute('data-res-label',p.res);
     chip.setAttribute('style',chipSt(p.status,p.isPor));
     chip.innerHTML='<span class="pchip-text">'+esc(p.name||'')+'</span>'
                   +((p.proc&&(p.status==='fichaje'||p.status==='futurible'))?'<span class="pchip-proc">'+esc(p.proc)+'</span>':'')
@@ -724,7 +733,8 @@ function renderRoster(){
   var futFuera=fut.filter(function(p){return!p.onPitch;});
   function mkItem(p,canDrag){
     var item=document.createElement('div');item.className='ritem';
-    var mini=document.createElement('div');mini.className='chip-mini'+(p.isPor?' por':'')+(p.residence?' residencia':'');
+    var mini=document.createElement('div');mini.className='chip-mini'+(p.isPor?' por':'')+(p.res?' residencia':'');
+    if(p.res)mini.setAttribute('data-res-label',p.res);
     mini.setAttribute('style',chipSt(p.status,p.isPor));
     mini.innerHTML='<span class="chip-mini-text">'+esc(p.name||'')+'</span>';
     var info=document.createElement('div');info.className='ritem-info';
@@ -831,9 +841,10 @@ function openModal(pid){
   var p=getPlayer(selectedId);if(!p)return;
   document.getElementById('fName').value=p.name||'';
   document.getElementById('fPor').checked=!!p.isPor;
-  document.getElementById('fRes').checked=!!p.residence;
   document.getElementById('fProc').value=p.proc||'';
   showProcRow(p.status);
+  /* residencia */
+  document.querySelectorAll('.res-btn').forEach(function(b){b.classList.toggle('active',b.dataset.res===(p.res||''));});
   /* lateralidad */
   document.querySelectorAll('.lat-btn').forEach(function(b){b.classList.toggle('active',b.dataset.lat===(p.lat||''));});
   document.querySelectorAll('.status-btn').forEach(function(b){b.classList.toggle('active',b.dataset.status===p.status);});
@@ -845,6 +856,13 @@ function closeModal(){
   selectedId=null;renderRoster();renderCampo();renderPlist();
 }
 function bindModal(){
+  document.querySelectorAll('.res-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var p=getPlayer(selectedId);if(!p)return;
+      p.res=this.dataset.res;persist();
+      document.querySelectorAll('.res-btn').forEach(function(b){b.classList.toggle('active',b.dataset.res===p.res);});
+    });
+  });
   document.querySelectorAll('.lat-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
       var p=getPlayer(selectedId);if(!p)return;
@@ -1027,9 +1045,11 @@ document.getElementById('btnHome').style.display='none';
 /* ══ BOOT ══ */
 restoreDark();
 buildStatusBtns();
+bindModal();   /* bind inmediato, no esperar Firebase */
+bindFoto();
 renderSeasonSel();
 renderTeamBar();
-showHome(); /* home primero */
+showHome();
 setSync('connecting');
 
 firebase.auth().signInAnonymously().then(function(){
@@ -1042,15 +1062,11 @@ firebase.auth().signInAnonymously().then(function(){
   });
 }).then(function(){
   buildStatusBtns();
-  bindModal();
-  bindFoto();
-  renderHomeGrid(); /* refrescar home con datos reales */
+  renderHomeGrid();
   setSync('saved');
 }).catch(function(e){
   console.error(e);
   setSync('error','Sin conexi\xf3n Firebase');
-  bindModal();
-  bindFoto();
 });
 </script>
 </body>
