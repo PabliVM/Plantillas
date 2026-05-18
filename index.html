@@ -231,7 +231,9 @@ button,input,select,textarea{font-family:inherit}
 .color-type-inputs span{font-size:9px;color:var(--text-mut);}
 .color-type-inputs input[type=color]{width:28px;height:24px;border:1px solid var(--border);border-radius:var(--rs);cursor:pointer;padding:1px;background:none;}
 .btn-reset-colors{font-size:10px;color:var(--text-mut);background:none;border:none;cursor:pointer;text-decoration:underline;margin-top:4px;}
-.btn-reset-colors:hover{color:var(--rm-blue)}
+.stat-pill{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-sec);white-space:nowrap;}
+.stat-pill strong{font-size:13px;font-weight:700;color:var(--rm-blue);}
+.stat-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;}
 
 /* FOOTER */
 .app-footer{background:var(--rm-blue);color:rgba(255,255,255,.5);font-size:10px;text-align:center;padding:10px;position:fixed;left:0;right:0;bottom:0;z-index:50;}
@@ -290,17 +292,16 @@ button,input,select,textarea{font-family:inherit}
 <div class="main">
   <div class="summary-bar">
     <div class="summary-name" id="teamName">&mdash;<small id="teamKey">&mdash;</small></div>
-    <div id="statsBar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px;font-weight:600;color:var(--text-sec);">
-      <span>Plantilla: <span class="cpill" id="statTotal" style="font-size:11px;">0+0</span></span>
-      <span style="color:var(--border);">|</span>
-      <span>&#128098; Diestros: <b id="statDiestro">0</b></span>
-      <span>&#128099; Zurdos: <b id="statZurdo">0</b></span>
-      <span>&#129456; Ambidiestros: <b id="statAmbi">0</b></span>
-      <span style="color:var(--border);">|</span>
-      <span>R Residencia: <b id="statRes">0</b></span>
-      <span>MP Media pens.: <b id="statMP">0</b></span>
+    <div id="statsBar" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div class="stat-pill">Plantilla <strong id="statTotal">0+0</strong></div>
+      <div class="stat-sep"></div>
+      <div class="stat-pill">Diestros <strong id="statDiestro">0</strong></div>
+      <div class="stat-pill">Zurdos <strong id="statZurdo">0</strong></div>
+      <div class="stat-pill">Ambidiestros <strong id="statAmbi">0</strong></div>
+      <div class="stat-sep"></div>
+      <div class="stat-pill">Residencia (R) <strong id="statRes">0</strong></div>
+      <div class="stat-pill">Media pens. (MP) <strong id="statMP">0</strong></div>
     </div>
-    <div class="counter">En campo: <span class="cpill" id="counterPill">0 + 0</span></div>
   </div>
   <div class="layout">
 
@@ -340,21 +341,6 @@ button,input,select,textarea{font-family:inherit}
           <div class="campo-players" id="campoPlayers"></div>
         </div>
       </div>
-      <!-- Necesidades y Observaciones debajo del campo -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:546px;margin-top:10px;">
-        <div class="card">
-          <div class="card-h" style="font-size:10px;padding:7px 10px;">Necesidades</div>
-          <div class="card-b" style="padding:7px 10px;">
-            <textarea id="txtNecesidades" placeholder="Necesidades del equipo..." style="width:100%;min-height:80px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.4;font-family:var(--font);"></textarea>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-h" style="font-size:10px;padding:7px 10px;">Observaciones</div>
-          <div class="card-b" style="padding:7px 10px;">
-            <textarea id="txtObservaciones" placeholder="Observaciones..." style="width:100%;min-height:80px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.4;font-family:var(--font);"></textarea>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- COL 2: ROSTER -->
@@ -384,6 +370,22 @@ button,input,select,textarea{font-family:inherit}
       </div>
     </div>
 
+  </div>
+
+  <!-- NECESIDADES Y OBSERVACIONES - ancho completo -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
+    <div class="card">
+      <div class="card-h">Necesidades del equipo</div>
+      <div class="card-b">
+        <textarea id="txtNecesidades" placeholder="Necesidades del equipo..." style="width:100%;min-height:90px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h">Observaciones</div>
+      <div class="card-b">
+        <textarea id="txtObservaciones" placeholder="Observaciones..." style="width:100%;min-height:90px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
+      </div>
+    </div>
   </div>
 
 </div>
