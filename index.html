@@ -808,15 +808,15 @@ function buildStatusBtns(){
 }
 
 /* ══ MODAL EDITOR ══ */
-var FOOT_R='https://raw.githubusercontent.com/PabliVM/Plantillas/main/Imagen1.png';
-var FOOT_L='https://raw.githubusercontent.com/PabliVM/Plantillas/main/Imagen2.png';
+var FOOT_R='https://raw.githubusercontent.com/PabliVM/Plantillas/main/Imagen2.png';
+var FOOT_L='https://raw.githubusercontent.com/PabliVM/Plantillas/main/Imagen1.png';
 function footHtmlFor(lat){
   if(!lat)return'';
   var stR='<img src="'+FOOT_R+'" style="width:11px;height:16px;display:block;opacity:.9;">';
   var stL='<img src="'+FOOT_L+'" style="width:11px;height:16px;display:block;opacity:.9;">';
   if(lat==='diestro')     return'<span class="pchip-foot right">'+stR+'</span>';
   if(lat==='zurdo')       return'<span class="pchip-foot left">'+stL+'</span>';
-  if(lat==='ambidiestro') return'<span class="pchip-foot both">'+stR+stL+'</span>';
+  if(lat==='ambidiestro') return'<span class="pchip-foot both">'+stL+stR+'</span>';
   return'';
 }
 function showProcRow(status){
