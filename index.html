@@ -822,6 +822,8 @@ function footHtmlFor(lat){
   if(lat==='ambidiestro') return s+'both"  style="color:#000">'+FOOT_SVG+FOOT_SVG+'</span>';
   return'';
 }
+
+function showProcRow(status){
   var show=status==='fichaje'||status==='futurible';
   document.getElementById('fProcRow').style.display=show?'flex':'none';
 }
@@ -1043,13 +1045,13 @@ document.getElementById('btnHome').addEventListener('click',showHome);
 document.getElementById('btnHome').style.display='none';
 
 /* ══ BOOT ══ */
-restoreDark();
-buildStatusBtns();
-bindModal();   /* bind inmediato, no esperar Firebase */
-bindFoto();
-renderSeasonSel();
-renderTeamBar();
-showHome();
+try{restoreDark();}catch(e){}
+try{buildStatusBtns();}catch(e){}
+try{bindModal();}catch(e){console.error('bindModal',e);}
+try{bindFoto();}catch(e){}
+try{renderSeasonSel();}catch(e){}
+try{renderTeamBar();}catch(e){}
+try{showHome();}catch(e){console.error('showHome',e);}
 setSync('connecting');
 
 firebase.auth().signInAnonymously().then(function(){
@@ -1057,15 +1059,15 @@ firebase.auth().signInAnonymously().then(function(){
     if(snap.exists){
       var d=snap.data();
       if(d.colors){ALL_COLOR_KEYS.forEach(function(k){if(d.colors[k])colors[k]=Object.assign({},STATUS_DEF[k],d.colors[k]);});try{localStorage.setItem(COL_KEY,JSON.stringify(d.colors));}catch(e){}}
-      if(d.seasons&&d.seasons.length){seasons=d.seasons;try{localStorage.setItem(SZN_KEY,JSON.stringify(seasons));}catch(e){}if(seasons.indexOf(activeSzn)===-1)activeSzn=seasons[seasons.length-1];renderSeasonSel();}
+      if(d.seasons&&d.seasons.length){seasons=d.seasons;try{localStorage.setItem(SZN_KEY,JSON.stringify(seasons));}catch(e){}if(seasons.indexOf(activeSzn)===-1)activeSzn=seasons[seasons.length-1];try{renderSeasonSel();}catch(e){}}
     }
   });
 }).then(function(){
-  buildStatusBtns();
-  renderHomeGrid();
+  try{buildStatusBtns();}catch(e){}
+  try{renderHomeGrid();}catch(e){}
   setSync('saved');
 }).catch(function(e){
-  console.error(e);
+  console.error('Firebase error',e);
   setSync('error','Sin conexi\xf3n Firebase');
 });
 </script>
