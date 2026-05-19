@@ -431,22 +431,6 @@ button,input,select,textarea{font-family:inherit}
           </div>
         </div>
       </div>
-      <!-- Necesidades y Observaciones justo debajo del campo -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:546px;">
-        <div class="card">
-          <div class="card-h" style="padding:6px 10px;font-size:10px;">Necesidades del equipo</div>
-          <div class="card-b" style="padding:6px 8px;">
-            <textarea id="txtNecesidades" placeholder="Necesidades..." style="width:100%;min-height:70px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.4;font-family:var(--font);"></textarea>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-h" style="padding:6px 10px;font-size:10px;">Observaciones</div>
-          <div class="card-b" style="padding:6px 8px;">
-            <textarea id="txtObservaciones" placeholder="Observaciones..." style="width:100%;min-height:70px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.4;font-family:var(--font);"></textarea>
-          </div>
-        </div>
-      </div>
-    </div>
 
       <!-- COL 2 IZQUIERDA: PLANTILLA TOTAL arriba + FALTAN abajo -->
       <div class="col">
@@ -474,6 +458,21 @@ button,input,select,textarea{font-family:inherit}
       </div>
     </div>
 
+    <!-- NECESIDADES Y OBSERVACIONES -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
+      <div class="card">
+        <div class="card-h">Necesidades del equipo</div>
+        <div class="card-b">
+          <textarea id="txtNecesidades" placeholder="Necesidades del equipo..." style="width:100%;min-height:90px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h">Observaciones</div>
+        <div class="card-b">
+          <textarea id="txtObservaciones" placeholder="Observaciones..." style="width:100%;min-height:90px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- PESTAÑA CONFIGURAR ZONAS -->
