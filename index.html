@@ -824,7 +824,7 @@ var ZONAS_DEFAULT_F7=[
 function getZonas(ft){
   var key='campograma_position_zones_'+ft;
   try{var s=localStorage.getItem(key);if(s)return JSON.parse(s);}catch(e){}
-  return JSON.parse(JSON.stringify(ft==='F7'?ZONAS_DEFAULT_F7:ZONAS_DEFAULT_F11));
+  return []; /* sin zonas por defecto — el usuario las crea */
 }
 
 /* ══════════════════════════════════════
@@ -1382,8 +1382,7 @@ function bindZonas(){
   /* Restaurar por defecto */
   document.getElementById('btnRestaurarZonas').addEventListener('click',function(){
     if(!confirm('\xbfRestaurar zonas por defecto para '+activeZonaFt+'?'))return;
-    var def=JSON.parse(JSON.stringify(activeZonaFt==='F7'?ZONAS_DEFAULT_F7:ZONAS_DEFAULT_F11));
-    saveZonas(activeZonaFt,def);selectedZonaId=null;
+    saveZonas(activeZonaFt,[]);selectedZonaId=null;
     renderZonaOverlay();renderZonaPanel();
   });
 
@@ -1590,25 +1589,7 @@ function getSegsKey(ft){return'campograma_segs_'+ft;}
 function getSegs(ft){
   try{var s=localStorage.getItem(getSegsKey(ft));if(s)return JSON.parse(s);}catch(e){}
   /* Defaults parecidos a la foto: líneas que no cruzan todo el campo */
-  if(ft==='F11')return[
-    {id:'s0',x1:0, y1:14,x2:100,y2:14}, /* línea área portería arriba */
-    {id:'s1',x1:0, y1:30,x2:100,y2:30}, /* defensa */
-    {id:'s2',x1:25,y1:30,x2:25, y2:57}, /* lateral izq superior */
-    {id:'s3',x1:75,y1:30,x2:75, y2:57}, /* lateral der superior */
-    {id:'s4',x1:0, y1:57,x2:100,y2:57}, /* mediocampo */
-    {id:'s5',x1:25,y1:57,x2:25, y2:80}, /* lateral izq inferior */
-    {id:'s6',x1:75,y1:57,x2:75, y2:80}, /* lateral der inferior */
-    {id:'s7',x1:50,y1:30,x2:50, y2:57}, /* centro arriba */
-    {id:'s8',x1:50,y1:57,x2:50, y2:80}, /* centro abajo */
-    {id:'s9',x1:0, y1:80,x2:100,y2:80}  /* delantera */
-  ];
-  return[
-    {id:'s0',x1:0, y1:18,x2:100,y2:18},
-    {id:'s1',x1:0, y1:45,x2:100,y2:45},
-    {id:'s2',x1:33,y1:18,x2:33, y2:82},
-    {id:'s3',x1:67,y1:18,x2:67, y2:82},
-    {id:'s4',x1:0, y1:82,x2:100,y2:82}
-  ];
+  return[]; /* campo limpio — el usuario crea sus propios segmentos */
 }
 function saveSegs(ft,segs){
   try{localStorage.setItem(getSegsKey(ft),JSON.stringify(segs));}catch(e){}
@@ -1626,24 +1607,27 @@ function renderCfgZonas(body){
   body.innerHTML='';
   var wrap=document.createElement('div');wrap.className='zed-wrap';
 
-  /* Selector tipo */
-  var tipoRow=document.createElement('div');tipoRow.className='zed-tipo';
-  tipoRow.innerHTML='<label>Tipo de campo:</label>';
-  ['F11','F7'].forEach(function(ft){
-    var btn=document.createElement('button');btn.className='zed-tipo-btn'+(ft===zedFt?' active':'');
-    btn.textContent=ft;btn.dataset.ft=ft;
-    btn.addEventListener('click',function(){
-      zedFt=ft;zedSelId=null;zedSelSeg=null;
-      document.querySelectorAll('.zed-tipo-btn').forEach(function(b){b.classList.toggle('active',b.dataset.ft===zedFt);});
+
+
+  /* Equipo usa tipo — con botones F11/F7 */
+  var teamRow=document.createElement('div');
+  teamRow.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:8px;flex-wrap:wrap;';
+  /* Botones F11 / F7 */
+  var btnF11=document.createElement('button');btnF11.className='zed-tipo-btn'+(zedFt==='F11'?' active':'');
+  btnF11.textContent='F11';btnF11.dataset.ft='F11';
+  var btnF7=document.createElement('button');btnF7.className='zed-tipo-btn'+(zedFt==='F7'?' active':'');
+  btnF7.textContent='F7';btnF7.dataset.ft='F7';
+  [btnF11,btnF7].forEach(function(b){
+    b.addEventListener('click',function(){
+      zedFt=b.dataset.ft;zedSelId=null;zedSelSeg=null;
+      [btnF11,btnF7].forEach(function(x){x.classList.toggle('active',x.dataset.ft===zedFt);});
+      teamSel.value=zedFt;
       renderZedFull(refs);
     });
-    tipoRow.appendChild(btn);
   });
-  wrap.appendChild(tipoRow);
-
-  /* Equipo usa tipo */
-  var teamRow=document.createElement('div');
-  teamRow.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:6px;';
+  teamRow.appendChild(btnF11);teamRow.appendChild(btnF7);
+  var sep=document.createElement('span');sep.style.cssText='width:1px;height:18px;background:var(--border);margin:0 4px;';teamRow.appendChild(sep);
+  var teamLbl=document.createElement('span');teamLbl.style.cssText='font-weight:600;color:var(--text-sec);';teamLbl.textContent=activeTeam+' usa:';teamRow.appendChild(teamLbl);
   var teamSel=document.createElement('select');
   teamSel.style.cssText='padding:3px 8px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);font-size:11px;';
   teamSel.innerHTML='<option value="F11">F11</option><option value="F7">F7</option>';
@@ -1737,6 +1721,7 @@ function renderCfgZonas(body){
     if(!confirm('\xbfRestaurar por defecto para '+zedFt+'?'))return;
     localStorage.removeItem(getSegsKey(zedFt));
     localStorage.removeItem('campograma_position_zones_'+zedFt);
+    saveSegs(zedFt,[]);saveZonas(zedFt,[]);
     zedSelId=null;zedSelSeg=null;refs.drawing=false;campoEl.style.cursor='default';
     renderZedFull(refs);
   });
