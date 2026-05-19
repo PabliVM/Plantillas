@@ -520,15 +520,7 @@ button,input,select,textarea{font-family:inherit}
           <button class="field-type-btn" data-ft="F7">F7</button>
         </div>
 
-        <!-- Tipo de campo por equipo -->
-        <div class="team-field-sel">
-          <label>Equipo usa:</label>
-          <select id="teamFieldType">
-            <option value="F11">F11</option>
-            <option value="F7">F7</option>
-          </select>
-          <button class="btn sm pri" id="btnSaveTeamField">Guardar</button>
-        </div>
+
 
         <!-- Lista de zonas -->
         <div class="zona-list" id="zonaList"></div>
@@ -1329,9 +1321,6 @@ function renderZonaPanel(){
     list.appendChild(item);
   });
   renderZonaEditForm();
-  /* selector tipo campo por equipo */
-  var sel=document.getElementById('teamFieldType');
-  sel.value=getTeamFieldType(activeTeam);
 }
 
 function renderZonaEditForm(){
@@ -1359,16 +1348,6 @@ function bindZonas(){
       document.querySelectorAll('.field-type-btn').forEach(function(b){b.classList.toggle('active',b.dataset.ft===activeZonaFt);});
       renderZonaOverlay();renderZonaPanel();
     });
-  });
-
-  /* Tipo campo por equipo */
-  document.getElementById('btnSaveTeamField').addEventListener('click',function(){
-    var val=document.getElementById('teamFieldType').value;
-    setTeamFieldType(activeTeam,val);
-    /* re-detectar zonas de todos los jugadores */
-    state.players.forEach(function(p){if(p.onPitch)detectAndUpdateZone(p);});
-    persist();renderPlist();renderRoster();
-    alert('Tipo de campo del equipo actualizado a '+val);
   });
 
   /* Nueva zona */
@@ -1531,6 +1510,26 @@ function toggleDark(){document.body.classList.toggle('dark');var d=document.body
 function restoreDark(){if(localStorage.getItem('plt_dark')==='1'){document.body.classList.add('dark');document.getElementById('darkBtn').innerHTML='\u2600';}}
 function renderAll(){renderTeamBar();renderRoster();renderCampo();renderCounter();renderPlist();renderStats();}
 
+/* TIPO DE CAMPO POR EQUIPO — asignados al arranque */
+(function(){
+  if(!localStorage.getItem('campograma_team_field_type_CAS'))localStorage.setItem('campograma_team_field_type_CAS','F11');
+  if(!localStorage.getItem('campograma_team_field_type_RMC'))localStorage.setItem('campograma_team_field_type_RMC','F11');
+  if(!localStorage.getItem('campograma_team_field_type_JA'))localStorage.setItem('campograma_team_field_type_JA','F11');
+  if(!localStorage.getItem('campograma_team_field_type_JB'))localStorage.setItem('campograma_team_field_type_JB','F11');
+  if(!localStorage.getItem('campograma_team_field_type_JC'))localStorage.setItem('campograma_team_field_type_JC','F11');
+  if(!localStorage.getItem('campograma_team_field_type_CA'))localStorage.setItem('campograma_team_field_type_CA','F11');
+  if(!localStorage.getItem('campograma_team_field_type_CB'))localStorage.setItem('campograma_team_field_type_CB','F11');
+  if(!localStorage.getItem('campograma_team_field_type_IA'))localStorage.setItem('campograma_team_field_type_IA','F11');
+  if(!localStorage.getItem('campograma_team_field_type_IB'))localStorage.setItem('campograma_team_field_type_IB','F11');
+  if(!localStorage.getItem('campograma_team_field_type_AA'))localStorage.setItem('campograma_team_field_type_AA','F11');
+  if(!localStorage.getItem('campograma_team_field_type_AB'))localStorage.setItem('campograma_team_field_type_AB','F7');
+  if(!localStorage.getItem('campograma_team_field_type_AC'))localStorage.setItem('campograma_team_field_type_AC','F7');
+  if(!localStorage.getItem('campograma_team_field_type_BA'))localStorage.setItem('campograma_team_field_type_BA','F7');
+  if(!localStorage.getItem('campograma_team_field_type_BB'))localStorage.setItem('campograma_team_field_type_BB','F7');
+  if(!localStorage.getItem('campograma_team_field_type_PA'))localStorage.setItem('campograma_team_field_type_PA','F7');
+  if(!localStorage.getItem('campograma_team_field_type_PB'))localStorage.setItem('campograma_team_field_type_PB','F7');
+  if(!localStorage.getItem('campograma_team_field_type_DB'))localStorage.setItem('campograma_team_field_type_DB','F7');
+})();
 /* ══ BOOT ══ */
 try{restoreDark();}catch(e){}
 try{buildStatusBtns();}catch(e){}
@@ -1609,10 +1608,9 @@ function renderCfgZonas(body){
 
 
 
-  /* Equipo usa tipo — con botones F11/F7 */
+  /* Botones F11/F7 integrados — sin selector de equipo */
   var teamRow=document.createElement('div');
-  teamRow.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:8px;flex-wrap:wrap;';
-  /* Botones F11 / F7 */
+  teamRow.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:8px;';
   var btnF11=document.createElement('button');btnF11.className='zed-tipo-btn'+(zedFt==='F11'?' active':'');
   btnF11.textContent='F11';btnF11.dataset.ft='F11';
   var btnF7=document.createElement('button');btnF7.className='zed-tipo-btn'+(zedFt==='F7'?' active':'');
@@ -1621,30 +1619,15 @@ function renderCfgZonas(body){
     b.addEventListener('click',function(){
       zedFt=b.dataset.ft;zedSelId=null;zedSelSeg=null;
       [btnF11,btnF7].forEach(function(x){x.classList.toggle('active',x.dataset.ft===zedFt);});
-      teamSel.value=zedFt;
       renderZedFull(refs);
     });
   });
   teamRow.appendChild(btnF11);teamRow.appendChild(btnF7);
-  var sep=document.createElement('span');sep.style.cssText='width:1px;height:18px;background:var(--border);margin:0 4px;';teamRow.appendChild(sep);
-  var teamLbl=document.createElement('span');teamLbl.style.cssText='font-weight:600;color:var(--text-sec);';teamLbl.textContent=activeTeam+' usa:';teamRow.appendChild(teamLbl);
-  var teamSel=document.createElement('select');
-  teamSel.style.cssText='padding:3px 8px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);font-size:11px;';
-  teamSel.innerHTML='<option value="F11">F11</option><option value="F7">F7</option>';
-  teamSel.value=getTeamFieldType(activeTeam);
-  var saveTeamBtn=document.createElement('button');saveTeamBtn.className='btn sm pri';saveTeamBtn.textContent='Guardar para '+activeTeam;
-  saveTeamBtn.addEventListener('click',function(){
-    setTeamFieldType(activeTeam,teamSel.value);
-    state.players.forEach(function(p){if(p.onPitch)detectAndUpdateZone(p);});
-    persist();renderPlist();renderRoster();
-    saveTeamBtn.textContent='\u2713 Guardado';setTimeout(function(){saveTeamBtn.textContent='Guardar para '+activeTeam;},1500);
-  });
-  teamRow.appendChild(teamSel);teamRow.appendChild(saveTeamBtn);
   wrap.appendChild(teamRow);
 
   /* Hint */
   var hint=document.createElement('div');hint.className='zed-hint';
-  hint.innerHTML='<b>Segmentos:</b> arrastra los extremos (\u25cf) para mover. <b>Zonas:</b> clic para editar nombre/iniciales. <b>Dibujar:</b> clic en el campo para crear segmento.';
+  hint.innerHTML='<b>1. Dibuja segmentos</b> como gu\xedas visuales. <b>2. Pulsa "+ Zona"</b> para crear una zona de detecci\xf3n (rect\xe1ngulo). Arrastra la zona para posicionarla y edita su nombre/iniciales haciendo clic en ella.';
   wrap.appendChild(hint);
 
   /* Botones */
