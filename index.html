@@ -431,6 +431,22 @@ button,input,select,textarea{font-family:inherit}
           </div>
         </div>
       </div>
+      <!-- Necesidades y Observaciones justo debajo del campo -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:546px;">
+        <div class="card">
+          <div class="card-h" style="padding:6px 10px;font-size:10px;">Necesidades del equipo</div>
+          <div class="card-b" style="padding:6px 8px;">
+            <textarea id="txtNecesidades" placeholder="Necesidades..." style="width:100%;min-height:70px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.4;font-family:var(--font);"></textarea>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h" style="padding:6px 10px;font-size:10px;">Observaciones</div>
+          <div class="card-b" style="padding:6px 8px;">
+            <textarea id="txtObservaciones" placeholder="Observaciones..." style="width:100%;min-height:70px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.4;font-family:var(--font);"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
 
       <!-- COL 2 IZQUIERDA: PLANTILLA TOTAL arriba + FALTAN abajo -->
       <div class="col">
@@ -458,21 +474,6 @@ button,input,select,textarea{font-family:inherit}
       </div>
     </div>
 
-    <!-- NECESIDADES Y OBSERVACIONES -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
-      <div class="card">
-        <div class="card-h">Necesidades del equipo</div>
-        <div class="card-b">
-          <textarea id="txtNecesidades" placeholder="Necesidades del equipo..." style="width:100%;min-height:90px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-h">Observaciones</div>
-        <div class="card-b">
-          <textarea id="txtObservaciones" placeholder="Observaciones..." style="width:100%;min-height:90px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- PESTAÑA CONFIGURAR ZONAS -->
@@ -1066,45 +1067,86 @@ function renderCampo(){
 }
 
 /* ══ RENDER ROSTER ══ */
-/* ══ RENDER ROSTER — COL 3 DER: Renovados, Fichados, Futuribles con scroll ══ */
+/* ══ RENDER ROSTER — COL DER: 5 bloques con scroll individual ══ */
 function renderRoster(){
   var body=document.getElementById('rosterTodos');body.innerHTML='';
-  var ORDER=['renovado','fichaje','futurible'];
-  var LABELS={renovado:'RENOVADOS',fichaje:'FICHADOS',futurible:'FUTURIBLES'};
-  var grupos={renovado:[],fichaje:[],futurible:[]};
+  var ORDER=['renovado','fichaje','futurible','duda','baja'];
+  var LABELS={renovado:'Renovados',fichaje:'Fichados',futurible:'Futuribles',duda:'Dudas',baja:'Bajas'};
+  var COLORS={
+    renovado:{bg:'#f1f5f9',text:'#1e293b',border:'#cbd5e1'},
+    fichaje: {bg:'#77ED85',text:'#003300',border:'#4ade80'},
+    futurible:{bg:'#3b82f6',text:'#fff',border:'#2563eb'},
+    duda:    {bg:'#f59e0b',text:'#1a1d23',border:'#d97706'},
+    baja:    {bg:'#e53e3e',text:'#fff',border:'#c53030'}
+  };
+  var grupos={renovado:[],fichaje:[],futurible:[],duda:[],baja:[]};
   state.players.forEach(function(p){
     if(grupos[p.status])grupos[p.status].push(p);
   });
 
   ORDER.forEach(function(st){
     var grp=grupos[st];
+    var col=COLORS[st];
+
+    /* Bloque contenedor */
+    var bloque=document.createElement('div');
+    bloque.style.cssText='margin-bottom:8px;border-radius:var(--rs);overflow:hidden;border:1px solid '+col.border+';';
+
+    /* Cabecera coloreada */
     var hdr=document.createElement('div');
-    hdr.style.cssText='font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--text-mut);'
-      +'padding:8px 4px 3px;border-bottom:1px solid var(--border);margin-bottom:3px;display:flex;justify-content:space-between;';
-    hdr.innerHTML='<span>'+LABELS[st]+'</span><span>'+grp.length+'</span>';
-    body.appendChild(hdr);
+    hdr.style.cssText='background:'+col.bg+';color:'+col.text+';padding:6px 10px;'
+      +'display:flex;justify-content:space-between;align-items:center;'
+      +'font-size:11px;font-weight:700;letter-spacing:.3px;cursor:pointer;';
+    var cnt=document.createElement('span');
+    cnt.style.cssText='background:rgba(0,0,0,.12);border-radius:8px;padding:1px 7px;font-size:10px;font-weight:800;';
+    cnt.textContent=grp.length;
+    hdr.innerHTML='<span>'+LABELS[st].toUpperCase()+'</span>';
+    hdr.appendChild(cnt);
+
+    /* Lista con scroll */
+    var lista=document.createElement('div');
+    lista.style.cssText='max-height:140px;overflow-y:auto;background:var(--surface);';
+
     if(!grp.length){
       var empty=document.createElement('div');
-      empty.style.cssText='font-size:10px;color:var(--text-mut);font-style:italic;padding:3px 4px 6px;';
-      empty.textContent='Ninguno';body.appendChild(empty);return;
+      empty.style.cssText='font-size:10px;color:var(--text-mut);font-style:italic;padding:6px 10px;';
+      empty.textContent='Ninguno';lista.appendChild(empty);
+    } else {
+      grp.forEach(function(p){
+        var item=document.createElement('div');
+        item.style.cssText='display:flex;align-items:center;gap:7px;padding:4px 8px;'
+          +'border-bottom:1px solid var(--border-light);cursor:pointer;transition:background var(--tr);';
+        item.addEventListener('mouseenter',function(){this.style.background='var(--rm-blue-bg)';});
+        item.addEventListener('mouseleave',function(){this.style.background='';});
+
+        var mini=document.createElement('div');mini.className='chip-mini'+(p.isPor?' por':'')+(p.res?' residencia':'');
+        if(p.res)mini.setAttribute('data-res-label',p.res);
+        mini.setAttribute('style',chipSt(p.status,p.isPor));
+        mini.innerHTML='<span class="chip-mini-text">'+esc(p.name||'')+'</span>';
+
+        var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
+        var posLabel=p.isPor?'POR':(p.detectedZoneShort||'');
+        var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:9px;font-weight:700;"> \u2713</span>':'';
+        info.innerHTML='<div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+          +esc(p.name||'(sin nombre)')+enCampo+'</div>'
+          +'<div style="font-size:9px;color:var(--text-mut);">'+(posLabel||'---')+'</div>';
+
+        var pen=document.createElement('button');pen.className='ritem-edit';pen.title='Editar';pen.textContent='\u270f';
+        pen.addEventListener('click',function(e){e.stopPropagation();openModal(p.id);});
+
+        item.appendChild(mini);item.appendChild(info);item.appendChild(pen);
+        item.addEventListener('click',function(){openModal(p.id);});
+        lista.appendChild(item);
+      });
     }
-    grp.forEach(function(p){
-      var item=document.createElement('div');item.className='ritem';item.style.marginBottom='3px';
-      var mini=document.createElement('div');mini.className='chip-mini'+(p.isPor?' por':'')+(p.res?' residencia':'');
-      if(p.res)mini.setAttribute('data-res-label',p.res);
-      mini.setAttribute('style',chipSt(p.status,p.isPor));
-      mini.innerHTML='<span class="chip-mini-text">'+esc(p.name||'')+'</span>';
-      var info=document.createElement('div');info.className='ritem-info';
-      var posLabel=p.isPor?'POR':(p.detectedZoneShort||'');
-      var enCampo=p.onPitch?'<span style="color:#16a34a;font-weight:700;"> \u2713</span>':'';
-      info.innerHTML='<div class="ritem-name">'+esc(p.name||'(sin nombre)')+enCampo+'</div>'
-        +'<div class="ritem-meta">'+(posLabel||'---')+'</div>';
-      var pen=document.createElement('button');pen.className='ritem-edit';pen.title='Editar';pen.textContent='\u270f';
-      pen.addEventListener('click',function(e){e.stopPropagation();openModal(p.id);});
-      item.appendChild(mini);item.appendChild(info);item.appendChild(pen);
-      item.addEventListener('click',function(){openModal(p.id);});
-      body.appendChild(item);
+
+    /* Toggle colapsar al clicar cabecera */
+    hdr.addEventListener('click',function(){
+      lista.style.display=lista.style.display==='none'?'':'none';
     });
+
+    bloque.appendChild(hdr);bloque.appendChild(lista);
+    body.appendChild(bloque);
   });
 }
 
