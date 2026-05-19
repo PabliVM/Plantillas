@@ -10,12 +10,12 @@
   --border:#dfe1e6;--border-light:#eaecf0;
   --text:#1a1d23;--text-sec:#5a6170;--text-mut:#8b919e;
   --rm-blue:#2563eb;--rm-blue-lt:#3b7cf5;--rm-blue-bg:#edf1fc;
-  --red:#dc2626;--sh-sm:0 1px 3px rgba(0,0,0,.06);
+  --red:#dc2626;--green:#16a34a;--orange:#f97316;
+  --sh-sm:0 1px 3px rgba(0,0,0,.06);
   --r:8px;--rs:5px;
   --font:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;
   --tr:.2s ease;
   --verde1:#1a6b2a;--verde2:#0f5220;
-  --residencia-bg:#c8a800;
 }
 body.dark{
   --bg:#1a1d23;--surface:#23272f;--surface-alt:#2a2e36;
@@ -66,13 +66,23 @@ button,input,select,textarea{font-family:inherit}
 .summary-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:var(--sh-sm);}
 .summary-name{font-size:14px;font-weight:700}
 .summary-name small{display:block;font-size:10px;color:var(--text-mut);margin-top:1px}
-.counter{font-size:12px;font-weight:600;color:var(--text-sec);display:flex;align-items:center;gap:7px}
 .cpill{background:var(--rm-blue-bg);color:var(--rm-blue);padding:3px 9px;border-radius:12px;font-weight:700;}
+.stat-pill{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-sec);white-space:nowrap;}
+.stat-pill strong{font-size:13px;font-weight:700;color:var(--rm-blue);}
+.stat-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;}
+
+/* TABS INTERNAS */
+.inner-tabs{display:flex;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:12px;overflow:hidden;box-shadow:var(--sh-sm);}
+.inner-tab{flex:1;padding:9px 16px;font-size:12px;font-weight:600;color:var(--text-mut);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all var(--tr);text-align:center;}
+.inner-tab:hover{color:var(--rm-blue);background:var(--rm-blue-bg);}
+.inner-tab.active{color:var(--rm-blue);border-bottom-color:var(--rm-blue);background:var(--rm-blue-bg);}
+
+/* LAYOUT */
 .layout{display:grid;grid-template-columns:minmax(0,1fr) 290px 270px;gap:14px;align-items:start}
 @media(max-width:1120px){.layout{grid-template-columns:minmax(0,1fr) 270px}}
 @media(max-width:760px){.layout{grid-template-columns:1fr}}
 
-/* CAMPO */
+/* CAMPO — componente reutilizable */
 .campo-outer{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;align-items:center;gap:8px;}
 .campo-hint{width:100%;font-size:10px;color:var(--text-mut);font-style:italic;}
 .campo-filter{display:flex;flex-wrap:wrap;gap:5px;width:100%;margin-bottom:4px;}
@@ -87,6 +97,7 @@ button,input,select,textarea{font-family:inherit}
 .campo-foto-btn:hover{background:rgba(255,255,255,.28)}
 .campo-foto-btn:disabled{opacity:.4;cursor:wait}
 .capturing .campo-foto-btn,.capturing .chip-remove-btn{display:none!important;}
+/* NO TOCAR: CAMPO PRINCIPAL LIMPIO */
 .campo-wrap{position:relative;width:100%;padding-bottom:118%;
   background:linear-gradient(180deg,var(--verde1) 0%,var(--verde2) 12.5%,var(--verde1) 12.5%,var(--verde1) 25%,var(--verde2) 25%,var(--verde2) 37.5%,var(--verde1) 37.5%,var(--verde1) 50%,var(--verde2) 50%,var(--verde2) 62.5%,var(--verde1) 62.5%,var(--verde1) 75%,var(--verde2) 75%,var(--verde2) 87.5%,var(--verde1) 87.5%,var(--verde1) 100%);overflow:hidden;}
 .campo-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
@@ -94,23 +105,26 @@ button,input,select,textarea{font-family:inherit}
 .campo-players{position:absolute;inset:0;z-index:2;}
 .campo-wrap.drop-ok{outline:3px dashed #3b7cf5;outline-offset:-3px;}
 
-/* FICHAS */
+/* ZONAS OVERLAY — solo visible en pestaña configurar */
+.zona-overlay{position:absolute;inset:0;z-index:3;pointer-events:none;}
+.zona-rect{position:absolute;border:2px dashed rgba(255,255,255,.7);background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:all;transition:background .15s;}
+.zona-rect:hover{background:rgba(255,255,255,.18);}
+.zona-rect.selected{border-color:#ffd400;background:rgba(255,212,0,.15);}
+.zona-rect.inactive{opacity:.35;}
+.zona-label{color:#fff;font-size:11px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.8);letter-spacing:.5px;text-align:center;pointer-events:none;}
+
+/* NO TOCAR: SISTEMA DE FICHAS EXISTENTE */
 .player-pos{position:absolute;transform:translate(-50%,-50%);width:22%;touch-action:none;}
 .player-chip{position:relative;width:100%;min-height:32px;padding:4px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;text-align:center;text-transform:uppercase;cursor:grab;user-select:none;-webkit-user-select:none;box-shadow:0 2px 6px rgba(0,0,0,.45);border:2px solid transparent;transition:transform .1s,box-shadow .1s;}
-.player-chip.por{border-color:#ffd400!important;border-width:3px;}
+.player-chip.por{border-color:#f97316!important;border-width:3.5px;}
 .player-chip.dragging{cursor:grabbing;box-shadow:0 6px 18px rgba(0,0,0,.6);transform:scale(1.07);}
 .player-chip.residencia::after{content:attr(data-res-label);position:absolute;top:-7px;right:-7px;min-width:16px;height:16px;padding:0 2px;border-radius:50px;background:#fff;color:#000;font-size:8px;font-weight:900;display:flex;align-items:center;justify-content:center;border:1.5px solid #000;font-family:'Arial Narrow','Arial',sans-serif;letter-spacing:-.3px;}
 .pchip-text{width:100%;font-size:10.5px;font-weight:500;white-space:normal;word-break:break-word;line-height:1.2;letter-spacing:.2px;font-family:'Arial Narrow','Arial','Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;}
 .pchip-proc{width:100%;font-size:8.5px;font-weight:400;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Arial Narrow','Arial','Helvetica Neue',sans-serif;margin-top:1px;font-style:italic;}
 .pchip-foot{position:absolute;bottom:2px;display:flex;align-items:flex-end;gap:1px;pointer-events:none;}
 .pchip-foot.right{right:2px;}
-.pchip-foot.left{left:2px;transform:scaleX(-1);}
+.pchip-foot.left{left:2px;}
 .pchip-foot.both{right:2px;}
-.pchip-foot svg{width:8px;height:auto;display:block;opacity:.7;}
-/* botones lateralidad */
-.lat-btn{padding:4px 8px;font-size:10px;font-weight:600;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-mut);cursor:pointer;transition:all var(--tr);}
-.lat-btn:hover{border-color:var(--rm-blue);color:var(--rm-blue)}
-.lat-btn.active{background:var(--rm-blue);color:#fff;border-color:var(--rm-blue);}
 .chip-remove-btn{position:absolute;top:-6px;left:-6px;width:16px;height:16px;border-radius:50%;background:#dc2626;color:#fff;border:1.5px solid #fff;font-size:11px;line-height:1;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;opacity:0;transition:opacity .15s;padding:0;}
 .player-pos:hover .chip-remove-btn{opacity:1;}
 
@@ -133,11 +147,11 @@ button,input,select,textarea{font-family:inherit}
 .ritem-edit:hover{color:var(--rm-blue);background:var(--rm-blue-bg);}
 .rempty{text-align:center;font-size:11px;color:var(--text-mut);padding:12px 6px;font-style:italic}
 .chip-mini{flex-shrink:0;width:52px;min-height:22px;padding:2px 3px;border-radius:5px;display:flex;align-items:center;justify-content:center;text-align:center;text-transform:uppercase;border:2px solid transparent;cursor:grab;position:relative;}
-.chip-mini.por{border-color:#ffd400!important;}
+.chip-mini.por{border-color:#f97316!important;}
 .chip-mini.residencia::after{content:attr(data-res-label);position:absolute;top:-5px;right:-5px;min-width:13px;height:13px;padding:0 2px;border-radius:50px;background:#fff;color:#000;font-size:7px;font-weight:900;display:flex;align-items:center;justify-content:center;border:1.5px solid #000;font-family:'Arial Narrow','Arial',sans-serif;letter-spacing:-.3px;}
 .chip-mini-text{font-size:9px;font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;width:100%;text-align:center;}
 
-/* STATUS BTNS */
+/* MODAL */
 .frow{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
 .frow label{font-size:9px;font-weight:700;color:var(--text-mut);letter-spacing:.3px;text-transform:uppercase}
 .frow input{width:100%;padding:7px 9px;font-size:13px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);}
@@ -157,18 +171,23 @@ button,input,select,textarea{font-family:inherit}
 .btn.gho{background:transparent;border-color:transparent;color:var(--text-mut)}
 .btn.gho:hover{color:var(--rm-blue);background:var(--rm-blue-bg)}
 .btn.sm{padding:3px 8px;font-size:10px}
+.lat-btn{padding:4px 8px;font-size:10px;font-weight:600;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-mut);cursor:pointer;transition:all var(--tr);}
+.lat-btn:hover{border-color:var(--rm-blue);color:var(--rm-blue)}
+.lat-btn.active{background:var(--rm-blue);color:#fff;border-color:var(--rm-blue);}
 
 /* LISTA COL 3 */
 .plist-group-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-mut);padding:6px 0 3px;}
 .plist-item{display:flex;align-items:center;gap:7px;padding:5px 6px;border-radius:var(--rs);background:var(--surface-alt);border:1px solid var(--border-light);cursor:pointer;transition:background var(--tr),border-color var(--tr);margin-bottom:3px;}
 .plist-item:hover{background:var(--rm-blue-bg);border-color:var(--rm-blue)}
 .plist-badge{flex-shrink:0;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;border:2px solid transparent;}
-.plist-badge.por{border-color:#ffd400!important;}
+.plist-badge.por{border-color:#f97316!important;}
 .plist-name{flex:1;min-width:0;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.plist-pos{font-size:9px;font-weight:700;color:var(--rm-blue);flex-shrink:0;min-width:28px;text-align:center;}
 .plist-addbtn{font-size:9px;padding:2px 6px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text-mut);cursor:pointer;flex-shrink:0;transition:all var(--tr);}
 .plist-addbtn:hover{border-color:var(--rm-blue);color:var(--rm-blue)}
 .plist-addbtn.in{color:var(--rm-blue);border-color:var(--rm-blue);background:var(--rm-blue-bg);}
 .plist-empty{text-align:center;font-size:11px;color:var(--text-mut);padding:14px;font-style:italic}
+.warn-tag{font-size:8px;color:var(--orange);font-weight:700;margin-top:1px;}
 
 /* MODAL EDITOR */
 .ed-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;}
@@ -178,7 +197,7 @@ button,input,select,textarea{font-family:inherit}
 .ed-modal-h span{font-size:14px;font-weight:700;color:#fff;}
 .ed-modal-close{width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
 .ed-modal-close:hover{background:rgba(255,255,255,.25)}
-.ed-modal-b{padding:16px;}
+.ed-modal-b{padding:16px;max-height:70vh;overflow-y:auto;}
 .ed-modal-f{padding:10px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;}
 
 /* CONFIG DRAWER */
@@ -195,8 +214,6 @@ button,input,select,textarea{font-family:inherit}
 .cfg-tab.active{color:var(--rm-blue);border-bottom-color:var(--rm-blue);background:var(--surface);}
 .cfg-body{flex:1;overflow-y:auto;padding:16px;}
 .cfg-section-title{font-size:10px;font-weight:700;color:var(--text-mut);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;}
-
-/* PLANTILLAS TAB */
 .pt-team-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
 .pt-ttab{padding:5px 12px;font-size:11px;font-weight:700;border-radius:20px;border:1.5px solid var(--border);background:var(--surface-alt);color:var(--text-sec);cursor:pointer;white-space:nowrap;transition:all var(--tr);display:flex;align-items:center;gap:5px;}
 .pt-ttab:hover{border-color:var(--rm-blue);color:var(--rm-blue)}
@@ -217,13 +234,11 @@ button,input,select,textarea{font-family:inherit}
 .pt-pnum{width:20px;font-size:11px;font-weight:700;color:var(--text-mut);flex-shrink:0;text-align:right;}
 .pt-pname{flex:1;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .pt-por-btn{font-size:9px;color:var(--text-mut);background:none;border:1px solid var(--border);border-radius:4px;cursor:pointer;padding:2px 6px;flex-shrink:0;transition:all var(--tr);}
-.pt-por-btn:hover,.pt-por-btn.on{color:#ffd400;border-color:#ffd400;background:rgba(255,212,0,.1);}
+.pt-por-btn:hover,.pt-por-btn.on{color:#f97316;border-color:#f97316;background:rgba(249,115,22,.1);}
 .pt-pdel{font-size:14px;color:var(--red);background:none;border:none;cursor:pointer;padding:0 2px;flex-shrink:0;line-height:1;opacity:.6;}
 .pt-pdel:hover{opacity:1}
 .pt-empty{text-align:center;font-size:11px;color:var(--text-mut);padding:24px;font-style:italic;background:var(--surface-alt);border-radius:var(--rs);}
 .pt-vaciar{font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;text-decoration:underline;margin-top:8px;display:block;}
-
-/* COLORES TAB */
 .color-type-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 10px;background:var(--surface-alt);border:1px solid var(--border-light);border-radius:var(--rs);}
 .color-type-preview{width:52px;min-height:24px;border-radius:5px;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;text-transform:uppercase;flex-shrink:0;}
 .color-type-label{flex:1;font-size:12px;font-weight:600;color:var(--text);}
@@ -231,14 +246,44 @@ button,input,select,textarea{font-family:inherit}
 .color-type-inputs span{font-size:9px;color:var(--text-mut);}
 .color-type-inputs input[type=color]{width:28px;height:24px;border:1px solid var(--border);border-radius:var(--rs);cursor:pointer;padding:1px;background:none;}
 .btn-reset-colors{font-size:10px;color:var(--text-mut);background:none;border:none;cursor:pointer;text-decoration:underline;margin-top:4px;}
-.stat-pill{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-sec);white-space:nowrap;}
-.stat-pill strong{font-size:13px;font-weight:700;color:var(--rm-blue);}
-.stat-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;}
+
+/* PANEL CONFIGURAR ZONAS */
+.zonas-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start;}
+@media(max-width:900px){.zonas-layout{grid-template-columns:1fr;}}
+.zona-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;box-shadow:var(--sh-sm);}
+.zona-panel h3{font-size:12px;font-weight:700;color:var(--rm-blue);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px;}
+.zona-list{max-height:220px;overflow-y:auto;margin-bottom:10px;display:flex;flex-direction:column;gap:3px;}
+.zona-item{padding:5px 8px;border-radius:var(--rs);background:var(--surface-alt);border:1px solid var(--border-light);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all var(--tr);}
+.zona-item:hover{background:var(--rm-blue-bg);border-color:var(--rm-blue)}
+.zona-item.sel{background:var(--rm-blue-bg);border-color:var(--rm-blue);font-weight:700;}
+.zona-item .zi-short{font-size:10px;font-weight:800;color:var(--rm-blue);width:30px;flex-shrink:0;}
+.zona-item .zi-label{flex:1;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.zona-item .zi-tags{display:flex;gap:3px;flex-shrink:0;}
+.zona-item .zi-tag{font-size:8px;padding:1px 4px;border-radius:3px;background:var(--border);color:var(--text-mut);}
+.zona-item .zi-tag.off{background:#fee2e2;color:#b91c1c;}
+.zona-edit-form{display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid var(--border);}
+.ze-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ze-field{display:flex;flex-direction:column;gap:3px;}
+.ze-field label{font-size:9px;font-weight:700;color:var(--text-mut);text-transform:uppercase;}
+.ze-field input[type=text],.ze-field input[type=number]{padding:5px 7px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);width:100%;}
+.ze-field input:focus{outline:none;border-color:var(--rm-blue);}
+.ze-checks{display:flex;gap:10px;}
+.ze-check{display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;}
+.ze-check input{width:14px;height:14px;accent-color:var(--rm-blue);}
+.zona-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.field-type-sel{display:flex;gap:6px;margin-bottom:12px;align-items:center;}
+.field-type-sel label{font-size:11px;font-weight:600;color:var(--text-sec);}
+.field-type-btn{padding:4px 14px;font-size:11px;font-weight:700;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-mut);cursor:pointer;transition:all var(--tr);}
+.field-type-btn:hover{border-color:var(--rm-blue);color:var(--rm-blue);}
+.field-type-btn.active{background:var(--rm-blue);color:#fff;border-color:var(--rm-blue);}
+.team-field-sel{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:11px;}
+.team-field-sel label{font-weight:600;color:var(--text-sec);}
+.team-field-sel select{padding:3px 8px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);font-size:11px;cursor:pointer;}
 
 /* FOOTER */
 .app-footer{background:var(--rm-blue);color:rgba(255,255,255,.5);font-size:10px;text-align:center;padding:10px;position:fixed;left:0;right:0;bottom:0;z-index:50;}
 
-/* ── PANTALLA INICIO ── */
+/* HOME */
 #homeScreen{min-height:calc(100vh - 52px - 40px);padding:20px;}
 .home-wrap{max-width:900px;margin:0 auto;}
 .home-header{display:flex;align-items:center;gap:16px;margin-bottom:28px;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-sm);}
@@ -252,236 +297,6 @@ button,input,select,textarea{font-family:inherit}
 .home-team-key{font-size:16px;font-weight:800;color:var(--text);letter-spacing:-.3px;}
 .home-team-name{font-size:10px;color:var(--text-mut);margin-top:3px;}
 .home-team-cnt{font-size:10px;font-weight:600;color:var(--rm-blue);margin-top:6px;}
-
-/* =========================================================
-   CSS PESTAÑA CONFIGURAR ZONAS
-   ========================================================= */
-
-.tab-zonas{
-  width:100%;
-  display:block;
-}
-
-.zonas-header{
-  background:var(--surface,#fff);
-  border:1px solid var(--border,#dfe1e6);
-  border-radius:var(--r,8px);
-  padding:12px 14px;
-  margin-bottom:14px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:14px;
-  box-shadow:var(--sh-sm,0 1px 3px rgba(0,0,0,.06));
-}
-
-.zonas-header h2{
-  font-size:15px;
-  font-weight:800;
-  color:var(--text,#1a1d23);
-  margin:0 0 3px;
-}
-
-.zonas-header p{
-  font-size:11px;
-  color:var(--text-mut,#8b919e);
-  margin:0;
-}
-
-.zonas-field-selector{
-  min-width:120px;
-}
-
-.zonas-field-selector label,
-.form-row label{
-  display:block;
-  font-size:9px;
-  font-weight:800;
-  color:var(--text-mut,#8b919e);
-  text-transform:uppercase;
-  letter-spacing:.4px;
-  margin-bottom:4px;
-}
-
-.zonas-field-selector select,
-.form-row select,
-.form-row input{
-  width:100%;
-  padding:7px 9px;
-  border:1px solid var(--border,#dfe1e6);
-  border-radius:var(--rs,5px);
-  background:var(--surface,#fff);
-  color:var(--text,#1a1d23);
-  font-size:12px;
-  outline:none;
-}
-
-.zonas-layout{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 330px;
-  gap:14px;
-  align-items:start;
-}
-
-.zonas-campo-panel{
-  background:var(--surface,#fff);
-  border:1px solid var(--border,#dfe1e6);
-  border-radius:var(--r,8px);
-  padding:12px;
-  box-shadow:var(--sh-sm,0 1px 3px rgba(0,0,0,.06));
-  display:flex;
-  justify-content:center;
-}
-
-.campo-zonas-card{
-  max-width:546px;
-}
-
-.zones-layer{
-  position:absolute;
-  inset:0;
-  z-index:4;
-  pointer-events:none;
-}
-
-.position-zone{
-  position:absolute;
-  border:1.5px dashed rgba(255,255,255,.85);
-  background:rgba(37,99,235,.24);
-  color:#fff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:13px;
-  font-weight:900;
-  text-shadow:0 1px 3px rgba(0,0,0,.75);
-  pointer-events:auto;
-  cursor:pointer;
-  border-radius:4px;
-}
-
-.position-zone:hover{
-  background:rgba(37,99,235,.36);
-}
-
-.position-zone.selected{
-  outline:3px solid #ffd400;
-  outline-offset:-3px;
-  background:rgba(37,99,235,.42);
-}
-
-.position-zone.inactive{
-  opacity:.35;
-  background:rgba(120,120,120,.28);
-}
-
-.zonas-editor{
-  background:var(--surface,#fff);
-  border:1px solid var(--border,#dfe1e6);
-  border-radius:var(--r,8px);
-  padding:12px;
-  box-shadow:var(--sh-sm,0 1px 3px rgba(0,0,0,.06));
-}
-
-.zonas-editor-title{
-  font-size:11px;
-  font-weight:800;
-  color:var(--text-sec,#5a6170);
-  text-transform:uppercase;
-  letter-spacing:.4px;
-  border-bottom:1px solid var(--border,#dfe1e6);
-  padding-bottom:8px;
-  margin-bottom:10px;
-}
-
-.form-row{
-  margin-bottom:10px;
-}
-
-.zonas-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-
-.zone-check{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  font-size:12px;
-  color:var(--text-sec,#5a6170);
-  margin-bottom:8px;
-  cursor:pointer;
-}
-
-.zone-check input{
-  width:15px;
-  height:15px;
-  accent-color:var(--rm-blue,#2563eb);
-}
-
-.zone-actions{
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  margin-top:12px;
-}
-
-.zone-btn{
-  padding:6px 10px;
-  border-radius:var(--rs,5px);
-  border:1px solid var(--border,#dfe1e6);
-  background:var(--surface,#fff);
-  color:var(--text,#1a1d23);
-  font-size:11px;
-  font-weight:700;
-  cursor:pointer;
-}
-
-.zone-btn.primary{
-  background:var(--rm-blue,#2563eb);
-  border-color:var(--rm-blue,#2563eb);
-  color:#fff;
-}
-
-.zone-btn.danger{
-  color:#dc2626;
-}
-
-.zone-btn.danger:hover{
-  background:#dc2626;
-  border-color:#dc2626;
-  color:#fff;
-}
-
-.zone-btn.ghost{
-  background:transparent;
-  color:var(--text-mut,#8b919e);
-  border-color:transparent;
-}
-
-.zone-help{
-  margin-top:12px;
-  padding:9px;
-  border-radius:6px;
-  background:var(--surface-alt,#fafbfc);
-  border:1px solid var(--border-light,#eaecf0);
-  font-size:11px;
-  color:var(--text-sec,#5a6170);
-  line-height:1.45;
-}
-
-@media(max-width:900px){
-  .zonas-layout{
-    grid-template-columns:1fr;
-  }
-
-  .zonas-header{
-    flex-direction:column;
-    align-items:stretch;
-  }
-}
-
 </style>
 </head>
 <body>
@@ -490,9 +305,9 @@ button,input,select,textarea{font-family:inherit}
   <div class="hlogo"><img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" onerror="this.parentNode.textContent='RM'"></div>
   <span class="htitle">Confecci&oacute;n de Plantillas</span>
   <button class="hbtn" id="btnCfg">&#9881; Config y Plantillas</button>
-  <div class="sync-indicator" id="syncEl"><span class="sync-dot" id="syncDot"></span><span id="syncLbl">Conectando&hellip;</span></div>
+  <div class="sync-indicator" id="syncEl"><span class="sync-dot"></span><span id="syncLbl">Conectando&hellip;</span></div>
   <span class="hspacer"></span>
-  <button class="hbtn" id="btnHome" title="Inicio">&#8592; Equipos</button>
+  <button class="hbtn" id="btnHome" style="display:none">&#8592; Equipos</button>
   <div class="season-group">
     <select id="seasonSel" class="season-sel"></select>
     <button class="season-add" id="btnSeasonAdd" title="Nueva temporada">+</button>
@@ -501,7 +316,7 @@ button,input,select,textarea{font-family:inherit}
   <button class="hbtn-icon" id="darkBtn" onclick="toggleDark()">&#9790;</button>
 </header>
 
-<!-- ══ PANTALLA INICIO ══ -->
+<!-- PANTALLA INICIO -->
 <div id="homeScreen">
   <div class="home-wrap">
     <div class="home-header">
@@ -520,9 +335,10 @@ button,input,select,textarea{font-family:inherit}
 <div class="team-bar" id="teamBar"></div>
 
 <div class="main">
+  <!-- ESTADÍSTICAS -->
   <div class="summary-bar">
     <div class="summary-name" id="teamName">&mdash;<small id="teamKey">&mdash;</small></div>
-    <div id="statsBar" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
       <div class="stat-pill">Plantilla <strong id="statTotal">0+0</strong></div>
       <div class="stat-sep"></div>
       <div class="stat-pill">Diestros <strong id="statDiestro">0</strong></div>
@@ -533,92 +349,210 @@ button,input,select,textarea{font-family:inherit}
       <div class="stat-pill">Media pens. (MP) <strong id="statMP">0</strong></div>
     </div>
   </div>
-  <div class="layout">
 
-    <!-- COL 1: CAMPO -->
-    <div class="campo-outer">
-      <div class="campo-filter" id="campoFilter">
-        <button class="cfilter-btn active" data-filter="all">Todos</button>
-        <button class="cfilter-btn" data-filter="renovado">Renovado</button>
-        <button class="cfilter-btn" data-filter="fichaje">Fichaje</button>
-        <button class="cfilter-btn" data-filter="futurible">Futurible</button>
-        <button class="cfilter-btn" data-filter="duda">Duda</button>
-        <button class="cfilter-btn" data-filter="baja">Baja</button>
-      </div>
-      <span class="campo-hint">Arrastra fichas al campo &middot; Hover para sacar (&times;)</span>
-      <div class="campo-card">
-        <div class="campo-hdr">
-          <div class="campo-hdr-title" id="campoTitle">&mdash;</div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="campo-hdr-count" id="campoCount">0+0P</div>
-            <button class="campo-foto-btn" id="btnFoto" title="Exportar imagen">&#128247;</button>
+  <!-- TABS INTERNAS -->
+  <div class="inner-tabs">
+    <button class="inner-tab active" data-itab="campograma">&#9917; Campograma</button>
+    <button class="inner-tab" data-itab="zonas">&#9638; Configurar zonas</button>
+  </div>
+
+  <!-- PESTAÑA CAMPOGRAMA -->
+  <!-- NO TOCAR: CAMPO PRINCIPAL LIMPIO -->
+  <div id="tabCampograma">
+    <div class="layout">
+      <div class="campo-outer">
+        <div class="campo-filter" id="campoFilter">
+          <button class="cfilter-btn active" data-filter="all">Todos</button>
+          <button class="cfilter-btn" data-filter="renovado">Renovado</button>
+          <button class="cfilter-btn" data-filter="fichaje">Fichaje</button>
+          <button class="cfilter-btn" data-filter="futurible">Futurible</button>
+          <button class="cfilter-btn" data-filter="duda">Duda</button>
+          <button class="cfilter-btn" data-filter="baja">Baja</button>
+        </div>
+        <span class="campo-hint">Arrastra fichas al campo &middot; Hover para sacar (&times;)</span>
+        <div class="campo-card">
+          <div class="campo-hdr">
+            <div class="campo-hdr-title" id="campoTitle">&mdash;</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="campo-hdr-count" id="campoCount">0+0P</div>
+              <button class="campo-foto-btn" id="btnFoto" title="Exportar imagen">&#128247;</button>
+            </div>
+          </div>
+          <!-- CAMPO PRINCIPAL LIMPIO — sin zonas visibles -->
+          <div class="campo-wrap" id="campoWrap">
+            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none">
+              <rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/>
+              <line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/>
+              <rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
+              <rect x="38" y="2" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
+              <rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
+              <rect x="38" y="109" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
+            </svg>
+            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet">
+              <circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>
+              <circle cx="50" cy="59" r="1" fill="rgba(255,255,255,.35)"/>
+            </svg>
+            <img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
+            <div class="campo-players" id="campoPlayers"></div>
+            <!-- NO TOCAR: sin zona-overlay aquí -->
           </div>
         </div>
-        <div class="campo-wrap" id="campoWrap">
-          <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none">
-            <rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/>
-            <line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/>
-            <rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
-            <rect x="38" y="2" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
-            <rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
-            <rect x="38" y="109" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
-          </svg>
-          <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet">
-            <circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>
-            <circle cx="50" cy="59" r="1" fill="rgba(255,255,255,.35)"/>
-          </svg>
-          <img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
-          <div class="campo-players" id="campoPlayers"></div>
+      </div>
+
+      <!-- COL 2: ROSTER -->
+      <div class="col">
+        <div class="card">
+          <div class="card-h">Renovados y Fichajes <span class="cnt" id="cntActual">0</span></div>
+          <div class="card-b"><div class="rlist" id="rosterActual"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-h">Futuribles y Dudas <span class="cnt" id="cntFuturible">0</span></div>
+          <div class="card-b"><div class="rlist" id="rosterFuturible"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-h">Bajas <span class="cnt" id="cntBaja">0</span></div>
+          <div class="card-b"><div class="rlist" id="rosterBaja"></div></div>
+        </div>
+        <div style="padding:8px 0 0">
+          <button class="btn pri" id="btnNew" style="width:100%;justify-content:center;display:flex;padding:9px;font-size:12px;">+ A&ntilde;adir jugador</button>
+        </div>
+      </div>
+
+      <!-- COL 3: LISTA -->
+      <div class="col">
+        <div class="card">
+          <div class="card-h">Lista del equipo <span class="cnt" id="plistTotal">0+0</span></div>
+          <div class="card-b" id="plistBody"><div class="plist-empty">Sin jugadores a&uacute;n.</div></div>
         </div>
       </div>
     </div>
 
-    <!-- COL 2: ROSTER -->
-    <div class="col">
+    <!-- NECESIDADES Y OBSERVACIONES -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
       <div class="card">
-        <div class="card-h">Renovados y Fichajes <span class="cnt" id="cntActual">0</span></div>
-        <div class="card-b"><div class="rlist" id="rosterActual"></div></div>
-      </div>
-      <div class="card">
-        <div class="card-h">Futuribles y Dudas <span class="cnt" id="cntFuturible">0</span></div>
-        <div class="card-b"><div class="rlist" id="rosterFuturible"></div></div>
+        <div class="card-h">Necesidades del equipo</div>
+        <div class="card-b">
+          <textarea id="txtNecesidades" placeholder="Necesidades del equipo..." style="width:100%;min-height:90px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
+        </div>
       </div>
       <div class="card">
-        <div class="card-h">Bajas <span class="cnt" id="cntBaja">0</span></div>
-        <div class="card-b"><div class="rlist" id="rosterBaja"></div></div>
-      </div>
-      <div class="card-b" style="padding:8px 0 0">
-        <button class="btn pri" id="btnNew" style="width:100%;justify-content:center;display:flex;padding:9px;font-size:12px;">+ A&ntilde;adir jugador</button>
-      </div>
-    </div>
-
-    <!-- COL 3: LISTA -->
-    <div class="col">
-      <div class="card">
-        <div class="card-h">Lista del equipo <span class="cnt" id="plistTotal">0+0</span></div>
-        <div class="card-b" id="plistBody"><div class="plist-empty">Sin jugadores a&uacute;n.</div></div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- NECESIDADES Y OBSERVACIONES - ancho completo -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
-    <div class="card">
-      <div class="card-h">Necesidades del equipo</div>
-      <div class="card-b">
-        <textarea id="txtNecesidades" placeholder="Necesidades del equipo..." style="width:100%;min-height:90px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-h">Observaciones</div>
-      <div class="card-b">
-        <textarea id="txtObservaciones" placeholder="Observaciones..." style="width:100%;min-height:90px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
+        <div class="card-h">Observaciones</div>
+        <div class="card-b">
+          <textarea id="txtObservaciones" placeholder="Observaciones..." style="width:100%;min-height:90px;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.5;font-family:var(--font);"></textarea>
+        </div>
       </div>
     </div>
   </div>
 
-</div>
+  <!-- PESTAÑA CONFIGURAR ZONAS -->
+  <!-- CAMPO REPLICADO PARA CONFIGURAR ZONAS -->
+  <div id="tabZonas" style="display:none">
+    <div class="zonas-layout">
+      <!-- Campo replicado con overlay de zonas -->
+      <div class="campo-outer">
+        <span class="campo-hint">Selecciona una zona en el panel para editarla</span>
+        <div class="campo-card">
+          <div class="campo-hdr">
+            <div class="campo-hdr-title" id="zonasFieldTitle">Zonas &mdash; F11</div>
+            <div class="campo-hdr-count" id="zonasFieldCount">0 zonas</div>
+          </div>
+          <div class="campo-wrap" id="zonasWrap">
+            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none">
+              <rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/>
+              <line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/>
+              <rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
+              <rect x="38" y="2" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
+              <rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
+              <rect x="38" y="109" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
+            </svg>
+            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet">
+              <circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>
+              <circle cx="50" cy="59" r="1" fill="rgba(255,255,255,.35)"/>
+            </svg>
+            <img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
+            <!-- ZONA OVERLAY VISIBLE AQUÍ -->
+            <div class="zona-overlay" id="zonaOverlay"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel edición zonas -->
+      <div class="zona-panel">
+        <h3>Editar zonas</h3>
+
+        <!-- Tipo de campo -->
+        <div class="field-type-sel">
+          <label>Tipo:</label>
+          <button class="field-type-btn active" data-ft="F11">F11</button>
+          <button class="field-type-btn" data-ft="F7">F7</button>
+        </div>
+
+        <!-- Tipo de campo por equipo -->
+        <div class="team-field-sel">
+          <label>Equipo usa:</label>
+          <select id="teamFieldType">
+            <option value="F11">F11</option>
+            <option value="F7">F7</option>
+          </select>
+          <button class="btn sm pri" id="btnSaveTeamField">Guardar</button>
+        </div>
+
+        <!-- Lista de zonas -->
+        <div class="zona-list" id="zonaList"></div>
+
+        <!-- Botones crear / restaurar -->
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <button class="btn pri sm" id="btnNuevaZona">+ Nueva zona</button>
+          <button class="btn sm" id="btnRestaurarZonas">Restaurar por defecto</button>
+        </div>
+
+        <!-- Formulario edición zona seleccionada -->
+        <div class="zona-edit-form" id="zonaEditForm" style="display:none">
+          <div class="ze-row">
+            <div class="ze-field">
+              <label>Short (inicial)</label>
+              <input type="text" id="zeShort" maxlength="6" placeholder="MC">
+            </div>
+            <div class="ze-field">
+              <label>Label (nombre)</label>
+              <input type="text" id="zeLabel" maxlength="30" placeholder="Mediocentro">
+            </div>
+          </div>
+          <div class="ze-row">
+            <div class="ze-field">
+              <label>X % (izq&rarr;der)</label>
+              <input type="number" id="zeX" min="0" max="100" step="1">
+            </div>
+            <div class="ze-field">
+              <label>Y % (arr&rarr;abj)</label>
+              <input type="number" id="zeY" min="0" max="100" step="1">
+            </div>
+          </div>
+          <div class="ze-row">
+            <div class="ze-field">
+              <label>Ancho %</label>
+              <input type="number" id="zeW" min="1" max="100" step="1">
+            </div>
+            <div class="ze-field">
+              <label>Alto %</label>
+              <input type="number" id="zeH" min="1" max="100" step="1">
+            </div>
+          </div>
+          <div class="ze-checks">
+            <label class="ze-check"><input type="checkbox" id="zeVisible"> Visible</label>
+            <label class="ze-check"><input type="checkbox" id="zeActive"> Activa (detección)</label>
+          </div>
+          <div class="zona-btns">
+            <button class="btn pri sm" id="btnGuardarZona">Guardar zona</button>
+            <button class="btn dan sm" id="btnEliminarZona">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /appScreen -->
 
 <!-- MODAL EDITOR -->
 <div id="edModal" class="ed-modal-backdrop" style="display:none">
@@ -641,7 +575,7 @@ button,input,select,textarea{font-family:inherit}
       </div>
       <div class="frow">
         <label>Residencia</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="lat-btn res-btn" data-res="">— Ninguna</button>
           <button class="lat-btn res-btn" data-res="R">Residencia (R)</button>
           <button class="lat-btn res-btn" data-res="MP">Medio Pensionista (MP)</button>
@@ -653,7 +587,7 @@ button,input,select,textarea{font-family:inherit}
       </div>
       <div class="frow">
         <label>Lateralidad</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="lat-btn" data-lat="">— Ninguna</button>
           <button class="lat-btn" data-lat="diestro">Diestro</button>
           <button class="lat-btn" data-lat="zurdo">Zurdo</button>
@@ -685,16 +619,13 @@ button,input,select,textarea{font-family:inherit}
   </div>
 </div>
 
-</div><!-- /appScreen -->
-
 <footer class="app-footer">Cantera del Real Madrid CF &middot; Confecci&oacute;n de Plantillas</footer>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-/* ══ CONFIG ══ */
+/* ══ EQUIPOS ══ */
 var TEAMS=[
   {key:'CAS',name:'Castilla'},{key:'RMC',name:'Real Madrid C'},
   {key:'JA',name:'Juvenil A'},{key:'JB',name:'Juvenil B'},{key:'JC',name:'Juvenil C'},
@@ -705,6 +636,8 @@ var TEAMS=[
   {key:'PA',name:'Prebenjam\xedn A'},{key:'PB',name:'Prebenjam\xedn B'},
   {key:'DB',name:'Debutante'}
 ];
+
+/* ══ ESTADOS ══ */
 var STATUS_DEF={
   renovado: {label:'Renovado',  bg:'#f1f5f9',text:'#1e293b',border:'#cbd5e1'},
   fichaje:  {label:'Fichaje',   bg:'#77ED85', text:'#003300',border:'#4ade80'},
@@ -727,7 +660,7 @@ firebase.initializeApp({
 });
 var db=firebase.firestore();
 db.enablePersistence({synchronizeTabs:false}).catch(function(){});
-window.addEventListener('online', function(){setSync('saved');});
+window.addEventListener('online',function(){setSync('saved');});
 window.addEventListener('offline',function(){setSync('offline');});
 
 /* ══ SYNC ══ */
@@ -755,7 +688,7 @@ function saveColors(){
 }
 function chipSt(status,isPor){
   var c=colors[status]||STATUS_DEF.renovado;
-  var bc=isPor?'#f97316':c.border; /* naranja para portero */
+  var bc=isPor?'#f97316':c.border;
   var bw=isPor?'3.5px':'2px';
   return'background:'+c.bg+';color:'+c.text+';border-color:'+bc+';border-style:solid;border-width:'+bw+';';
 }
@@ -770,18 +703,13 @@ function saveSeasons(){
   db.collection('config').doc('global').set({seasons:seasons,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
 }
 
-/* ══ PERSISTENCIA FIRESTORE ══ */
+/* ══ PERSISTENCIA ══ */
 var saveTimer=null,saveInFlight=false,pendingSave=false;
-/* Usamos campogramas/{szn_teamKey} — permitido por las reglas si incluye teamKey, version y players */
 function docId(tk){return activeSzn.replace('/','_')+'_'+tk;}
 function teamDoc(tk){return db.collection('campogramas').doc(docId(tk));}
-
-/* Versión local para optimistic locking ligero */
 var localVersions={};
-
 function persist(){
-  if(!state)return;
-  setSync('saving');
+  if(!state)return;setSync('saving');
   if(saveTimer)clearTimeout(saveTimer);
   saveTimer=setTimeout(flushSave,600);
 }
@@ -793,20 +721,15 @@ function flushSave(){
   if(!localVersions[dk])localVersions[dk]=0;
   localVersions[dk]++;
   var snap=JSON.parse(JSON.stringify(state));
-  /* Las reglas exigen: teamKey (string), version (int), players (list) */
   teamDoc(activeTeam).set({
-    teamKey: docId(activeTeam),
-    version: localVersions[dk],
-    players: snap.players||[],
-    necesidades: snap.necesidades||'',
-    observaciones: snap.observaciones||'',
-    ts: firebase.firestore.FieldValue.serverTimestamp()
-  })
-  .then(function(){saveInFlight=false;setSync('saved');if(pendingSave){pendingSave=false;persist();}})
+    teamKey:docId(activeTeam),version:localVersions[dk],
+    players:snap.players||[],
+    necesidades:snap.necesidades||'',
+    observaciones:snap.observaciones||'',
+    ts:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){saveInFlight=false;setSync('saved');if(pendingSave){pendingSave=false;persist();}})
   .catch(function(){saveInFlight=false;setSync(navigator.onLine?'error':'offline');if(pendingSave){pendingSave=false;persist();}});
 }
-
-/* Cargar equipo de Firestore */
 function loadTeamFB(tk){
   return teamDoc(tk).get().then(function(snap){
     var d=snap.exists?snap.data():{};
@@ -814,7 +737,6 @@ function loadTeamFB(tk){
     return{players:d.players||[]};
   });
 }
-/* loadState/saveState para panel Plantillas */
 function loadState(tk){
   if(tk===activeTeam&&state)return state;
   try{var r=localStorage.getItem('plt_cache_'+docId(tk));return r?JSON.parse(r):null;}catch(e){return null;}
@@ -825,13 +747,108 @@ function saveState(tk,s){
   else{
     if(!localVersions[docId(tk)])localVersions[docId(tk)]=0;
     localVersions[docId(tk)]++;
-    teamDoc(tk).set({
-      teamKey: docId(tk),
-      version: localVersions[docId(tk)],
-      players: s.players||[],
-      ts: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(function(){setSync('saved');}).catch(function(){setSync('error');});
+    teamDoc(tk).set({teamKey:docId(tk),version:localVersions[docId(tk)],players:s.players||[],ts:firebase.firestore.FieldValue.serverTimestamp()})
+    .then(function(){setSync('saved');}).catch(function(){setSync('error');});
   }
+}
+
+/* ══════════════════════════════════════
+   CONFIGURACIÓN DE ZONAS F11
+══════════════════════════════════════ */
+var ZONAS_DEFAULT_F11=[
+  {id:'z_por', label:'Portero',           short:'POR',x:30, y:88,width:40,height:12,visible:true,active:true},
+  {id:'z_dci', label:'Def. Central Izq.', short:'DCI',x:20, y:72,width:28,height:14,visible:true,active:true},
+  {id:'z_dcd', label:'Def. Central Der.', short:'DCD',x:52, y:72,width:28,height:14,visible:true,active:true},
+  {id:'z_li',  label:'Lateral Izquierdo', short:'LI', x:0,  y:68,width:20,height:22,visible:true,active:true},
+  {id:'z_ld',  label:'Lateral Derecho',   short:'LD', x:80, y:68,width:20,height:22,visible:true,active:true},
+  {id:'z_mcd', label:'MC Defensivo',      short:'MCD',x:30, y:55,width:40,height:14,visible:true,active:true},
+  {id:'z_mc',  label:'Mediocentro',       short:'MC', x:25, y:40,width:50,height:15,visible:true,active:true},
+  {id:'z_mp',  label:'Mediapunta',        short:'MP', x:25, y:26,width:50,height:14,visible:true,active:true},
+  {id:'z_ei',  label:'Extremo Izquierdo', short:'EI', x:0,  y:20,width:25,height:22,visible:true,active:true},
+  {id:'z_ed',  label:'Extremo Derecho',   short:'ED', x:75, y:20,width:25,height:22,visible:true,active:true},
+  {id:'z_dc',  label:'Delantero Centro',  short:'DC', x:25, y:6, width:50,height:18,visible:true,active:true}
+];
+
+/* ══════════════════════════════════════
+   CONFIGURACIÓN DE ZONAS F7
+══════════════════════════════════════ */
+var ZONAS_DEFAULT_F7=[
+  {id:'z7_por',label:'Portero',           short:'POR',x:25, y:85,width:50,height:15,visible:true,active:true},
+  {id:'z7_ci', label:'Central Izquierdo', short:'CI', x:10, y:65,width:38,height:18,visible:true,active:true},
+  {id:'z7_cd', label:'Central Derecho',   short:'CD', x:52, y:65,width:38,height:18,visible:true,active:true},
+  {id:'z7_li', label:'Lateral Izquierdo', short:'LI', x:0,  y:60,width:10,height:25,visible:true,active:true},
+  {id:'z7_ld', label:'Lateral Derecho',   short:'LD', x:90, y:60,width:10,height:25,visible:true,active:true},
+  {id:'z7_mc', label:'Mediocentro',       short:'MC', x:20, y:40,width:60,height:22,visible:true,active:true},
+  {id:'z7_ii', label:'Interior Izquierdo',short:'II', x:0,  y:20,width:30,height:20,visible:true,active:true},
+  {id:'z7_id', label:'Interior Derecho',  short:'ID', x:70, y:20,width:30,height:20,visible:true,active:true},
+  {id:'z7_dc', label:'Delantero Centro',  short:'DC', x:25, y:4, width:50,height:18,visible:true,active:true}
+];
+
+/* ══════════════════════════════════════
+   CARGA DE ZONAS DESDE LOCALSTORAGE
+══════════════════════════════════════ */
+function getZonas(ft){
+  var key='campograma_position_zones_'+ft;
+  try{var s=localStorage.getItem(key);if(s)return JSON.parse(s);}catch(e){}
+  return JSON.parse(JSON.stringify(ft==='F7'?ZONAS_DEFAULT_F7:ZONAS_DEFAULT_F11));
+}
+
+/* ══════════════════════════════════════
+   GUARDADO DE ZONAS
+══════════════════════════════════════ */
+function saveZonas(ft,zonas){
+  var key='campograma_position_zones_'+ft;
+  try{localStorage.setItem(key,JSON.stringify(zonas));}catch(e){}
+}
+
+/* ══════════════════════════════════════
+   TIPO DE CAMPO POR EQUIPO
+══════════════════════════════════════ */
+function getTeamFieldType(tk){
+  try{return localStorage.getItem('campograma_team_field_type_'+tk)||'F11';}catch(e){return'F11';}
+}
+function setTeamFieldType(tk,ft){
+  try{localStorage.setItem('campograma_team_field_type_'+tk,ft);}catch(e){}
+}
+
+/* ══════════════════════════════════════
+   DETECCIÓN DE ZONA POR MAYOR SOLAPE DE LA FICHA
+   POSICIÓN VISIBLE = SHORT CONFIGURADO EN LA ZONA
+══════════════════════════════════════ */
+var PLAYER_TOKEN_SIZE_PERCENT=11; /* tamaño aprox de ficha en % del campo */
+
+function detectZoneByOverlap(px,py,zones){
+  /* px, py = posición centro de ficha en porcentaje del campo (x: 0-100, y: 0-118 escalado a 0-100) */
+  var hw=PLAYER_TOKEN_SIZE_PERCENT/2;
+  var hh=PLAYER_TOKEN_SIZE_PERCENT/2;
+  var chipLeft=px-hw, chipRight=px+hw;
+  var chipTop=py-hh, chipBottom=py+hh;
+  var chipArea=(chipRight-chipLeft)*(chipBottom-chipTop);
+
+  var best=null,bestArea=0;
+  zones.forEach(function(z){
+    if(!z.active)return;
+    var ix1=Math.max(chipLeft,z.x);
+    var iy1=Math.max(chipTop,z.y);
+    var ix2=Math.min(chipRight,z.x+z.width);
+    var iy2=Math.min(chipBottom,z.y+z.height);
+    if(ix2<=ix1||iy2<=iy1)return;
+    var area=(ix2-ix1)*(iy2-iy1);
+    if(area>=bestArea){bestArea=area;best=z;}
+  });
+  if(!best||bestArea===0)return{id:'',short:'',label:'Sin zona'};
+  return{id:best.id,short:best.short,label:best.label};
+}
+
+function detectAndUpdateZone(p){
+  var ft=getTeamFieldType(activeTeam);
+  var zones=getZonas(ft);
+  /* py escalado a porcentaje de 0-100 (el campo usa 0-118 internamente) */
+  var py=(p.y/118)*100;
+  var result=detectZoneByOverlap(p.x,py,zones);
+  p.detectedZoneId=result.id;
+  p.detectedZoneShort=result.short;
+  p.detectedZoneLabel=result.label;
 }
 
 /* ══ ESTADO ══ */
@@ -842,37 +859,34 @@ var selectedId=null;
 var activeCfgTab='plantillas';
 var activePtTeam=activeTeam;
 var DRAG_T=5;
-var unsubscribeSnapshot=null; /* para cancelar listener anterior */
+var unsubscribeSnapshot=null;
+var activeInnerTab='campograma';
+var activeFilter='all';
+var activeZonaFt='F11';
+var selectedZonaId=null;
 
 function uid(){return'p_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
 function getPlayer(id){return state.players.find(function(p){return p.id===id})}
 
 function loadTeam(){
-  /* Cancelar listener anterior si lo hay */
   if(unsubscribeSnapshot){unsubscribeSnapshot();unsubscribeSnapshot=null;}
-
-  /* Mostrar caché local inmediatamente mientras llega Firestore */
   try{var r=localStorage.getItem('plt_cache_'+docId(activeTeam));if(r){state=JSON.parse(r);renderAll();}}catch(e){}
-
-  /* Suscripción en tiempo real con onSnapshot */
   setSync('connecting');
-  unsubscribeSnapshot=teamDoc(activeTeam).onSnapshot(
-    function(snap){
-      /* Ignorar actualizaciones que vengan de nosotros mismos mientras estamos guardando */
-      if(saveInFlight)return;
-      var d=snap.exists?snap.data():{};
-      if(d.version)localVersions[docId(activeTeam)]=d.version;
-      var incoming={players:d.players||[],necesidades:d.necesidades||'',observaciones:d.observaciones||''};
-      state=incoming;
-      try{localStorage.setItem('plt_cache_'+docId(activeTeam),JSON.stringify(incoming));}catch(e){}
-      renderAll();
-      setSync('saved');
-    },
-    function(err){
-      console.warn('onSnapshot error',err);
-      setSync(navigator.onLine?'error':'offline');
-    }
-  );
+  unsubscribeSnapshot=teamDoc(activeTeam).onSnapshot(function(snap){
+    if(saveInFlight)return;
+    var d=snap.exists?snap.data():{};
+    if(d.version)localVersions[docId(activeTeam)]=d.version;
+    var incoming={players:d.players||[],necesidades:d.necesidades||'',observaciones:d.observaciones||''};
+    state=incoming;
+    try{localStorage.setItem('plt_cache_'+docId(activeTeam),JSON.stringify(incoming));}catch(e){}
+    renderAll();
+    var tn=document.getElementById('txtNecesidades');if(tn)tn.value=state.necesidades||'';
+    var to=document.getElementById('txtObservaciones');if(to)to.value=state.observaciones||'';
+    setSync('saved');
+  },function(err){
+    console.warn('onSnapshot error',err);
+    setSync(navigator.onLine?'error':'offline');
+  });
 }
 
 /* ══ NAVEGACIÓN HOME/APP ══ */
@@ -885,30 +899,24 @@ function showHome(){
 }
 function showApp(teamKey){
   if(teamKey&&teamKey!==activeTeam){
-    activeTeam=teamKey;
-    localStorage.setItem(ATM_KEY,activeTeam);
+    activeTeam=teamKey;localStorage.setItem(ATM_KEY,activeTeam);
     state={players:[]};selectedId=null;
   }
   localStorage.setItem('plt_last_view','app');
   document.getElementById('homeScreen').style.display='none';
   document.getElementById('appScreen').style.display='block';
   document.getElementById('btnHome').style.display='inline-flex';
-  renderTeamBar();
-  renderAll();
-  loadTeam();
+  renderTeamBar();renderAll();loadTeam();
 }
-
 function renderHomeGrid(){
   var grid=document.getElementById('homeGrid');grid.innerHTML='';
   TEAMS.forEach(function(t){
-    /* contar jugadores desde caché local */
     var cached=null;
     try{var r=localStorage.getItem('plt_cache_'+activeSzn.replace('/','_')+'_'+t.key);if(r)cached=JSON.parse(r);}catch(e){}
     var cnt=cached&&cached.players?cached.players.length:0;
     var card=document.createElement('div');card.className='home-team-card';
-    card.innerHTML='<div class="home-team-key">'+t.key+'</div>'
-                  +'<div class="home-team-name">'+t.name+'</div>'
-                  +(cnt?'<div class="home-team-cnt">'+cnt+' jugadores</div>':'<div class="home-team-cnt" style="color:var(--text-mut)">Sin jugadores</div>');
+    card.innerHTML='<div class="home-team-key">'+t.key+'</div><div class="home-team-name">'+t.name+'</div>'
+      +(cnt?'<div class="home-team-cnt">'+cnt+' jugadores</div>':'<div class="home-team-cnt" style="color:var(--text-mut)">Sin jugadores</div>');
     card.addEventListener('click',function(){showApp(t.key);});
     grid.appendChild(card);
   });
@@ -923,13 +931,11 @@ function renderTeamBar(){
     b.addEventListener('click',function(){
       if(t.key===activeTeam)return;
       activeTeam=t.key;localStorage.setItem(ATM_KEY,activeTeam);
-      state={players:[]};selectedId=null;
-      renderAll();
-      loadTeam(); /* loadTeam cancela el listener anterior automáticamente */
+      state={players:[]};selectedId=null;renderAll();loadTeam();
     });
     bar.appendChild(b);
   });
-  var t=TEAMS.find(function(x){return x.key===activeTeam});
+  var t=TEAMS.find(function(x){return x.key===activeTeam;});
   var nm=t?t.name:'\u2014';
   document.getElementById('teamName').firstChild.textContent=nm;
   document.getElementById('teamKey').textContent=activeTeam;
@@ -946,8 +952,7 @@ function renderSeasonSel(){
 }
 document.getElementById('seasonSel').addEventListener('change',function(){
   activeSzn=this.value;localStorage.setItem(ASZN_KEY,activeSzn);
-  state={players:[]};selectedId=null;
-  renderAll();loadTeam();
+  state={players:[]};selectedId=null;renderAll();loadTeam();
 });
 document.getElementById('btnSeasonAdd').addEventListener('click',function(){
   var last=seasons[seasons.length-1];var y=parseInt(last.split('/')[1]||last)+1;var next=y+'/'+(y+1);
@@ -957,7 +962,7 @@ document.getElementById('btnSeasonAdd').addEventListener('click',function(){
 });
 document.getElementById('btnSeasonDel').addEventListener('click',function(){
   if(seasons.length<=1){alert('Debe haber al menos una temporada.');return}
-  if(!confirm('\xbfEliminar la temporada "'+activeSzn+'"?\nQuedar\xe1 en Firebase como backup.'))return;
+  if(!confirm('\xbfEliminar la temporada "'+activeSzn+'"?'))return;
   var idx=seasons.indexOf(activeSzn);seasons.splice(idx,1);
   activeSzn=seasons[Math.min(idx,seasons.length-1)];
   saveSeasons();localStorage.setItem(ASZN_KEY,activeSzn);
@@ -970,8 +975,7 @@ function inGoal(x,y){return(x>=PZ.top.x1&&x<=PZ.top.x2&&y>=PZ.top.y1&&y<=PZ.top.
 function countPitch(){var c=0,p=0;state.players.forEach(function(pl){if(!pl.onPitch||pl.status==='baja')return;if(pl.isPor&&inGoal(pl.x,pl.y))p++;else c++;});return{c:c,p:p};}
 function renderCounter(){var r=countPitch();document.getElementById('campoCount').textContent=r.c+'+'+r.p+'P';}
 
-var activeFilter='all';
-
+/* ══ FILTRO ══ */
 function bindFilter(){
   document.querySelectorAll('.cfilter-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
@@ -982,7 +986,20 @@ function bindFilter(){
   });
 }
 
-/* ══ RENDER CAMPO ══ */
+/* ══ IMÁGENES LATERALIDAD ══ */
+var FOOT_R='https://raw.githubusercontent.com/PabliVM/Plantillas/main/izquierdo.png';
+var FOOT_L='https://raw.githubusercontent.com/PabliVM/Plantillas/main/derecho.png';
+function footHtmlFor(lat){
+  if(!lat)return'';
+  var stR='<img src="'+FOOT_R+'" style="width:11px;height:16px;display:block;opacity:.9;transform:scaleX(-1);">';
+  var stL='<img src="'+FOOT_L+'" style="width:11px;height:16px;display:block;opacity:.9;">';
+  if(lat==='diestro')return'<span class="pchip-foot right">'+stR+'</span>';
+  if(lat==='zurdo')return'<span class="pchip-foot left">'+stL+'</span>';
+  if(lat==='ambidiestro')return'<span class="pchip-foot both"><img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/ambidiestro.png?v=2" style="width:22px;height:16px;display:block;opacity:.9;"></span>';
+  return'';
+}
+
+/* ══ RENDER CAMPO (NO TOCAR: CAMPO PRINCIPAL LIMPIO) ══ */
 function renderCampo(){
   var cont=document.getElementById('campoPlayers');cont.innerHTML='';
   state.players.forEach(function(p){
@@ -996,11 +1013,11 @@ function renderCampo(){
     if(p.res)chip.setAttribute('data-res-label',p.res);
     chip.setAttribute('style',chipSt(p.status,p.isPor));
     chip.innerHTML='<span class="pchip-text">'+esc(p.name||'')+'</span>'
-                  +((p.proc&&(p.status==='fichaje'||p.status==='futurible'))?'<span class="pchip-proc">'+esc(p.proc)+'</span>':'')
-                  +footHtmlFor(p.lat||'');
+      +((p.proc&&(p.status==='fichaje'||p.status==='futurible'))?'<span class="pchip-proc">'+esc(p.proc)+'</span>':'')
+      +footHtmlFor(p.lat||'');
     var xBtn=document.createElement('button');xBtn.className='chip-remove-btn';xBtn.textContent='\xd7';
     xBtn.addEventListener('pointerdown',function(e){e.stopPropagation();});
-    xBtn.addEventListener('click',function(e){e.stopPropagation();p.onPitch=false;persist();renderCampo();renderRoster();renderCounter();renderPlist();});
+    xBtn.addEventListener('click',function(e){e.stopPropagation();p.onPitch=false;persist();renderCampo();renderRoster();renderCounter();renderPlist();renderStats();});
     pos.appendChild(chip);pos.appendChild(xBtn);
     chip.addEventListener('pointerdown',function(ev){if(visible)dragOnCampo(ev,p.id);});
     cont.appendChild(pos);
@@ -1013,9 +1030,9 @@ function renderRoster(){
   ab.innerHTML='';fb.innerHTML='';bb.innerHTML='';
   var actual=[],fut=[],baja=[];
   state.players.forEach(function(p){
-    if(p.status==='baja') baja.push(p);
-    else if(p.status==='futurible'||p.status==='duda') fut.push(p);
-    else actual.push(p); /* renovado + fichaje */
+    if(p.status==='baja')baja.push(p);
+    else if(p.status==='futurible'||p.status==='duda')fut.push(p);
+    else actual.push(p);
   });
   var actualFuera=actual.filter(function(p){return!p.onPitch;});
   var futFuera=fut.filter(function(p){return!p.onPitch;});
@@ -1026,9 +1043,11 @@ function renderRoster(){
     mini.setAttribute('style',chipSt(p.status,p.isPor));
     mini.innerHTML='<span class="chip-mini-text">'+esc(p.name||'')+'</span>';
     var info=document.createElement('div');info.className='ritem-info';
-    var lbl=(colors[p.status]||STATUS_DEF.actual).label;
+    /* POSICIÓN VISIBLE = SHORT CONFIGURADO EN LA ZONA */
+    var posLabel=p.detectedZoneShort||'';
+    var lbl=(colors[p.status]||STATUS_DEF.renovado).label;
     info.innerHTML='<div class="ritem-name">'+esc(p.name||'(sin nombre)')+'</div>'
-                  +'<div class="ritem-meta">'+lbl+(p.isPor?' \xb7 POR':'')+(p.residence?' \xb7 R':'')+'</div>';
+      +'<div class="ritem-meta">'+lbl+(posLabel?' \xb7 '+posLabel:'')+'</div>';
     var pen=document.createElement('button');pen.className='ritem-edit';pen.title='Editar';pen.textContent='\u270f';
     pen.addEventListener('click',function(e){e.stopPropagation();openModal(p.id);});
     item.appendChild(mini);item.appendChild(info);item.appendChild(pen);
@@ -1051,7 +1070,8 @@ function renderRoster(){
 function renderPlist(){
   var body=document.getElementById('plistBody');body.innerHTML='';
   var totalC=state.players.filter(function(p){return!p.isPor&&p.status!=='baja';}).length;
-  var totalP=state.players.filter(function(p){return p.isPor&&p.status!=='baja';}).length;  document.getElementById('plistTotal').textContent=totalC+'+'+totalP;
+  var totalP=state.players.filter(function(p){return p.isPor&&p.status!=='baja';}).length;
+  document.getElementById('plistTotal').textContent=totalC+'+'+totalP;
   if(!state.players.length){body.innerHTML='<div class="plist-empty">Sin jugadores a\xfan.</div>';return;}
   var fuera=state.players.filter(function(p){return!p.onPitch&&p.status!=='baja';});
   var dentro=state.players.filter(function(p){return p.onPitch&&p.status!=='baja';});
@@ -1060,18 +1080,39 @@ function renderPlist(){
   function mkRow(p,btn){
     var row=document.createElement('div');row.className='plist-item';
     var badge=document.createElement('div');badge.className='plist-badge'+(p.isPor?' por':'');
-    badge.setAttribute('style',chipSt(p.status,p.isPor));badge.textContent=p.isPor?'POR':'CAM';
+    badge.setAttribute('style',chipSt(p.status,p.isPor));
+    /* POSICIÓN VISIBLE = SHORT CONFIGURADO EN LA ZONA */
+    badge.textContent=p.detectedZoneShort||'---';
     var name=document.createElement('div');name.className='plist-name';name.textContent=esc(p.name||'(sin nombre)');
+    /* advertencias portero */
+    var warn='';
+    if(p.isPor&&p.detectedZoneShort&&p.detectedZoneShort!=='POR')warn='Portero fuera de zona POR';
+    if(!p.isPor&&p.detectedZoneShort==='POR')warn='Jugador de campo en zona POR';
+    var infoDiv=document.createElement('div');infoDiv.style.flex='1';infoDiv.style.minWidth='0';
+    infoDiv.innerHTML='<div class="plist-name">'+esc(p.name||'(sin nombre)')+'</div>'+(warn?'<div class="warn-tag">'+warn+'</div>':'');
     var ab=document.createElement('button');ab.className='plist-addbtn'+(btn==='in'?' in':'');
     ab.textContent=btn==='in'?'Sacar':'+ Campo';
     ab.addEventListener('click',function(e){e.stopPropagation();if(btn==='in'){p.onPitch=false;}else{p.onPitch=true;selectedId=p.id;}persist();renderAll();});
-    row.appendChild(badge);row.appendChild(name);row.appendChild(ab);
+    row.appendChild(badge);row.appendChild(infoDiv);row.appendChild(ab);
     row.addEventListener('click',function(){openModal(p.id);});
     return row;
   }
   if(fuera.length){var l=document.createElement('div');l.className='plist-group-label';l.textContent='Faltan por poner ('+fuera.length+')';body.appendChild(l);fuera.forEach(function(p){body.appendChild(mkRow(p,'out'));});}
   else{var all=document.createElement('div');all.className='plist-empty';all.textContent='\u2713 Todos en el campo';body.appendChild(all);}
   if(dentro.length){var l2=document.createElement('div');l2.className='plist-group-label';l2.style.marginTop='10px';l2.textContent='En campo ('+enC+'+'+enP+'P)';body.appendChild(l2);dentro.forEach(function(p){body.appendChild(mkRow(p,'in'));});}
+}
+
+/* ══ STATS ══ */
+function renderStats(){
+  var activos=state.players.filter(function(p){return p.status!=='baja';});
+  var totalC=activos.filter(function(p){return!p.isPor;}).length;
+  var totalP=activos.filter(function(p){return p.isPor;}).length;
+  document.getElementById('statTotal').textContent=totalC+'+'+totalP;
+  document.getElementById('statDiestro').textContent=state.players.filter(function(p){return p.lat==='diestro';}).length;
+  document.getElementById('statZurdo').textContent=state.players.filter(function(p){return p.lat==='zurdo';}).length;
+  document.getElementById('statAmbi').textContent=state.players.filter(function(p){return p.lat==='ambidiestro';}).length;
+  document.getElementById('statRes').textContent=state.players.filter(function(p){return p.res==='R';}).length;
+  document.getElementById('statMP').textContent=state.players.filter(function(p){return p.res==='MP';}).length;
 }
 
 /* ══ STATUS BTNS ══ */
@@ -1094,30 +1135,17 @@ function buildStatusBtns(){
 }
 
 /* ══ MODAL EDITOR ══ */
-var FOOT_R='https://raw.githubusercontent.com/PabliVM/Plantillas/main/izquierdo.png';
-var FOOT_L='https://raw.githubusercontent.com/PabliVM/Plantillas/main/derecho.png';
-function footHtmlFor(lat){
-  if(!lat)return'';
-  var stR='<img src="'+FOOT_R+'" style="width:11px;height:16px;display:block;opacity:.9;transform:scaleX(-1);">';
-  var stL='<img src="'+FOOT_L+'" style="width:11px;height:16px;display:block;opacity:.9;">';
-  if(lat==='diestro')     return'<span class="pchip-foot right">'+stR+'</span>';
-  if(lat==='zurdo')       return'<span class="pchip-foot left">'+stL+'</span>';
-  if(lat==='ambidiestro') return'<span class="pchip-foot both"><img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/ambidiestro.png?v=2" style="width:22px;height:16px;display:block;opacity:.9;"></span>';
-  return'';
-}
 function showProcRow(status){
-  var show=status==='fichaje'||status==='futurible';
-  document.getElementById('fProcRow').style.display=show?'flex':'none';
+  document.getElementById('fProcRow').style.display=(status==='fichaje'||status==='futurible')?'flex':'none';
 }
-
 function openModal(pid){
   var isNew=!pid;
   if(isNew){
-    var p={id:uid(),name:'',status:'renovado',isPor:false,residence:false,proc:'',onPitch:false,x:50,y:59};
+    var p={id:uid(),name:'',status:'renovado',isPor:false,res:'',proc:'',lat:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona'};
     state.players.push(p);selectedId=p.id;persist();
     document.getElementById('edModalTitle').textContent='Nuevo jugador';
     document.getElementById('btnDelete').style.display='none';
-  } else {
+  }else{
     selectedId=pid;
     document.getElementById('edModalTitle').textContent='Editar jugador';
     document.getElementById('btnDelete').style.display='inline-flex';
@@ -1127,9 +1155,7 @@ function openModal(pid){
   document.getElementById('fPor').checked=!!p.isPor;
   document.getElementById('fProc').value=p.proc||'';
   showProcRow(p.status);
-  /* residencia */
   document.querySelectorAll('.res-btn').forEach(function(b){b.classList.toggle('active',b.dataset.res===(p.res||''));});
-  /* lateralidad — solo botones con data-lat, no res-btn */
   document.querySelectorAll('.lat-btn[data-lat]').forEach(function(b){b.classList.toggle('active',b.dataset.lat===(p.lat||''));});
   document.querySelectorAll('.status-btn').forEach(function(b){b.classList.toggle('active',b.dataset.status===p.status);});
   document.getElementById('edModal').style.display='flex';
@@ -1154,15 +1180,9 @@ function bindModal(){
       document.querySelectorAll('.lat-btn[data-lat]').forEach(function(b){b.classList.toggle('active',b.dataset.lat===p.lat);});
     });
   });
-  document.getElementById('fProc').addEventListener('input',function(){
-    var p=getPlayer(selectedId);if(p){p.proc=this.value;persist();}
-  });
-  document.getElementById('fName').addEventListener('input',function(){
-    var p=getPlayer(selectedId);if(p){p.name=this.value;persist();}
-  });
-  document.getElementById('fPor').addEventListener('change',function(){
-    var p=getPlayer(selectedId);if(p){p.isPor=this.checked;persist();}
-  });
+  document.getElementById('fProc').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.proc=this.value;persist();}});
+  document.getElementById('fName').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.name=this.value;persist();}});
+  document.getElementById('fPor').addEventListener('change',function(){var p=getPlayer(selectedId);if(p){p.isPor=this.checked;persist();}});
   document.getElementById('btnSave').addEventListener('click',closeModal);
   document.getElementById('edClose').addEventListener('click',closeModal);
   document.getElementById('edCancel').addEventListener('click',closeModal);
@@ -1175,7 +1195,7 @@ function bindModal(){
   document.getElementById('btnNew').addEventListener('click',function(){openModal(null);});
 }
 
-/* ══ DRAG ON CAMPO ══ */
+/* ══ DRAG ON CAMPO (NO TOCAR: SISTEMA DE FICHAS EXISTENTE) ══ */
 function dragOnCampo(ev,pid){
   ev.preventDefault();
   var p=getPlayer(pid);if(!p)return;
@@ -1188,7 +1208,13 @@ function dragOnCampo(ev,pid){
     if(!moved&&(Math.abs(e.clientX-sx)>DRAG_T||Math.abs(e.clientY-sy)>DRAG_T)){moved=true;chip.classList.add('dragging');}
     if(moved){var r=wrap.getBoundingClientRect();var x=Math.max(2,Math.min(98,((e.clientX-r.left)/r.width)*100));var yp=Math.max(2,Math.min(98,((e.clientY-r.top)/r.height)*100));p.x=x;p.y=yp*(118/100);pos.style.left=x+'%';pos.style.top=yp+'%';renderCounter();}
   }
-  function up(){chip.classList.remove('dragging');try{chip.releasePointerCapture(ptr);}catch(e){}chip.removeEventListener('pointermove',mv);chip.removeEventListener('pointerup',up);chip.removeEventListener('pointercancel',up);if(!moved){openModal(pid);}else persist();}
+  function up(){
+    chip.classList.remove('dragging');
+    try{chip.releasePointerCapture(ptr);}catch(e){}
+    chip.removeEventListener('pointermove',mv);chip.removeEventListener('pointerup',up);chip.removeEventListener('pointercancel',up);
+    if(!moved){openModal(pid);}
+    else{detectAndUpdateZone(p);persist();renderPlist();renderRoster();}
+  }
   chip.addEventListener('pointermove',mv);chip.addEventListener('pointerup',up);chip.addEventListener('pointercancel',up);
 }
 
@@ -1208,12 +1234,166 @@ function dragFromRoster(ev,pid){
     if(moved){ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';var r=wrap.getBoundingClientRect();wrap.classList.toggle('drop-ok',e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom);}
   }
   function up(e){
-    try{src.releasePointerCapture(ptr);}catch(err){}src.removeEventListener('pointermove',mv);src.removeEventListener('pointerup',up);src.removeEventListener('pointercancel',up);wrap.classList.remove('drop-ok');if(ghost.parentNode)ghost.parentNode.removeChild(ghost);
+    try{src.releasePointerCapture(ptr);}catch(err){}
+    src.removeEventListener('pointermove',mv);src.removeEventListener('pointerup',up);src.removeEventListener('pointercancel',up);
+    wrap.classList.remove('drop-ok');if(ghost.parentNode)ghost.parentNode.removeChild(ghost);
     if(!moved){openModal(pid);return;}
     var r=wrap.getBoundingClientRect();
-    if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){var x=Math.max(2,Math.min(98,((e.clientX-r.left)/r.width)*100));var yp=Math.max(2,Math.min(98,((e.clientY-r.top)/r.height)*100));p.onPitch=true;p.x=x;p.y=yp*(118/100);selectedId=p.id;persist();renderAll();}
+    if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
+      var x=Math.max(2,Math.min(98,((e.clientX-r.left)/r.width)*100));
+      var yp=Math.max(2,Math.min(98,((e.clientY-r.top)/r.height)*100));
+      p.onPitch=true;p.x=x;p.y=yp*(118/100);selectedId=p.id;
+      detectAndUpdateZone(p);persist();renderAll();
+    }
   }
   src.addEventListener('pointermove',mv);src.addEventListener('pointerup',up);src.addEventListener('pointercancel',up);
+}
+
+/* ══ PESTAÑA CONFIGURAR ZONAS ══ */
+/* GUARDADO DE ZONAS EN LOCALSTORAGE */
+/* DETECCIÓN DE POSICIÓN POR MAYOR SOLAPE */
+/* POSICIÓN VISIBLE = SHORT DE LA ZONA */
+function renderOneOverlay(overlayId,ft){
+  var overlay=document.getElementById(overlayId);if(!overlay)return;
+  overlay.innerHTML='';
+  var zonas=getZonas(ft);
+  var cntEl=ft==='F7'?document.getElementById('zonasF7Count'):document.getElementById('zonasF11Count');
+  if(cntEl)cntEl.textContent=zonas.length+' zonas';
+  zonas.forEach(function(z){
+    if(!z.visible)return;
+    var el=document.createElement('div');
+    el.className='zona-rect'+(z.id===selectedZonaId&&activeZonaFt===ft?' selected':'')+(z.active?'':' inactive');
+    el.style.left=z.x+'%';
+    el.style.top=(z.y*(100/118))+'%';
+    el.style.width=z.width+'%';
+    el.style.height=(z.height*(100/118))+'%';
+    var lbl=document.createElement('div');lbl.className='zona-label';lbl.textContent=z.short;
+    el.appendChild(lbl);
+    el.addEventListener('click',function(){activeZonaFt=ft;selectedZonaId=z.id;
+      document.querySelectorAll('.field-type-btn').forEach(function(b){b.classList.toggle('active',b.dataset.ft===ft);});
+      renderZonaOverlay();renderZonaPanel();});
+    overlay.appendChild(el);
+  });
+}
+function renderZonaOverlay(){
+  renderOneOverlay('zonaOverlay','F11');
+  renderOneOverlay('zonaOverlayF7','F7');
+}
+
+function renderZonaPanel(){
+  var zonas=getZonas(activeZonaFt);
+  var list=document.getElementById('zonaList');list.innerHTML='';
+  zonas.forEach(function(z){
+    var item=document.createElement('div');item.className='zona-item'+(z.id===selectedZonaId?' sel':'');
+    item.innerHTML='<span class="zi-short">'+esc(z.short)+'</span><span class="zi-label">'+esc(z.label)+'</span><span class="zi-tags">'
+      +(!z.visible?'<span class="zi-tag off">oculta</span>':'')
+      +(!z.active?'<span class="zi-tag off">inactiva</span>':'')
+      +'</span>';
+    item.addEventListener('click',function(){selectedZonaId=z.id;renderZonaPanel();renderZonaOverlay();renderZonaEditForm();});
+    list.appendChild(item);
+  });
+  renderZonaEditForm();
+  /* selector tipo campo por equipo */
+  var sel=document.getElementById('teamFieldType');
+  sel.value=getTeamFieldType(activeTeam);
+}
+
+function renderZonaEditForm(){
+  var form=document.getElementById('zonaEditForm');
+  if(!selectedZonaId){form.style.display='none';return;}
+  var zonas=getZonas(activeZonaFt);
+  var z=zonas.find(function(x){return x.id===selectedZonaId;});
+  if(!z){form.style.display='none';return;}
+  form.style.display='flex';
+  document.getElementById('zeShort').value=z.short;
+  document.getElementById('zeLabel').value=z.label;
+  document.getElementById('zeX').value=z.x;
+  document.getElementById('zeY').value=z.y;
+  document.getElementById('zeW').value=z.width;
+  document.getElementById('zeH').value=z.height;
+  document.getElementById('zeVisible').checked=!!z.visible;
+  document.getElementById('zeActive').checked=!!z.active;
+}
+
+function bindZonas(){
+  /* Botones tipo campo F11/F7 */
+  document.querySelectorAll('.field-type-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      activeZonaFt=this.dataset.ft;selectedZonaId=null;
+      document.querySelectorAll('.field-type-btn').forEach(function(b){b.classList.toggle('active',b.dataset.ft===activeZonaFt);});
+      renderZonaOverlay();renderZonaPanel();
+    });
+  });
+
+  /* Tipo campo por equipo */
+  document.getElementById('btnSaveTeamField').addEventListener('click',function(){
+    var val=document.getElementById('teamFieldType').value;
+    setTeamFieldType(activeTeam,val);
+    /* re-detectar zonas de todos los jugadores */
+    state.players.forEach(function(p){if(p.onPitch)detectAndUpdateZone(p);});
+    persist();renderPlist();renderRoster();
+    alert('Tipo de campo del equipo actualizado a '+val);
+  });
+
+  /* Nueva zona */
+  document.getElementById('btnNuevaZona').addEventListener('click',function(){
+    var zonas=getZonas(activeZonaFt);
+    var nz={id:'z_'+Date.now(),label:'Nueva zona',short:'NZ',x:30,y:30,width:40,height:20,visible:true,active:true};
+    zonas.push(nz);saveZonas(activeZonaFt,zonas);
+    selectedZonaId=nz.id;renderZonaOverlay();renderZonaPanel();
+  });
+
+  /* Restaurar por defecto */
+  document.getElementById('btnRestaurarZonas').addEventListener('click',function(){
+    if(!confirm('\xbfRestaurar zonas por defecto para '+activeZonaFt+'?'))return;
+    var def=JSON.parse(JSON.stringify(activeZonaFt==='F7'?ZONAS_DEFAULT_F7:ZONAS_DEFAULT_F11));
+    saveZonas(activeZonaFt,def);selectedZonaId=null;
+    renderZonaOverlay();renderZonaPanel();
+  });
+
+  /* Guardar zona */
+  document.getElementById('btnGuardarZona').addEventListener('click',function(){
+    if(!selectedZonaId)return;
+    var zonas=getZonas(activeZonaFt);
+    var z=zonas.find(function(x){return x.id===selectedZonaId;});if(!z)return;
+    z.short=(document.getElementById('zeShort').value||'').trim().toUpperCase()||z.short;
+    z.label=(document.getElementById('zeLabel').value||'').trim()||z.label;
+    z.x=parseFloat(document.getElementById('zeX').value)||0;
+    z.y=parseFloat(document.getElementById('zeY').value)||0;
+    z.width=parseFloat(document.getElementById('zeW').value)||10;
+    z.height=parseFloat(document.getElementById('zeH').value)||10;
+    z.visible=document.getElementById('zeVisible').checked;
+    z.active=document.getElementById('zeActive').checked;
+    saveZonas(activeZonaFt,zonas);
+    /* re-detectar jugadores si es el tipo activo del equipo */
+    if(getTeamFieldType(activeTeam)===activeZonaFt){
+      state.players.forEach(function(p){if(p.onPitch)detectAndUpdateZone(p);});
+      persist();renderPlist();renderRoster();
+    }
+    renderZonaOverlay();renderZonaPanel();
+  });
+
+  /* Eliminar zona */
+  document.getElementById('btnEliminarZona').addEventListener('click',function(){
+    if(!selectedZonaId||!confirm('\xbfEliminar esta zona?'))return;
+    var zonas=getZonas(activeZonaFt);
+    zonas=zonas.filter(function(x){return x.id!==selectedZonaId;});
+    saveZonas(activeZonaFt,zonas);selectedZonaId=null;
+    renderZonaOverlay();renderZonaPanel();
+  });
+}
+
+/* ══ TABS INTERNAS ══ */
+function bindInnerTabs(){
+  document.querySelectorAll('.inner-tab').forEach(function(tab){
+    tab.addEventListener('click',function(){
+      activeInnerTab=this.dataset.itab;
+      document.querySelectorAll('.inner-tab').forEach(function(t){t.classList.toggle('active',t.dataset.itab===activeInnerTab);});
+      document.getElementById('tabCampograma').style.display=activeInnerTab==='campograma'?'block':'none';
+      document.getElementById('tabZonas').style.display=activeInnerTab==='zonas'?'block':'none';
+      if(activeInnerTab==='zonas'){renderZonaOverlay();renderZonaPanel();}
+    });
+  });
 }
 
 /* ══ CFG DRAWER ══ */
@@ -1234,8 +1414,6 @@ function renderCfg(){
   if(activeCfgTab==='plantillas')renderCfgPlantillas(body);
   else renderCfgColores(body);
 }
-
-/* TAB PLANTILLAS */
 function renderCfgPlantillas(body){
   var tabs=document.createElement('div');tabs.className='pt-team-tabs';
   TEAMS.forEach(function(t){
@@ -1258,32 +1436,30 @@ function renderCfgPlantillas(body){
     var name=(inp.value||'').trim();if(!name)return;
     var tdd=loadState(activePtTeam)||{players:[]};if(!tdd.players)tdd.players=[];
     if(tdd.players.some(function(p){return p.name===name;})){inp.select();return;}
-    tdd.players.push({id:uid(),name:name,status:'renovado',isPor:false,residence:false,onPitch:false,x:50,y:59});
+    tdd.players.push({id:uid(),name:name,status:'renovado',isPor:false,res:'',lat:'',proc:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona'});
     saveState(activePtTeam,tdd);inp.value='';renderCfg();setTimeout(function(){var el=document.getElementById('ptInp');if(el)el.focus();},50);
   }
   addBtn.addEventListener('click',doAdd);inp.addEventListener('keydown',function(e){if(e.key==='Enter')doAdd();});
   var listWrap=document.createElement('div');listWrap.className='pt-player-list';
-  if(!players.length){var emp=document.createElement('div');emp.className='pt-empty';emp.textContent='No hay jugadores en '+tName+'. Escribe un nombre y pulsa + A\xd1ADIR.';listWrap.appendChild(emp);}
+  if(!players.length){var emp=document.createElement('div');emp.className='pt-empty';emp.textContent='No hay jugadores en '+tName+'.';listWrap.appendChild(emp);}
   else players.forEach(function(p,i){
     var row=document.createElement('div');row.className='pt-pitem';
     var num=document.createElement('span');num.className='pt-pnum';num.textContent=i+1;
     var name=document.createElement('span');name.className='pt-pname';name.textContent=p.name||'(sin nombre)';
     var porBtn=document.createElement('button');porBtn.className='pt-por-btn'+(p.isPor?' on':'');porBtn.textContent=p.isPor?'POR \u2713':'POR';
-    porBtn.addEventListener('click',function(e){e.stopPropagation();var tdd=loadState(activePtTeam)||{players:[]};var pp=tdd.players.find(function(x){return x.id===p.id;});if(pp){pp.isPor=!pp.isPor;saveState(activePtTeam,tdd);}if(activePtTeam===activeTeam){loadTeamFB(activeTeam).then(function(d){state=d;renderAll();});}renderCfg();});
+    porBtn.addEventListener('click',function(e){e.stopPropagation();var tdd=loadState(activePtTeam)||{players:[]};var pp=tdd.players.find(function(x){return x.id===p.id;});if(pp){pp.isPor=!pp.isPor;saveState(activePtTeam,tdd);}if(activePtTeam===activeTeam){state=tdd;renderAll();}renderCfg();});
     var del=document.createElement('button');del.className='pt-pdel';del.textContent='\xd7';
     del.addEventListener('click',function(e){e.stopPropagation();var tdd=loadState(activePtTeam)||{players:[]};tdd.players=(tdd.players||[]).filter(function(x){return x.id!==p.id;});saveState(activePtTeam,tdd);if(activePtTeam===activeTeam){state=tdd;renderAll();}renderCfg();});
     row.appendChild(num);row.appendChild(name);row.appendChild(porBtn);row.appendChild(del);listWrap.appendChild(row);
   });
   body.appendChild(listWrap);
-  if(players.length){var vac=document.createElement('button');vac.className='pt-vaciar';vac.textContent='Vaciar equipo';vac.addEventListener('click',function(){if(!confirm('\xbfVaciar la plantilla de '+tName+'?\nQuedar\xe1 en Firebase como backup.'))return;saveState(activePtTeam,{players:[]});if(activePtTeam===activeTeam){state={players:[]};renderAll();}renderCfg();});body.appendChild(vac);}
+  if(players.length){var vac=document.createElement('button');vac.className='pt-vaciar';vac.textContent='Vaciar equipo';vac.addEventListener('click',function(){if(!confirm('\xbfVaciar la plantilla de '+tName+'?'))return;saveState(activePtTeam,{players:[]});if(activePtTeam===activeTeam){state={players:[]};renderAll();}renderCfg();});body.appendChild(vac);}
 }
-
-/* TAB COLORES */
 function renderCfgColores(body){
-  var title=document.createElement('div');title.className='cfg-section-title';title.textContent='Colores (se aplican a todos los equipos)';body.appendChild(title);
+  var title=document.createElement('div');title.className='cfg-section-title';title.textContent='Colores de las fichas';body.appendChild(title);
   ALL_COLOR_KEYS.forEach(function(k){
     var c=colors[k];var row=document.createElement('div');row.className='color-type-row';
-    var prev=document.createElement('div');prev.className='color-type-preview';prev.setAttribute('style',k==='portero'?chipSt('actual',true):chipSt(k,false));prev.textContent=k==='portero'?'POR':c.label.split(' ')[0].toUpperCase();
+    var prev=document.createElement('div');prev.className='color-type-preview';prev.setAttribute('style',chipSt(k,false));prev.textContent=c.label.split(' ')[0].toUpperCase();
     var lbl=document.createElement('div');lbl.className='color-type-label';lbl.textContent=c.label;
     var inputs=document.createElement('div');inputs.className='color-type-inputs';
     inputs.innerHTML='<span>Fondo</span><input type="color" value="'+c.bg+'" data-k="'+k+'" data-p="bg"><span>Texto</span><input type="color" value="'+c.text+'" data-k="'+k+'" data-p="text"><span>Borde</span><input type="color" value="'+c.border+'" data-k="'+k+'" data-p="border">';
@@ -1317,384 +1493,7 @@ function doCapture(){
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function toggleDark(){document.body.classList.toggle('dark');var d=document.body.classList.contains('dark');document.getElementById('darkBtn').innerHTML=d?'\u2600':'\u263e';localStorage.setItem('plt_dark',d?'1':'0');}
 function restoreDark(){if(localStorage.getItem('plt_dark')==='1'){document.body.classList.add('dark');document.getElementById('darkBtn').innerHTML='\u2600';}}
-function renderStats(){
-  var activos=state.players.filter(function(p){return p.status!=='baja';});
-  var totalC=activos.filter(function(p){return!p.isPor;}).length;
-  var totalP=activos.filter(function(p){return p.isPor;}).length;
-  var diestros=state.players.filter(function(p){return p.lat==='diestro';}).length;
-  var zurdos=state.players.filter(function(p){return p.lat==='zurdo';}).length;
-  var ambis=state.players.filter(function(p){return p.lat==='ambidiestro';}).length;
-  var res=state.players.filter(function(p){return p.res==='R';}).length;
-  var mp=state.players.filter(function(p){return p.res==='MP';}).length;
-  document.getElementById('statTotal').textContent=totalC+'+'+totalP;
-  document.getElementById('statDiestro').textContent=diestros;
-  document.getElementById('statZurdo').textContent=zurdos;
-  document.getElementById('statAmbi').textContent=ambis;
-  document.getElementById('statRes').textContent=res;
-  document.getElementById('statMP').textContent=mp;
-}
 function renderAll(){renderTeamBar();renderRoster();renderCampo();renderCounter();renderPlist();renderStats();}
-function renderColors(){if(document.getElementById('cfgBody').innerHTML&&activeCfgTab==='colores')renderCfg();}
-
-document.getElementById('txtNecesidades').addEventListener('input',function(){
-  if(state){state.necesidades=this.value;persist();}
-});
-document.getElementById('txtObservaciones').addEventListener('input',function(){
-  if(state){state.observaciones=this.value;persist();}
-});
-document.getElementById('btnHome').addEventListener('click',showHome);
-document.getElementById('btnHome').style.display='none';
-
-/* =========================================================
-   CONFIGURACIÓN DE ZONAS DEL CAMPO
-   ========================================================= */
-
-/* ZONAS POR DEFECTO F11 */
-const DEFAULT_ZONES_F11 = [
-  {id:'por', label:'Portero', short:'POR', x:38, y:86, width:24, height:12, visible:true, active:true},
-
-  {id:'li', label:'Lateral izquierdo', short:'LI', x:0, y:58, width:23, height:28, visible:true, active:true},
-  {id:'dci', label:'Central izquierdo', short:'CI', x:23, y:68, width:27, height:17, visible:true, active:true},
-  {id:'dcd', label:'Central derecho', short:'CD', x:50, y:68, width:27, height:17, visible:true, active:true},
-  {id:'ld', label:'Lateral derecho', short:'LD', x:77, y:58, width:23, height:28, visible:true, active:true},
-
-  {id:'mc', label:'Mediocentro', short:'MC', x:32, y:43, width:36, height:18, visible:true, active:true},
-
-  {id:'ei', label:'Extremo izquierdo', short:'EI', x:0, y:24, width:25, height:25, visible:true, active:true},
-  {id:'ii', label:'Interior izquierdo', short:'II', x:25, y:24, width:25, height:25, visible:true, active:true},
-  {id:'id', label:'Interior derecho', short:'ID', x:50, y:24, width:25, height:25, visible:true, active:true},
-  {id:'ed', label:'Extremo derecho', short:'ED', x:75, y:24, width:25, height:25, visible:true, active:true},
-
-  {id:'dc', label:'Delantero centro', short:'DC', x:35, y:4, width:30, height:17, visible:true, active:true}
-];
-
-/* ZONAS POR DEFECTO F7 */
-const DEFAULT_ZONES_F7 = [
-  {id:'por', label:'Portero', short:'POR', x:38, y:86, width:24, height:12, visible:true, active:true},
-
-  {id:'ct', label:'Central', short:'CT', x:30, y:69, width:40, height:16, visible:true, active:true},
-
-  {id:'ci', label:'Carril izquierdo', short:'CI', x:0, y:49, width:30, height:23, visible:true, active:true},
-  {id:'cd', label:'Carril derecho', short:'CD', x:70, y:49, width:30, height:23, visible:true, active:true},
-
-  {id:'mc', label:'Mediocentro', short:'MC', x:30, y:42, width:40, height:18, visible:true, active:true},
-
-  {id:'ii', label:'Interior izquierdo', short:'II', x:20, y:24, width:30, height:20, visible:true, active:true},
-  {id:'id', label:'Interior derecho', short:'ID', x:50, y:24, width:30, height:20, visible:true, active:true},
-
-  {id:'dc', label:'Delantero centro', short:'DC', x:35, y:5, width:30, height:16, visible:true, active:true}
-];
-
-let zoneFieldType = 'F11';
-let selectedZoneId = null;
-let currentZones = [];
-
-/* LOCALSTORAGE */
-function getZoneStorageKey(type){
-  return 'campograma_position_zones_' + type;
-}
-
-function loadZones(type){
-  try{
-    const raw = localStorage.getItem(getZoneStorageKey(type));
-    if(raw) return JSON.parse(raw);
-  }catch(e){}
-
-  return JSON.parse(JSON.stringify(type === 'F7' ? DEFAULT_ZONES_F7 : DEFAULT_ZONES_F11));
-}
-
-function saveZones(type, zones){
-  localStorage.setItem(getZoneStorageKey(type), JSON.stringify(zones));
-}
-
-/* INICIAR PESTAÑA */
-function initConfigurarZonas(){
-  const selector = document.getElementById('zoneFieldType');
-  if(!selector) return;
-
-  zoneFieldType = selector.value || 'F11';
-  currentZones = loadZones(zoneFieldType);
-  selectedZoneId = currentZones[0] ? currentZones[0].id : null;
-
-  renderZonesLayer();
-  renderZoneSelect();
-  fillZoneForm();
-
-  selector.addEventListener('change', function(){
-    zoneFieldType = this.value;
-    currentZones = loadZones(zoneFieldType);
-    selectedZoneId = currentZones[0] ? currentZones[0].id : null;
-
-    renderZonesLayer();
-    renderZoneSelect();
-    fillZoneForm();
-  });
-
-  document.getElementById('zoneSelect').addEventListener('change', function(){
-    selectedZoneId = this.value;
-    renderZonesLayer();
-    fillZoneForm();
-  });
-
-  document.getElementById('btnSaveZone').addEventListener('click', saveCurrentZone);
-  document.getElementById('btnNewZone').addEventListener('click', createNewZone);
-  document.getElementById('btnDeleteZone').addEventListener('click', deleteCurrentZone);
-  document.getElementById('btnResetZones').addEventListener('click', resetZones);
-}
-
-/* PINTAR ZONAS */
-function renderZonesLayer(){
-  const layer = document.getElementById('zonesLayer');
-  if(!layer) return;
-
-  layer.innerHTML = '';
-
-  currentZones.forEach(function(zone){
-    if(!zone.visible) return;
-
-    const div = document.createElement('div');
-
-    div.className =
-      'position-zone' +
-      (zone.id === selectedZoneId ? ' selected' : '') +
-      (!zone.active ? ' inactive' : '');
-
-    div.style.left = zone.x + '%';
-    div.style.top = zone.y + '%';
-    div.style.width = zone.width + '%';
-    div.style.height = zone.height + '%';
-
-    div.textContent = zone.short || '?';
-    div.title = zone.label || zone.short || zone.id;
-
-    div.addEventListener('click', function(){
-      selectedZoneId = zone.id;
-      renderZoneSelect();
-      renderZonesLayer();
-      fillZoneForm();
-    });
-
-    layer.appendChild(div);
-  });
-
-  const label = document.getElementById('zonesFieldTypeLabel');
-  if(label) label.textContent = zoneFieldType;
-}
-
-/* SELECT DE ZONAS */
-function renderZoneSelect(){
-  const sel = document.getElementById('zoneSelect');
-  if(!sel) return;
-
-  sel.innerHTML = '';
-
-  currentZones.forEach(function(zone){
-    const opt = document.createElement('option');
-    opt.value = zone.id;
-    opt.textContent = (zone.short || '?') + ' - ' + (zone.label || zone.id);
-    sel.appendChild(opt);
-  });
-
-  sel.value = selectedZoneId || '';
-}
-
-function getSelectedZone(){
-  return currentZones.find(function(z){
-    return z.id === selectedZoneId;
-  });
-}
-
-/* RELLENAR FORMULARIO */
-function fillZoneForm(){
-  const z = getSelectedZone();
-  if(!z) return;
-
-  document.getElementById('zoneLabel').value = z.label || '';
-  document.getElementById('zoneShort').value = z.short || '';
-  document.getElementById('zoneX').value = z.x;
-  document.getElementById('zoneY').value = z.y;
-  document.getElementById('zoneW').value = z.width;
-  document.getElementById('zoneH').value = z.height;
-  document.getElementById('zoneVisible').checked = !!z.visible;
-  document.getElementById('zoneActive').checked = !!z.active;
-}
-
-/* GUARDAR ZONA */
-function saveCurrentZone(){
-  const z = getSelectedZone();
-  if(!z) return;
-
-  z.label = document.getElementById('zoneLabel').value.trim();
-  z.short = document.getElementById('zoneShort').value.trim();
-
-  z.x = clampNumber(document.getElementById('zoneX').value, 0, 100);
-  z.y = clampNumber(document.getElementById('zoneY').value, 0, 100);
-  z.width = clampNumber(document.getElementById('zoneW').value, 1, 100);
-  z.height = clampNumber(document.getElementById('zoneH').value, 1, 100);
-
-  z.visible = document.getElementById('zoneVisible').checked;
-  z.active = document.getElementById('zoneActive').checked;
-
-  saveZones(zoneFieldType, currentZones);
-  renderZoneSelect();
-  renderZonesLayer();
-}
-
-/* NUEVA ZONA */
-function createNewZone(){
-  const id = 'zona_' + Date.now();
-
-  const z = {
-    id:id,
-    label:'Nueva zona',
-    short:'NZ',
-    x:40,
-    y:40,
-    width:20,
-    height:12,
-    visible:true,
-    active:true
-  };
-
-  currentZones.push(z);
-  selectedZoneId = id;
-
-  saveZones(zoneFieldType, currentZones);
-  renderZoneSelect();
-  renderZonesLayer();
-  fillZoneForm();
-}
-
-/* ELIMINAR ZONA */
-function deleteCurrentZone(){
-  if(!selectedZoneId) return;
-
-  if(!confirm('¿Eliminar esta zona?')) return;
-
-  currentZones = currentZones.filter(function(z){
-    return z.id !== selectedZoneId;
-  });
-
-  selectedZoneId = currentZones[0] ? currentZones[0].id : null;
-
-  saveZones(zoneFieldType, currentZones);
-  renderZoneSelect();
-  renderZonesLayer();
-  fillZoneForm();
-}
-
-/* RESTAURAR */
-function resetZones(){
-  if(!confirm('¿Restaurar las zonas por defecto de ' + zoneFieldType + '?')) return;
-
-  currentZones = JSON.parse(JSON.stringify(zoneFieldType === 'F7' ? DEFAULT_ZONES_F7 : DEFAULT_ZONES_F11));
-  selectedZoneId = currentZones[0] ? currentZones[0].id : null;
-
-  saveZones(zoneFieldType, currentZones);
-  renderZoneSelect();
-  renderZonesLayer();
-  fillZoneForm();
-}
-
-function clampNumber(value, min, max){
-  let n = parseFloat(value);
-  if(isNaN(n)) n = min;
-  return Math.max(min, Math.min(max, n));
-}
-
-/* =========================================================
-   DETECCIÓN DE POSICIÓN POR SOLAPE
-   ========================================================= */
-
-/*
-player debe tener:
-{
-  x: 50,      // porcentaje horizontal
-  y: 59       // coordenada del campo en escala 0-118
-}
-
-Esta función devuelve:
-{
-  detectedZoneId,
-  detectedZoneShort,
-  detectedZoneLabel
-}
-*/
-
-function detectZoneByOverlap(player, type){
-  const zones = loadZones(type || zoneFieldType).filter(function(z){
-    return z.active;
-  });
-
-  const PLAYER_SIZE_PERCENT = 8;
-  const half = PLAYER_SIZE_PERCENT / 2;
-
-  const playerRect = {
-    x1: player.x - half,
-    y1: ((player.y || 0) * (100 / 118)) - half,
-    x2: player.x + half,
-    y2: ((player.y || 0) * (100 / 118)) + half
-  };
-
-  let bestZone = null;
-  let bestArea = 0;
-
-  zones.forEach(function(zone){
-    const zoneRect = {
-      x1: zone.x,
-      y1: zone.y,
-      x2: zone.x + zone.width,
-      y2: zone.y + zone.height
-    };
-
-    const overlapX = Math.max(
-      0,
-      Math.min(playerRect.x2, zoneRect.x2) - Math.max(playerRect.x1, zoneRect.x1)
-    );
-
-    const overlapY = Math.max(
-      0,
-      Math.min(playerRect.y2, zoneRect.y2) - Math.max(playerRect.y1, zoneRect.y1)
-    );
-
-    const area = overlapX * overlapY;
-
-    if(area > 0 && area >= bestArea){
-      bestArea = area;
-      bestZone = zone;
-    }
-  });
-
-  if(!bestZone){
-    return {
-      detectedZoneId:'',
-      detectedZoneShort:'',
-      detectedZoneLabel:'Sin zona'
-    };
-  }
-
-  return {
-    detectedZoneId:bestZone.id,
-    detectedZoneShort:bestZone.short || '',
-    detectedZoneLabel:bestZone.label || ''
-  };
-}
-
-/* EJEMPLO DE USO AL MOVER UNA FICHA */
-function updatePlayerDetectedPosition(player, type){
-  const result = detectZoneByOverlap(player, type);
-
-  player.detectedZoneId = result.detectedZoneId;
-  player.detectedZoneShort = result.detectedZoneShort;
-  player.detectedZoneLabel = result.detectedZoneLabel;
-
-  return result;
-}
-
-/* ACTIVAR */
-document.addEventListener('DOMContentLoaded', function(){
-  initConfigurarZonas();
-});
 
 /* ══ BOOT ══ */
 try{restoreDark();}catch(e){}
@@ -1702,19 +1501,22 @@ try{buildStatusBtns();}catch(e){}
 try{bindModal();}catch(e){console.error('bindModal',e);}
 try{bindFilter();}catch(e){}
 try{bindFoto();}catch(e){}
+try{bindInnerTabs();}catch(e){}
+try{bindZonas();}catch(e){console.error('bindZonas',e);}
 try{renderSeasonSel();}catch(e){}
 try{renderTeamBar();}catch(e){}
-/* Restaurar última vista */
+
+document.getElementById('txtNecesidades').addEventListener('input',function(){if(state){state.necesidades=this.value;persist();}});
+document.getElementById('txtObservaciones').addEventListener('input',function(){if(state){state.observaciones=this.value;persist();}});
+document.getElementById('btnHome').addEventListener('click',showHome);
+
 try{
   var lastView=localStorage.getItem('plt_last_view');
-  if(lastView==='app'&&activeTeam){
-    showApp(activeTeam);
-  } else {
-    showHome();
-  }
+  if(lastView==='app'&&activeTeam)showApp(activeTeam);
+  else showHome();
 }catch(e){showHome();}
-setSync('connecting');
 
+setSync('connecting');
 firebase.auth().signInAnonymously().then(function(){
   return db.collection('config').doc('global').get().then(function(snap){
     if(snap.exists){
