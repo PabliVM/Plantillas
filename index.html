@@ -1,4 +1,3 @@
->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -253,6 +252,236 @@ button,input,select,textarea{font-family:inherit}
 .home-team-key{font-size:16px;font-weight:800;color:var(--text);letter-spacing:-.3px;}
 .home-team-name{font-size:10px;color:var(--text-mut);margin-top:3px;}
 .home-team-cnt{font-size:10px;font-weight:600;color:var(--rm-blue);margin-top:6px;}
+
+/* =========================================================
+   CSS PESTAÑA CONFIGURAR ZONAS
+   ========================================================= */
+
+.tab-zonas{
+  width:100%;
+  display:block;
+}
+
+.zonas-header{
+  background:var(--surface,#fff);
+  border:1px solid var(--border,#dfe1e6);
+  border-radius:var(--r,8px);
+  padding:12px 14px;
+  margin-bottom:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  box-shadow:var(--sh-sm,0 1px 3px rgba(0,0,0,.06));
+}
+
+.zonas-header h2{
+  font-size:15px;
+  font-weight:800;
+  color:var(--text,#1a1d23);
+  margin:0 0 3px;
+}
+
+.zonas-header p{
+  font-size:11px;
+  color:var(--text-mut,#8b919e);
+  margin:0;
+}
+
+.zonas-field-selector{
+  min-width:120px;
+}
+
+.zonas-field-selector label,
+.form-row label{
+  display:block;
+  font-size:9px;
+  font-weight:800;
+  color:var(--text-mut,#8b919e);
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  margin-bottom:4px;
+}
+
+.zonas-field-selector select,
+.form-row select,
+.form-row input{
+  width:100%;
+  padding:7px 9px;
+  border:1px solid var(--border,#dfe1e6);
+  border-radius:var(--rs,5px);
+  background:var(--surface,#fff);
+  color:var(--text,#1a1d23);
+  font-size:12px;
+  outline:none;
+}
+
+.zonas-layout{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 330px;
+  gap:14px;
+  align-items:start;
+}
+
+.zonas-campo-panel{
+  background:var(--surface,#fff);
+  border:1px solid var(--border,#dfe1e6);
+  border-radius:var(--r,8px);
+  padding:12px;
+  box-shadow:var(--sh-sm,0 1px 3px rgba(0,0,0,.06));
+  display:flex;
+  justify-content:center;
+}
+
+.campo-zonas-card{
+  max-width:546px;
+}
+
+.zones-layer{
+  position:absolute;
+  inset:0;
+  z-index:4;
+  pointer-events:none;
+}
+
+.position-zone{
+  position:absolute;
+  border:1.5px dashed rgba(255,255,255,.85);
+  background:rgba(37,99,235,.24);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+  font-weight:900;
+  text-shadow:0 1px 3px rgba(0,0,0,.75);
+  pointer-events:auto;
+  cursor:pointer;
+  border-radius:4px;
+}
+
+.position-zone:hover{
+  background:rgba(37,99,235,.36);
+}
+
+.position-zone.selected{
+  outline:3px solid #ffd400;
+  outline-offset:-3px;
+  background:rgba(37,99,235,.42);
+}
+
+.position-zone.inactive{
+  opacity:.35;
+  background:rgba(120,120,120,.28);
+}
+
+.zonas-editor{
+  background:var(--surface,#fff);
+  border:1px solid var(--border,#dfe1e6);
+  border-radius:var(--r,8px);
+  padding:12px;
+  box-shadow:var(--sh-sm,0 1px 3px rgba(0,0,0,.06));
+}
+
+.zonas-editor-title{
+  font-size:11px;
+  font-weight:800;
+  color:var(--text-sec,#5a6170);
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  border-bottom:1px solid var(--border,#dfe1e6);
+  padding-bottom:8px;
+  margin-bottom:10px;
+}
+
+.form-row{
+  margin-bottom:10px;
+}
+
+.zonas-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.zone-check{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  font-size:12px;
+  color:var(--text-sec,#5a6170);
+  margin-bottom:8px;
+  cursor:pointer;
+}
+
+.zone-check input{
+  width:15px;
+  height:15px;
+  accent-color:var(--rm-blue,#2563eb);
+}
+
+.zone-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:12px;
+}
+
+.zone-btn{
+  padding:6px 10px;
+  border-radius:var(--rs,5px);
+  border:1px solid var(--border,#dfe1e6);
+  background:var(--surface,#fff);
+  color:var(--text,#1a1d23);
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.zone-btn.primary{
+  background:var(--rm-blue,#2563eb);
+  border-color:var(--rm-blue,#2563eb);
+  color:#fff;
+}
+
+.zone-btn.danger{
+  color:#dc2626;
+}
+
+.zone-btn.danger:hover{
+  background:#dc2626;
+  border-color:#dc2626;
+  color:#fff;
+}
+
+.zone-btn.ghost{
+  background:transparent;
+  color:var(--text-mut,#8b919e);
+  border-color:transparent;
+}
+
+.zone-help{
+  margin-top:12px;
+  padding:9px;
+  border-radius:6px;
+  background:var(--surface-alt,#fafbfc);
+  border:1px solid var(--border-light,#eaecf0);
+  font-size:11px;
+  color:var(--text-sec,#5a6170);
+  line-height:1.45;
+}
+
+@media(max-width:900px){
+  .zonas-layout{
+    grid-template-columns:1fr;
+  }
+
+  .zonas-header{
+    flex-direction:column;
+    align-items:stretch;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1115,6 +1344,357 @@ document.getElementById('txtObservaciones').addEventListener('input',function(){
 });
 document.getElementById('btnHome').addEventListener('click',showHome);
 document.getElementById('btnHome').style.display='none';
+
+/* =========================================================
+   CONFIGURACIÓN DE ZONAS DEL CAMPO
+   ========================================================= */
+
+/* ZONAS POR DEFECTO F11 */
+const DEFAULT_ZONES_F11 = [
+  {id:'por', label:'Portero', short:'POR', x:38, y:86, width:24, height:12, visible:true, active:true},
+
+  {id:'li', label:'Lateral izquierdo', short:'LI', x:0, y:58, width:23, height:28, visible:true, active:true},
+  {id:'dci', label:'Central izquierdo', short:'CI', x:23, y:68, width:27, height:17, visible:true, active:true},
+  {id:'dcd', label:'Central derecho', short:'CD', x:50, y:68, width:27, height:17, visible:true, active:true},
+  {id:'ld', label:'Lateral derecho', short:'LD', x:77, y:58, width:23, height:28, visible:true, active:true},
+
+  {id:'mc', label:'Mediocentro', short:'MC', x:32, y:43, width:36, height:18, visible:true, active:true},
+
+  {id:'ei', label:'Extremo izquierdo', short:'EI', x:0, y:24, width:25, height:25, visible:true, active:true},
+  {id:'ii', label:'Interior izquierdo', short:'II', x:25, y:24, width:25, height:25, visible:true, active:true},
+  {id:'id', label:'Interior derecho', short:'ID', x:50, y:24, width:25, height:25, visible:true, active:true},
+  {id:'ed', label:'Extremo derecho', short:'ED', x:75, y:24, width:25, height:25, visible:true, active:true},
+
+  {id:'dc', label:'Delantero centro', short:'DC', x:35, y:4, width:30, height:17, visible:true, active:true}
+];
+
+/* ZONAS POR DEFECTO F7 */
+const DEFAULT_ZONES_F7 = [
+  {id:'por', label:'Portero', short:'POR', x:38, y:86, width:24, height:12, visible:true, active:true},
+
+  {id:'ct', label:'Central', short:'CT', x:30, y:69, width:40, height:16, visible:true, active:true},
+
+  {id:'ci', label:'Carril izquierdo', short:'CI', x:0, y:49, width:30, height:23, visible:true, active:true},
+  {id:'cd', label:'Carril derecho', short:'CD', x:70, y:49, width:30, height:23, visible:true, active:true},
+
+  {id:'mc', label:'Mediocentro', short:'MC', x:30, y:42, width:40, height:18, visible:true, active:true},
+
+  {id:'ii', label:'Interior izquierdo', short:'II', x:20, y:24, width:30, height:20, visible:true, active:true},
+  {id:'id', label:'Interior derecho', short:'ID', x:50, y:24, width:30, height:20, visible:true, active:true},
+
+  {id:'dc', label:'Delantero centro', short:'DC', x:35, y:5, width:30, height:16, visible:true, active:true}
+];
+
+let zoneFieldType = 'F11';
+let selectedZoneId = null;
+let currentZones = [];
+
+/* LOCALSTORAGE */
+function getZoneStorageKey(type){
+  return 'campograma_position_zones_' + type;
+}
+
+function loadZones(type){
+  try{
+    const raw = localStorage.getItem(getZoneStorageKey(type));
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+
+  return JSON.parse(JSON.stringify(type === 'F7' ? DEFAULT_ZONES_F7 : DEFAULT_ZONES_F11));
+}
+
+function saveZones(type, zones){
+  localStorage.setItem(getZoneStorageKey(type), JSON.stringify(zones));
+}
+
+/* INICIAR PESTAÑA */
+function initConfigurarZonas(){
+  const selector = document.getElementById('zoneFieldType');
+  if(!selector) return;
+
+  zoneFieldType = selector.value || 'F11';
+  currentZones = loadZones(zoneFieldType);
+  selectedZoneId = currentZones[0] ? currentZones[0].id : null;
+
+  renderZonesLayer();
+  renderZoneSelect();
+  fillZoneForm();
+
+  selector.addEventListener('change', function(){
+    zoneFieldType = this.value;
+    currentZones = loadZones(zoneFieldType);
+    selectedZoneId = currentZones[0] ? currentZones[0].id : null;
+
+    renderZonesLayer();
+    renderZoneSelect();
+    fillZoneForm();
+  });
+
+  document.getElementById('zoneSelect').addEventListener('change', function(){
+    selectedZoneId = this.value;
+    renderZonesLayer();
+    fillZoneForm();
+  });
+
+  document.getElementById('btnSaveZone').addEventListener('click', saveCurrentZone);
+  document.getElementById('btnNewZone').addEventListener('click', createNewZone);
+  document.getElementById('btnDeleteZone').addEventListener('click', deleteCurrentZone);
+  document.getElementById('btnResetZones').addEventListener('click', resetZones);
+}
+
+/* PINTAR ZONAS */
+function renderZonesLayer(){
+  const layer = document.getElementById('zonesLayer');
+  if(!layer) return;
+
+  layer.innerHTML = '';
+
+  currentZones.forEach(function(zone){
+    if(!zone.visible) return;
+
+    const div = document.createElement('div');
+
+    div.className =
+      'position-zone' +
+      (zone.id === selectedZoneId ? ' selected' : '') +
+      (!zone.active ? ' inactive' : '');
+
+    div.style.left = zone.x + '%';
+    div.style.top = zone.y + '%';
+    div.style.width = zone.width + '%';
+    div.style.height = zone.height + '%';
+
+    div.textContent = zone.short || '?';
+    div.title = zone.label || zone.short || zone.id;
+
+    div.addEventListener('click', function(){
+      selectedZoneId = zone.id;
+      renderZoneSelect();
+      renderZonesLayer();
+      fillZoneForm();
+    });
+
+    layer.appendChild(div);
+  });
+
+  const label = document.getElementById('zonesFieldTypeLabel');
+  if(label) label.textContent = zoneFieldType;
+}
+
+/* SELECT DE ZONAS */
+function renderZoneSelect(){
+  const sel = document.getElementById('zoneSelect');
+  if(!sel) return;
+
+  sel.innerHTML = '';
+
+  currentZones.forEach(function(zone){
+    const opt = document.createElement('option');
+    opt.value = zone.id;
+    opt.textContent = (zone.short || '?') + ' - ' + (zone.label || zone.id);
+    sel.appendChild(opt);
+  });
+
+  sel.value = selectedZoneId || '';
+}
+
+function getSelectedZone(){
+  return currentZones.find(function(z){
+    return z.id === selectedZoneId;
+  });
+}
+
+/* RELLENAR FORMULARIO */
+function fillZoneForm(){
+  const z = getSelectedZone();
+  if(!z) return;
+
+  document.getElementById('zoneLabel').value = z.label || '';
+  document.getElementById('zoneShort').value = z.short || '';
+  document.getElementById('zoneX').value = z.x;
+  document.getElementById('zoneY').value = z.y;
+  document.getElementById('zoneW').value = z.width;
+  document.getElementById('zoneH').value = z.height;
+  document.getElementById('zoneVisible').checked = !!z.visible;
+  document.getElementById('zoneActive').checked = !!z.active;
+}
+
+/* GUARDAR ZONA */
+function saveCurrentZone(){
+  const z = getSelectedZone();
+  if(!z) return;
+
+  z.label = document.getElementById('zoneLabel').value.trim();
+  z.short = document.getElementById('zoneShort').value.trim();
+
+  z.x = clampNumber(document.getElementById('zoneX').value, 0, 100);
+  z.y = clampNumber(document.getElementById('zoneY').value, 0, 100);
+  z.width = clampNumber(document.getElementById('zoneW').value, 1, 100);
+  z.height = clampNumber(document.getElementById('zoneH').value, 1, 100);
+
+  z.visible = document.getElementById('zoneVisible').checked;
+  z.active = document.getElementById('zoneActive').checked;
+
+  saveZones(zoneFieldType, currentZones);
+  renderZoneSelect();
+  renderZonesLayer();
+}
+
+/* NUEVA ZONA */
+function createNewZone(){
+  const id = 'zona_' + Date.now();
+
+  const z = {
+    id:id,
+    label:'Nueva zona',
+    short:'NZ',
+    x:40,
+    y:40,
+    width:20,
+    height:12,
+    visible:true,
+    active:true
+  };
+
+  currentZones.push(z);
+  selectedZoneId = id;
+
+  saveZones(zoneFieldType, currentZones);
+  renderZoneSelect();
+  renderZonesLayer();
+  fillZoneForm();
+}
+
+/* ELIMINAR ZONA */
+function deleteCurrentZone(){
+  if(!selectedZoneId) return;
+
+  if(!confirm('¿Eliminar esta zona?')) return;
+
+  currentZones = currentZones.filter(function(z){
+    return z.id !== selectedZoneId;
+  });
+
+  selectedZoneId = currentZones[0] ? currentZones[0].id : null;
+
+  saveZones(zoneFieldType, currentZones);
+  renderZoneSelect();
+  renderZonesLayer();
+  fillZoneForm();
+}
+
+/* RESTAURAR */
+function resetZones(){
+  if(!confirm('¿Restaurar las zonas por defecto de ' + zoneFieldType + '?')) return;
+
+  currentZones = JSON.parse(JSON.stringify(zoneFieldType === 'F7' ? DEFAULT_ZONES_F7 : DEFAULT_ZONES_F11));
+  selectedZoneId = currentZones[0] ? currentZones[0].id : null;
+
+  saveZones(zoneFieldType, currentZones);
+  renderZoneSelect();
+  renderZonesLayer();
+  fillZoneForm();
+}
+
+function clampNumber(value, min, max){
+  let n = parseFloat(value);
+  if(isNaN(n)) n = min;
+  return Math.max(min, Math.min(max, n));
+}
+
+/* =========================================================
+   DETECCIÓN DE POSICIÓN POR SOLAPE
+   ========================================================= */
+
+/*
+player debe tener:
+{
+  x: 50,      // porcentaje horizontal
+  y: 59       // coordenada del campo en escala 0-118
+}
+
+Esta función devuelve:
+{
+  detectedZoneId,
+  detectedZoneShort,
+  detectedZoneLabel
+}
+*/
+
+function detectZoneByOverlap(player, type){
+  const zones = loadZones(type || zoneFieldType).filter(function(z){
+    return z.active;
+  });
+
+  const PLAYER_SIZE_PERCENT = 8;
+  const half = PLAYER_SIZE_PERCENT / 2;
+
+  const playerRect = {
+    x1: player.x - half,
+    y1: ((player.y || 0) * (100 / 118)) - half,
+    x2: player.x + half,
+    y2: ((player.y || 0) * (100 / 118)) + half
+  };
+
+  let bestZone = null;
+  let bestArea = 0;
+
+  zones.forEach(function(zone){
+    const zoneRect = {
+      x1: zone.x,
+      y1: zone.y,
+      x2: zone.x + zone.width,
+      y2: zone.y + zone.height
+    };
+
+    const overlapX = Math.max(
+      0,
+      Math.min(playerRect.x2, zoneRect.x2) - Math.max(playerRect.x1, zoneRect.x1)
+    );
+
+    const overlapY = Math.max(
+      0,
+      Math.min(playerRect.y2, zoneRect.y2) - Math.max(playerRect.y1, zoneRect.y1)
+    );
+
+    const area = overlapX * overlapY;
+
+    if(area > 0 && area >= bestArea){
+      bestArea = area;
+      bestZone = zone;
+    }
+  });
+
+  if(!bestZone){
+    return {
+      detectedZoneId:'',
+      detectedZoneShort:'',
+      detectedZoneLabel:'Sin zona'
+    };
+  }
+
+  return {
+    detectedZoneId:bestZone.id,
+    detectedZoneShort:bestZone.short || '',
+    detectedZoneLabel:bestZone.label || ''
+  };
+}
+
+/* EJEMPLO DE USO AL MOVER UNA FICHA */
+function updatePlayerDetectedPosition(player, type){
+  const result = detectZoneByOverlap(player, type);
+
+  player.detectedZoneId = result.detectedZoneId;
+  player.detectedZoneShort = result.detectedZoneShort;
+  player.detectedZoneLabel = result.detectedZoneLabel;
+
+  return result;
+}
+
+/* ACTIVAR */
+document.addEventListener('DOMContentLoaded', function(){
+  initConfigurarZonas();
+});
 
 /* ══ BOOT ══ */
 try{restoreDark();}catch(e){}
