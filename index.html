@@ -1007,6 +1007,9 @@ function renderCampo(){
 /* ══ RENDER ROSTER ══ */
 function renderRoster(){
   var body=document.getElementById('rosterTodos');body.innerHTML='';
+  var POS_ORDER=['PO','LD','CD','CT','CI','LI','MC','ID','II','ED','EI','DC'];
+  function posIdx(p){var s=p.isPor?'PO':(p.detectedZoneShort||'');var i=POS_ORDER.indexOf(s);return i<0?999:i;}
+  function sortByPos(arr){return arr.slice().sort(function(a,b){var d=posIdx(a)-posIdx(b);return d!==0?d:(a.name||'').localeCompare(b.name||'');});}
   var ORDER=['renovado','fichaje','futurible','duda','baja'];
   var LABELS={renovado:'Renovados',fichaje:'Fichados',futurible:'Futuribles',duda:'Dudas',baja:'Bajas'};
   var COLORS={
@@ -1021,7 +1024,7 @@ function renderRoster(){
     if(grupos[p.status])grupos[p.status].push(p);
   });
   ORDER.forEach(function(st){
-    var grp=grupos[st];
+    var grp=sortByPos(grupos[st]);
     var col=COLORS[st];
     var bloque=document.createElement('div');
     bloque.style.cssText='margin-bottom:6px;border-radius:var(--rs);overflow:hidden;border:1px solid '+col.border+';flex-shrink:0;';
@@ -1035,7 +1038,7 @@ function renderRoster(){
     hdr.innerHTML='<span>'+LABELS[st].toUpperCase()+'</span>';
     hdr.appendChild(cnt);
     var lista=document.createElement('div');
-    lista.style.cssText='max-height:140px;overflow-y:auto;background:var(--surface);';
+    lista.style.cssText='background:var(--surface);';
     if(!grp.length){
       var empty=document.createElement('div');
       empty.style.cssText='font-size:10px;color:var(--text-mut);font-style:italic;padding:6px 10px;';
@@ -1074,7 +1077,7 @@ function renderRoster(){
 
 /* ══ RENDER PLIST ══ */
 function renderPlist(){
-  var POS_ORDER=['POR','LD','CD','CI','CT','LI','MC','ID','II','IN','ED','EI','DC'];
+  var POS_ORDER=['PO','LD','CD','CT','CI','LI','MC','ID','II','ED','EI','DC'];
   var body=document.getElementById('plistBody');body.innerHTML='';
   var activos=state.players.filter(function(p){return p.status!=='baja';});
   var totalC=activos.filter(function(p){return!p.isPor;}).length;
@@ -1131,19 +1134,15 @@ function renderPlist(){
 
 /* ══ STATS ══ */
 function renderStats(){
-  var enCampo=state.players.filter(function(p){
-    if(!p.onPitch)return false;
-    if(activeFilters[0]==='all')return true;
-    return activeFilters.indexOf(p.status)>=0;
-  });
-  var totalC=enCampo.filter(function(p){return!p.isPor;}).length;
-  var totalP=enCampo.filter(function(p){return p.isPor;}).length;
+  var activos=state.players.filter(function(p){return p.status!=='baja';});
+  var totalC=activos.filter(function(p){return!p.isPor;}).length;
+  var totalP=activos.filter(function(p){return p.isPor;}).length;
   document.getElementById('statTotal').textContent=totalC+'+'+totalP;
-  document.getElementById('statDiestro').textContent=enCampo.filter(function(p){return p.lat==='diestro';}).length;
-  document.getElementById('statZurdo').textContent=enCampo.filter(function(p){return p.lat==='zurdo';}).length;
-  document.getElementById('statAmbi').textContent=enCampo.filter(function(p){return p.lat==='ambidiestro';}).length;
-  document.getElementById('statRes').textContent=enCampo.filter(function(p){return p.res==='R';}).length;
-  document.getElementById('statMP').textContent=enCampo.filter(function(p){return p.res==='MP';}).length;
+  document.getElementById('statDiestro').textContent=activos.filter(function(p){return p.lat==='diestro';}).length;
+  document.getElementById('statZurdo').textContent=activos.filter(function(p){return p.lat==='zurdo';}).length;
+  document.getElementById('statAmbi').textContent=activos.filter(function(p){return p.lat==='ambidiestro';}).length;
+  document.getElementById('statRes').textContent=activos.filter(function(p){return p.res==='R';}).length;
+  document.getElementById('statMP').textContent=activos.filter(function(p){return p.res==='MP';}).length;
 }
 
 /* ══ STATUS BTNS ══ */
