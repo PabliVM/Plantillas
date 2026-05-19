@@ -1072,7 +1072,8 @@ function renderRoster(){
     mini.innerHTML='<span class="chip-mini-text">'+esc(p.name||'')+'</span>';
     var info=document.createElement('div');info.className='ritem-info';
     /* POSICIÓN VISIBLE = SHORT CONFIGURADO EN LA ZONA */
-    var posLabel=p.detectedZoneShort||'';
+    /* Si es portero, posición siempre POR */
+    var posLabel=p.isPor?'POR':(p.detectedZoneShort||'');
     var lbl=(colors[p.status]||STATUS_DEF.renovado).label;
     info.innerHTML='<div class="ritem-name">'+esc(p.name||'(sin nombre)')+'</div>'
       +'<div class="ritem-meta">'+lbl+(posLabel?' \xb7 '+posLabel:'')+'</div>';
@@ -1110,11 +1111,11 @@ function renderPlist(){
     var badge=document.createElement('div');badge.className='plist-badge'+(p.isPor?' por':'');
     badge.setAttribute('style',chipSt(p.status,p.isPor));
     /* POSICIÓN VISIBLE = SHORT CONFIGURADO EN LA ZONA */
-    badge.textContent=p.detectedZoneShort||'---';
+    /* Si es portero, posición siempre POR */
+    badge.textContent=p.isPor?'POR':(p.detectedZoneShort||'---');
     var name=document.createElement('div');name.className='plist-name';name.textContent=esc(p.name||'(sin nombre)');
     /* advertencias portero */
     var warn='';
-    if(p.isPor&&p.detectedZoneShort&&p.detectedZoneShort!=='POR')warn='Portero fuera de zona POR';
     if(!p.isPor&&p.detectedZoneShort==='POR')warn='Jugador de campo en zona POR';
     var infoDiv=document.createElement('div');infoDiv.style.flex='1';infoDiv.style.minWidth='0';
     infoDiv.innerHTML='<div class="plist-name">'+esc(p.name||'(sin nombre)')+'</div>'+(warn?'<div class="warn-tag">'+warn+'</div>':'');
