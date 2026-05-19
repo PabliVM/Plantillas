@@ -436,7 +436,7 @@ button,input,select,textarea{font-family:inherit}
       <div class="col">
         <div class="card">
           <div class="card-h">Todos los jugadores <span class="cnt" id="cntTotal">0</span></div>
-          <div class="card-b"><div class="rlist" id="rosterTodos" style="max-height:420px;"></div></div>
+          <div class="card-b" style="padding:6px 8px;"><div id="rosterTodos"></div></div>
         </div>
         <div style="padding:8px 0 0">
           <button class="btn pri" id="btnNew" style="width:100%;justify-content:center;display:flex;padding:9px;font-size:12px;">+ A&ntilde;adir jugador</button>
@@ -448,12 +448,12 @@ button,input,select,textarea{font-family:inherit}
         <!-- Morado: faltan por poner -->
         <div class="card">
           <div class="card-h" style="background:#6d28d9;color:#fff;">Faltan por poner <span class="cnt" id="cntFaltan" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);">0</span></div>
-          <div class="card-b"><div class="rlist" id="rosterFaltan" style="max-height:180px;"></div></div>
+          <div class="card-b" style="padding:6px 8px;"><div class="rlist" id="rosterFaltan" style="max-height:240px;"></div></div>
         </div>
         <!-- Verde: plantilla total -->
         <div class="card">
           <div class="card-h" style="background:#15803d;color:#fff;">Plantilla total <span class="cnt" id="plistTotal" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);">0+0</span></div>
-          <div class="card-b" id="plistBody" style="padding:6px 8px;"><div class="plist-empty">Sin jugadores a&uacute;n.</div></div>
+          <div class="card-b" style="padding:6px 8px;"><div class="rlist" id="plistBody" style="max-height:300px;"><div class="plist-empty">Sin jugadores aún.</div></div></div>
         </div>
       </div>
     </div>
@@ -1052,50 +1052,61 @@ function renderCampo(){
 }
 
 /* ══ RENDER ROSTER ══ */
-/* ══ RENDER ROSTER — COL 2: TODOS siempre, agrupados por estado ══ */
+/* ══ RENDER ROSTER — COL 2: TODOS, sin scroll, grupos claros ══ */
 function renderRoster(){
   var body=document.getElementById('rosterTodos');body.innerHTML='';
   var ORDER=['renovado','fichaje','futurible','duda','baja'];
+  var LABELS={renovado:'RENOVADOS',fichaje:'FICHADOS',futurible:'FUTURIBLES',duda:'DUDAS',baja:'BAJAS'};
   var grupos={renovado:[],fichaje:[],futurible:[],duda:[],baja:[]};
   state.players.forEach(function(p){
     if(grupos[p.status])grupos[p.status].push(p);
     else grupos['renovado'].push(p);
   });
-  var total=state.players.length;
-  document.getElementById('cntTotal').textContent=total;
-
-  function mkItem(p){
-    var item=document.createElement('div');item.className='ritem';
-    var mini=document.createElement('div');mini.className='chip-mini'+(p.isPor?' por':'')+(p.res?' residencia':'');
-    if(p.res)mini.setAttribute('data-res-label',p.res);
-    mini.setAttribute('style',chipSt(p.status,p.isPor));
-    mini.innerHTML='<span class="chip-mini-text">'+esc(p.name||'')+'</span>';
-    var info=document.createElement('div');info.className='ritem-info';
-    var posLabel=p.isPor?'POR':(p.detectedZoneShort||'');
-    var enCampo=p.onPitch?'<span style="font-size:8px;color:#16a34a;font-weight:700;"> · En campo</span>':'';
-    info.innerHTML='<div class="ritem-name">'+esc(p.name||'(sin nombre)')+'</div>'
-      +'<div class="ritem-meta">'+(posLabel?posLabel:'---')+enCampo+'</div>';
-    var pen=document.createElement('button');pen.className='ritem-edit';pen.title='Editar';pen.textContent='\u270f';
-    pen.addEventListener('click',function(e){e.stopPropagation();openModal(p.id);});
-    item.appendChild(mini);item.appendChild(info);item.appendChild(pen);
-    item.addEventListener('click',function(){openModal(p.id);});
-    mini.addEventListener('pointerdown',function(ev){dragFromRoster(ev,p.id);});
-    return item;
-  }
+  document.getElementById('cntTotal').textContent=state.players.length;
 
   ORDER.forEach(function(st){
-    var grp=grupos[st];if(!grp||!grp.length)return;
-    var lbl=document.createElement('div');lbl.className='plist-group-label';
-    lbl.textContent=(colors[st]||STATUS_DEF[st]).label+' ('+grp.length+')';
-    body.appendChild(lbl);
-    grp.forEach(function(p){body.appendChild(mkItem(p));});
+    var grp=grupos[st];
+    /* Cabecera de grupo siempre visible */
+    var hdr=document.createElement('div');
+    hdr.style.cssText='font-size:10px;font-weight:800;letter-spacing:.6px;color:var(--text-mut);'
+      +'padding:8px 4px 4px;text-transform:uppercase;border-bottom:1px solid var(--border);margin-bottom:4px;'
+      +'display:flex;justify-content:space-between;';
+    hdr.innerHTML='<span>'+LABELS[st]+'</span><span style="font-weight:600;">'+grp.length+'</span>';
+    body.appendChild(hdr);
+
+    if(!grp.length){
+      var empty=document.createElement('div');
+      empty.style.cssText='font-size:10px;color:var(--text-mut);font-style:italic;padding:4px 4px 8px;';
+      empty.textContent='Ninguno';
+      body.appendChild(empty);
+      return;
+    }
+    grp.forEach(function(p){
+      var item=document.createElement('div');item.className='ritem';
+      item.style.marginBottom='3px';
+      var mini=document.createElement('div');mini.className='chip-mini'+(p.isPor?' por':'')+(p.res?' residencia':'');
+      if(p.res)mini.setAttribute('data-res-label',p.res);
+      mini.setAttribute('style',chipSt(p.status,p.isPor));
+      mini.innerHTML='<span class="chip-mini-text">'+esc(p.name||'')+'</span>';
+      var info=document.createElement('div');info.className='ritem-info';
+      var posLabel=p.isPor?'POR':(p.detectedZoneShort||'');
+      var enCampo=p.onPitch?'<span style="color:#16a34a;font-weight:700;"> · En campo</span>':'';
+      info.innerHTML='<div class="ritem-name" style="font-size:12px;">'+esc(p.name||'(sin nombre)')+'</div>'
+        +'<div class="ritem-meta">'+(posLabel||'---')+enCampo+'</div>';
+      var pen=document.createElement('button');pen.className='ritem-edit';pen.title='Editar';pen.textContent='\u270f';
+      pen.addEventListener('click',function(e){e.stopPropagation();openModal(p.id);});
+      item.appendChild(mini);item.appendChild(info);item.appendChild(pen);
+      item.addEventListener('click',function(){openModal(p.id);});
+      /* NO drag desde aquí */
+      body.appendChild(item);
+    });
   });
-  if(!total)body.innerHTML='<div class="rempty">Carga jugadores desde Config.</div>';
+  if(!state.players.length)body.innerHTML='<div class="rempty">Carga jugadores desde Config y Plantillas.</div>';
 }
 
-/* ══ RENDER COL 3: FALTAN (morado) + PLANTILLA TOTAL (verde) ══ */
+/* ══ RENDER COL 3: FALTAN (con drag) + PLANTILLA SIN BAJAS ══ */
 function renderPlist(){
-  /* Faltan por poner — TODOS los que no están en campo */
+  /* ── FALTAN POR PONER: todos sin campo, SE ARRASTRA DESDE AQUÍ ── */
   var faltan=document.getElementById('rosterFaltan');faltan.innerHTML='';
   var sinCampo=state.players.filter(function(p){return!p.onPitch;});
   document.getElementById('cntFaltan').textContent=sinCampo.length;
@@ -1103,38 +1114,39 @@ function renderPlist(){
     faltan.innerHTML='<div class="plist-empty">\u2713 Todos en el campo</div>';
   } else {
     sinCampo.forEach(function(p){
-      var row=document.createElement('div');row.className='plist-item';
-      var badge=document.createElement('div');badge.className='plist-badge'+(p.isPor?' por':'');
-      badge.setAttribute('style',chipSt(p.status,p.isPor));
-      badge.textContent=p.isPor?'POR':(p.detectedZoneShort||'---');
-      var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
-      info.innerHTML='<div class="plist-name">'+esc(p.name||'(sin nombre)')+'</div>';
+      var row=document.createElement('div');row.className='ritem';row.style.marginBottom='3px';
+      var mini=document.createElement('div');mini.className='chip-mini'+(p.isPor?' por':'')+(p.res?' residencia':'');
+      if(p.res)mini.setAttribute('data-res-label',p.res);
+      mini.setAttribute('style',chipSt(p.status,p.isPor));
+      mini.innerHTML='<span class="chip-mini-text">'+esc(p.name||'')+'</span>';
+      var info=document.createElement('div');info.className='ritem-info';
+      var posLabel=p.isPor?'POR':(p.detectedZoneShort||'---');
+      info.innerHTML='<div class="ritem-name">'+esc(p.name||'(sin nombre)')+'</div>'
+        +'<div class="ritem-meta">'+posLabel+'</div>';
       var addBtn=document.createElement('button');addBtn.className='plist-addbtn';addBtn.textContent='+ Campo';
       addBtn.addEventListener('click',function(e){e.stopPropagation();p.onPitch=true;selectedId=p.id;persist();renderAll();});
-      row.appendChild(badge);row.appendChild(info);row.appendChild(addBtn);
+      row.appendChild(mini);row.appendChild(info);row.appendChild(addBtn);
       row.addEventListener('click',function(){openModal(p.id);});
+      /* DRAG desde aquí */
+      mini.addEventListener('pointerdown',function(ev){dragFromRoster(ev,p.id);});
       faltan.appendChild(row);
     });
   }
 
-  /* Plantilla total */
+  /* ── PLANTILLA TOTAL SIN BAJAS ── */
   var body=document.getElementById('plistBody');body.innerHTML='';
-  var totalC=state.players.filter(function(p){return!p.isPor;}).length;
-  var totalP=state.players.filter(function(p){return p.isPor;}).length;
+  var activos=state.players.filter(function(p){return p.status!=='baja';});
+  var totalC=activos.filter(function(p){return!p.isPor;}).length;
+  var totalP=activos.filter(function(p){return p.isPor;}).length;
   document.getElementById('plistTotal').textContent=totalC+'+'+totalP;
-  if(!state.players.length){body.innerHTML='<div class="plist-empty">Sin jugadores a\xfan.</div>';return;}
-
-  state.players.forEach(function(p){
+  if(!activos.length){body.innerHTML='<div class="plist-empty">Sin jugadores a\xfan.</div>';return;}
+  activos.forEach(function(p){
     var row=document.createElement('div');row.className='plist-item';
     var badge=document.createElement('div');badge.className='plist-badge'+(p.isPor?' por':'');
     badge.setAttribute('style',chipSt(p.status,p.isPor));
-    /* POSICIÓN VISIBLE = SHORT CONFIGURADO EN LA ZONA */
     badge.textContent=p.isPor?'POR':(p.detectedZoneShort||'---');
-    var warn='';
-    if(!p.isPor&&p.detectedZoneShort==='POR')warn='Campo en zona POR';
     var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
-    info.innerHTML='<div class="plist-name">'+esc(p.name||'(sin nombre)')+'</div>'
-      +(warn?'<div class="warn-tag">'+warn+'</div>':'');
+    info.innerHTML='<div class="plist-name">'+esc(p.name||'(sin nombre)')+'</div>';
     var btn=document.createElement('button');
     btn.className='plist-addbtn'+(p.onPitch?' in':'');
     btn.textContent=p.onPitch?'Sacar':'+ Campo';
