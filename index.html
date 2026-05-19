@@ -1660,15 +1660,15 @@ function renderCfgZonas(body){
   var segSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
   segSvg.setAttribute('viewBox','0 0 100 118');
   segSvg.setAttribute('preserveAspectRatio','none');
-  segSvg.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:6;overflow:visible;';
+  segSvg.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:4;overflow:visible;pointer-events:none;';
   /* Zona overlay */
   var zonaOverlayEl=document.createElement('div');
-  zonaOverlayEl.style.cssText='position:absolute;inset:0;z-index:5;pointer-events:none;';
+  zonaOverlayEl.style.cssText='position:absolute;inset:0;z-index:5;';
   /* Preview línea dibujando */
   var previewSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
   previewSvg.setAttribute('viewBox','0 0 100 118');
   previewSvg.setAttribute('preserveAspectRatio','none');
-  previewSvg.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:7;pointer-events:none;overflow:visible;';
+  previewSvg.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:8;pointer-events:none;overflow:visible;';
 
   campoEl.appendChild(zonaOverlayEl);
   campoEl.appendChild(segSvg);
