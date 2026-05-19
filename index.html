@@ -1172,17 +1172,17 @@ function renderPlist(){
   }
 }
 
-/* ══ STATS ══ */
+/* ══ STATS — solo jugadores en el campo ══ */
 function renderStats(){
-  var activos=state.players.filter(function(p){return p.status!=='baja';});
-  var totalC=activos.filter(function(p){return!p.isPor;}).length;
-  var totalP=activos.filter(function(p){return p.isPor;}).length;
+  var enCampo=state.players.filter(function(p){return p.onPitch;});
+  var totalC=enCampo.filter(function(p){return!p.isPor;}).length;
+  var totalP=enCampo.filter(function(p){return p.isPor;}).length;
   document.getElementById('statTotal').textContent=totalC+'+'+totalP;
-  document.getElementById('statDiestro').textContent=state.players.filter(function(p){return p.lat==='diestro';}).length;
-  document.getElementById('statZurdo').textContent=state.players.filter(function(p){return p.lat==='zurdo';}).length;
-  document.getElementById('statAmbi').textContent=state.players.filter(function(p){return p.lat==='ambidiestro';}).length;
-  document.getElementById('statRes').textContent=state.players.filter(function(p){return p.res==='R';}).length;
-  document.getElementById('statMP').textContent=state.players.filter(function(p){return p.res==='MP';}).length;
+  document.getElementById('statDiestro').textContent=enCampo.filter(function(p){return p.lat==='diestro';}).length;
+  document.getElementById('statZurdo').textContent=enCampo.filter(function(p){return p.lat==='zurdo';}).length;
+  document.getElementById('statAmbi').textContent=enCampo.filter(function(p){return p.lat==='ambidiestro';}).length;
+  document.getElementById('statRes').textContent=enCampo.filter(function(p){return p.res==='R';}).length;
+  document.getElementById('statMP').textContent=enCampo.filter(function(p){return p.res==='MP';}).length;
 }
 
 /* ══ STATUS BTNS ══ */
