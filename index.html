@@ -841,22 +841,22 @@ function setTeamFieldType(tk,ft){
    DETECCIÓN DE ZONA POR MAYOR SOLAPE DE LA FICHA
    POSICIÓN VISIBLE = SHORT CONFIGURADO EN LA ZONA
 ══════════════════════════════════════ */
-var PLAYER_TOKEN_SIZE_PERCENT=11; /* tamaño aprox de ficha en % del campo */
+var PLAYER_TOKEN_W=11; /* % ancho ficha respecto al campo (eje X: 0-100) */
+var PLAYER_TOKEN_H=13; /* % alto ficha respecto al campo (eje Y: 0-118) */
 
 function detectZoneByOverlap(px,py,zones){
-  /* px, py = posición centro de ficha en porcentaje del campo (x: 0-100, y: 0-118 escalado a 0-100) */
-  var hw=PLAYER_TOKEN_SIZE_PERCENT/2;
-  var hh=PLAYER_TOKEN_SIZE_PERCENT/2;
+  /* px en 0-100, py en 0-118 — igual que las zonas */
+  var hw=PLAYER_TOKEN_W/2;
+  var hh=PLAYER_TOKEN_H/2;
   var chipLeft=px-hw, chipRight=px+hw;
-  var chipTop=py-hh, chipBottom=py+hh;
-  var chipArea=(chipRight-chipLeft)*(chipBottom-chipTop);
+  var chipTop=py-hh,  chipBottom=py+hh;
 
   var best=null,bestArea=0;
   zones.forEach(function(z){
     if(!z.active)return;
-    var ix1=Math.max(chipLeft,z.x);
-    var iy1=Math.max(chipTop,z.y);
-    var ix2=Math.min(chipRight,z.x+z.width);
+    var ix1=Math.max(chipLeft, z.x);
+    var iy1=Math.max(chipTop,  z.y);
+    var ix2=Math.min(chipRight, z.x+z.width);
     var iy2=Math.min(chipBottom,z.y+z.height);
     if(ix2<=ix1||iy2<=iy1)return;
     var area=(ix2-ix1)*(iy2-iy1);
@@ -869,9 +869,8 @@ function detectZoneByOverlap(px,py,zones){
 function detectAndUpdateZone(p){
   var ft=getTeamFieldType(activeTeam);
   var zones=getZonas(ft);
-  /* py escalado a porcentaje de 0-100 (el campo usa 0-118 internamente) */
-  var py=(p.y/118)*100;
-  var result=detectZoneByOverlap(p.x,py,zones);
+  /* p.x en 0-100, p.y en 0-118 — mismo sistema que las zonas */
+  var result=detectZoneByOverlap(p.x,p.y,zones);
   p.detectedZoneId=result.id;
   p.detectedZoneShort=result.short;
   p.detectedZoneLabel=result.label;
