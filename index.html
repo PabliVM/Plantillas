@@ -874,6 +874,8 @@ function detectAndUpdateZone(p){
   p.detectedZoneId=result.id;
   p.detectedZoneShort=result.short;
   p.detectedZoneLabel=result.label;
+  /* DEBUG temporal — eliminar después */
+  console.log('DETECT player:',p.name,'x='+Math.round(p.x)+'%','y='+Math.round(p.y)+'/118','→',result.short,'zones:',zones.map(function(z){return z.short+'(x:'+Math.round(z.x)+'-'+Math.round(z.x+z.width)+' y:'+Math.round(z.y)+'-'+Math.round(z.y+z.height)+')';}).join(' '));
 }
 
 /* ══ ESTADO ══ */
