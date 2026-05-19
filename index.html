@@ -937,7 +937,15 @@ document.getElementById('btnSeasonDel').addEventListener('click',function(){
 /* ══ CONTADOR ══ */
 var PZ={top:{x1:26,y1:0,x2:74,y2:16},bot:{x1:26,y1:100,x2:74,y2:118}};
 function inGoal(x,y){return(x>=PZ.top.x1&&x<=PZ.top.x2&&y>=PZ.top.y1&&y<=PZ.top.y2)||(x>=PZ.bot.x1&&x<=PZ.bot.x2&&y>=PZ.bot.y1&&y<=PZ.bot.y2);}
-function countPitch(){var c=0,p=0;state.players.forEach(function(pl){if(!pl.onPitch||pl.status==='baja')return;if(pl.isPor&&inGoal(pl.x,pl.y))p++;else c++;});return{c:c,p:p};}
+function countPitch(){
+  var c=0,p=0;
+  state.players.forEach(function(pl){
+    if(!pl.onPitch)return;
+    if(activeFilters[0]!=='all'&&activeFilters.indexOf(pl.status)<0)return;
+    if(pl.isPor&&inGoal(pl.x,pl.y))p++;else c++;
+  });
+  return{c:c,p:p};
+}
 function renderCounter(){var r=countPitch();document.getElementById('campoCount').textContent=r.c+'+'+r.p+'P';}
 
 /* ══ FILTRO ══ */
