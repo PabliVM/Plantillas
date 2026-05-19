@@ -1569,107 +1569,110 @@ firebase.auth().signInAnonymously().then(function(){
   setSync('error','Sin conexi\xf3n Firebase');
 });
 
+
 /* ══════════════════════════════════════════════════════
-   EDITOR DE ZONAS CON LÍNEAS — pestaña Config y Plantillas
-   Las líneas horizontales y verticales dividen el campo
-   y generan zonas rectangulares automáticamente.
-   Cada celda resultante tiene short + label editables.
+   EDITOR DE ZONAS — SEGMENTOS LIBRES
+   Cada segmento tiene x1,y1 → x2,y2 en % del campo.
+   Las zonas se definen manualmente (short + coordenadas).
+   Los segmentos sirven como guías visuales para dibujar.
 ══════════════════════════════════════════════════════ */
 
-var zedFt='F11';       /* tipo activo en el editor */
-var zedSelId=null;     /* zona seleccionada */
+var zedFt='F11';
+var zedSelId=null;
+var zedSelSeg=null; /* segmento seleccionado */
+var zedDrawing=false;
+var zedDrawStart=null;
 
-/* Líneas divisorias guardadas separadas de las zonas */
+/* ── SEGMENTOS (líneas libres) ── */
+function getSegsKey(ft){return'campograma_segs_'+ft;}
+function getSegs(ft){
+  try{var s=localStorage.getItem(getSegsKey(ft));if(s)return JSON.parse(s);}catch(e){}
+  /* Defaults parecidos a la foto: líneas que no cruzan todo el campo */
+  if(ft==='F11')return[
+    {id:'s0',x1:0, y1:14,x2:100,y2:14}, /* línea área portería arriba */
+    {id:'s1',x1:0, y1:30,x2:100,y2:30}, /* defensa */
+    {id:'s2',x1:25,y1:30,x2:25, y2:57}, /* lateral izq superior */
+    {id:'s3',x1:75,y1:30,x2:75, y2:57}, /* lateral der superior */
+    {id:'s4',x1:0, y1:57,x2:100,y2:57}, /* mediocampo */
+    {id:'s5',x1:25,y1:57,x2:25, y2:80}, /* lateral izq inferior */
+    {id:'s6',x1:75,y1:57,x2:75, y2:80}, /* lateral der inferior */
+    {id:'s7',x1:50,y1:30,x2:50, y2:57}, /* centro arriba */
+    {id:'s8',x1:50,y1:57,x2:50, y2:80}, /* centro abajo */
+    {id:'s9',x1:0, y1:80,x2:100,y2:80}  /* delantera */
+  ];
+  return[
+    {id:'s0',x1:0, y1:18,x2:100,y2:18},
+    {id:'s1',x1:0, y1:45,x2:100,y2:45},
+    {id:'s2',x1:33,y1:18,x2:33, y2:82},
+    {id:'s3',x1:67,y1:18,x2:67, y2:82},
+    {id:'s4',x1:0, y1:82,x2:100,y2:82}
+  ];
+}
+function saveSegs(ft,segs){
+  try{localStorage.setItem(getSegsKey(ft),JSON.stringify(segs));}catch(e){}
+}
+
+/* GUARDADO DE ZONAS EN LOCALSTORAGE */
 function getLinesKey(ft){return'campograma_lines_'+ft;}
-function getLines(ft){
-  try{var s=localStorage.getItem(getLinesKey(ft));if(s)return JSON.parse(s);}catch(e){}
-  /* Defaults: F11 tiene más líneas, F7 menos */
-  if(ft==='F11')return{h:[14,27,43,57,72,88],v:[25,50,75]};
-  return{h:[18,40,60,82],v:[33,67]};
-}
-function saveLines(ft,lines){
-  try{localStorage.setItem(getLinesKey(ft),JSON.stringify(lines));}catch(e){}
-}
+function getLines(ft){return{h:[],v:[]};}
+function saveLines(ft,l){}
+function zonasFromLines(ft){return getZonas(ft);}
+function regenZonas(ft){return getZonas(ft);}
 
-/* Regenerar zonas desde líneas — crea la cuadrícula automáticamente */
-function zonasFromLines(ft){
-  var lines=getLines(ft);
-  var hs=[0].concat(lines.h.slice().sort(function(a,b){return a-b})).concat([100]);
-  var vs=[0].concat(lines.v.slice().sort(function(a,b){return a-b})).concat([100]);
-  /* Obtener zonas existentes para preservar short/label */
-  var existing=getZonas(ft);
-  var exMap={};existing.forEach(function(z){exMap[z.id]=z;});
-  var zonas=[];
-  for(var r=0;r<hs.length-1;r++){
-    for(var col=0;col<vs.length-1;col++){
-      var id='zg_'+ft+'_'+r+'_'+col;
-      var x=vs[col],y=hs[r],w=vs[col+1]-vs[col],h=hs[r+1]-hs[r];
-      var ex=exMap[id];
-      zonas.push({
-        id:id,
-        label:ex?ex.label:'Zona '+(r+1)+'-'+(col+1),
-        short:ex?ex.short:('Z'+(r+1)+(col+1)),
-        x:x,y:y,width:w,height:h,
-        visible:ex?ex.visible:true,
-        active:ex?ex.active:true
-      });
-    }
-  }
-  return zonas;
-}
-
-/* Recalcular y guardar zonas desde líneas actuales */
-function regenZonas(ft){
-  var zonas=zonasFromLines(ft);
-  saveZonas(ft,zonas);
-  return zonas;
-}
-
+/* ── RENDER CONFIGURACIÓN ZONAS ── */
 function renderCfgZonas(body){
   body.innerHTML='';
   var wrap=document.createElement('div');wrap.className='zed-wrap';
 
-  /* Selector de tipo */
+  /* Selector tipo */
   var tipoRow=document.createElement('div');tipoRow.className='zed-tipo';
   tipoRow.innerHTML='<label>Tipo de campo:</label>';
   ['F11','F7'].forEach(function(ft){
     var btn=document.createElement('button');btn.className='zed-tipo-btn'+(ft===zedFt?' active':'');
     btn.textContent=ft;btn.dataset.ft=ft;
     btn.addEventListener('click',function(){
-      zedFt=ft;zedSelId=null;
+      zedFt=ft;zedSelId=null;zedSelSeg=null;
       document.querySelectorAll('.zed-tipo-btn').forEach(function(b){b.classList.toggle('active',b.dataset.ft===zedFt);});
-      renderZedCampo(campoEl,linesOverlay,zonasOverlay);
-      renderZedPanel(panelEl);
+      renderZedFull(refs);
     });
     tipoRow.appendChild(btn);
   });
   wrap.appendChild(tipoRow);
 
   /* Equipo usa tipo */
-  var teamRow=document.createElement('div');teamRow.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:4px;';
-  var teamSel=document.createElement('select');teamSel.style.cssText='padding:3px 8px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);font-size:11px;';
-  teamSel.innerHTML='<option value="F11">Este equipo usa F11</option><option value="F7">Este equipo usa F7</option>';
+  var teamRow=document.createElement('div');
+  teamRow.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:6px;';
+  var teamSel=document.createElement('select');
+  teamSel.style.cssText='padding:3px 8px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);font-size:11px;';
+  teamSel.innerHTML='<option value="F11">F11</option><option value="F7">F7</option>';
   teamSel.value=getTeamFieldType(activeTeam);
-  var saveTeamBtn=document.createElement('button');saveTeamBtn.className='btn sm pri';saveTeamBtn.textContent='Guardar';
+  var saveTeamBtn=document.createElement('button');saveTeamBtn.className='btn sm pri';saveTeamBtn.textContent='Guardar para '+activeTeam;
   saveTeamBtn.addEventListener('click',function(){
     setTeamFieldType(activeTeam,teamSel.value);
     state.players.forEach(function(p){if(p.onPitch)detectAndUpdateZone(p);});
     persist();renderPlist();renderRoster();
-    saveTeamBtn.textContent='✓ Guardado';setTimeout(function(){saveTeamBtn.textContent='Guardar';},1500);
+    saveTeamBtn.textContent='\u2713 Guardado';setTimeout(function(){saveTeamBtn.textContent='Guardar para '+activeTeam;},1500);
   });
-  teamRow.innerHTML='<label style="font-weight:600;color:var(--text-sec);">'+activeTeam+':</label>';
   teamRow.appendChild(teamSel);teamRow.appendChild(saveTeamBtn);
   wrap.appendChild(teamRow);
 
   /* Hint */
   var hint=document.createElement('div');hint.className='zed-hint';
-  hint.textContent='Arrastra las líneas amarillas para dividir el campo en zonas. Haz clic en una zona para editar su nombre.';
+  hint.innerHTML='<b>Segmentos:</b> arrastra los extremos (\u25cf) para mover. <b>Zonas:</b> clic para editar nombre/iniciales. <b>Dibujar:</b> clic en el campo para crear segmento.';
   wrap.appendChild(hint);
 
-  /* Campo con líneas */
+  /* Botones */
+  var btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;';
+  var btnAddSeg=document.createElement('button');btnAddSeg.className='btn sm';btnAddSeg.innerHTML='&#9998; Dibujar segmento';
+  var btnAddZona=document.createElement('button');btnAddZona.className='btn sm pri';btnAddZona.textContent='+ Zona';
+  var btnReset=document.createElement('button');btnReset.className='btn sm dan';btnReset.textContent='Restaurar';
+  btnRow.appendChild(btnAddSeg);btnRow.appendChild(btnAddZona);btnRow.appendChild(btnReset);
+  wrap.appendChild(btnRow);
+
+  /* Campo */
   var campoWrap=document.createElement('div');campoWrap.className='zed-campo-wrap';
   var campoEl=document.createElement('div');campoEl.className='zed-campo';
-  /* SVG campo */
+  campoEl.style.cursor='default';
   campoEl.innerHTML='<svg viewBox="0 0 100 118" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;">'
     +'<rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/>'
     +'<line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/>'
@@ -1682,240 +1685,319 @@ function renderCfgZonas(body){
     +'<circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>'
     +'<circle cx="50" cy="59" r="1" fill="rgba(255,255,255,.35)"/>'
     +'</svg>'
-    +'<img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" style="position:absolute;top:50%;left:50%;width:32%;transform:translate(-50%,-50%) translateY(-6%);opacity:.15;pointer-events:none;" onerror="this.style.display=\'none\'">';
-  var linesOverlay=document.createElement('div');linesOverlay.style.cssText='position:absolute;inset:0;z-index:4;';
-  var zonasOverlay=document.createElement('div');zonasOverlay.style.cssText='position:absolute;inset:0;z-index:3;';
-  campoEl.appendChild(linesOverlay);
-  campoEl.appendChild(zonasOverlay);
+    +'<img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" style="position:absolute;top:50%;left:50%;width:32%;transform:translate(-50%,-50%) translateY(-6%);opacity:.12;pointer-events:none;" onerror="this.style.display=\'none\'">';
+
+  /* SVG para segmentos (encima del campo) */
+  var segSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  segSvg.setAttribute('viewBox','0 0 100 118');
+  segSvg.setAttribute('preserveAspectRatio','none');
+  segSvg.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:6;overflow:visible;';
+  /* Zona overlay */
+  var zonaOverlayEl=document.createElement('div');
+  zonaOverlayEl.style.cssText='position:absolute;inset:0;z-index:5;pointer-events:none;';
+  /* Preview línea dibujando */
+  var previewSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  previewSvg.setAttribute('viewBox','0 0 100 118');
+  previewSvg.setAttribute('preserveAspectRatio','none');
+  previewSvg.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:7;pointer-events:none;overflow:visible;';
+
+  campoEl.appendChild(zonaOverlayEl);
+  campoEl.appendChild(segSvg);
+  campoEl.appendChild(previewSvg);
   campoWrap.appendChild(campoEl);
   wrap.appendChild(campoWrap);
 
-  /* Botones añadir línea */
-  var addRow=document.createElement('div');addRow.className='zed-add-line-row';
-  var addH=document.createElement('button');addH.className='btn sm';addH.textContent='+ Línea horizontal';
-  addH.addEventListener('click',function(){
-    var lines=getLines(zedFt);
-    lines.h.push(50);saveLines(zedFt,lines);regenZonas(zedFt);
-    renderZedCampo(campoEl,linesOverlay,zonasOverlay);renderZedPanel(panelEl);
-  });
-  var addV=document.createElement('button');addV.className='btn sm';addV.textContent='+ Línea vertical';
-  addV.addEventListener('click',function(){
-    var lines=getLines(zedFt);
-    lines.v.push(50);saveLines(zedFt,lines);regenZonas(zedFt);
-    renderZedCampo(campoEl,linesOverlay,zonasOverlay);renderZedPanel(panelEl);
-  });
-  var resetBtn=document.createElement('button');resetBtn.className='btn sm dan';resetBtn.textContent='Restaurar';
-  resetBtn.addEventListener('click',function(){
-    if(!confirm('\xbfRestaurar l\xedneas por defecto para '+zedFt+'?'))return;
-    localStorage.removeItem(getLinesKey(zedFt));
-    localStorage.removeItem('campograma_position_zones_'+zedFt);
-    zedSelId=null;regenZonas(zedFt);
-    renderZedCampo(campoEl,linesOverlay,zonasOverlay);renderZedPanel(panelEl);
-  });
-  addRow.appendChild(addH);addRow.appendChild(addV);addRow.appendChild(resetBtn);
-  wrap.appendChild(addRow);
-
-  /* Panel lista + editor */
+  /* Panel */
   var panelEl=document.createElement('div');panelEl.className='zed-panel';
   wrap.appendChild(panelEl);
-
   body.appendChild(wrap);
 
-  /* Renderizar */
-  renderZedCampo(campoEl,linesOverlay,zonasOverlay);
-  renderZedPanel(panelEl);
+  var refs={campoEl:campoEl,segSvg:segSvg,zonaOverlayEl:zonaOverlayEl,previewSvg:previewSvg,panelEl:panelEl,drawing:false,drawStart:null};
 
-  /* Guardar referencia para actualizaciones */
-  body._zedRefs={campoEl:campoEl,linesOverlay:linesOverlay,zonasOverlay:zonasOverlay,panelEl:panelEl};
-}
-
-function renderZedCampo(campoEl,linesOverlay,zonasOverlay){
-  linesOverlay.innerHTML='';zonasOverlay.innerHTML='';
-  var lines=getLines(zedFt);
-  var zonas=regenZonas(zedFt);
-
-  /* Zonas rectangulares */
-  zonas.forEach(function(z){
-    var el=document.createElement('div');el.className='zed-zona-rect'+(z.id===zedSelId?' sel':'');
-    /* y está en % de 0-100 del campo interno (118), convertir a % CSS */
-    el.style.left=z.x+'%';
-    el.style.top=(z.y*(100/118))+'%';
-    el.style.width=z.width+'%';
-    el.style.height=(z.height*(100/118))+'%';
-    var lbl=document.createElement('div');lbl.className='zed-zona-label';
-    lbl.innerHTML='<strong style="font-size:12px;">'+esc(z.short)+'</strong><br><span style="font-size:8px;opacity:.8;">'+esc(z.label)+'</span>';
-    el.appendChild(lbl);
-    el.addEventListener('click',function(e){e.stopPropagation();zedSelId=z.id;renderZedCampo(campoEl,linesOverlay,zonasOverlay);renderZedPanel(campoEl.closest('.zed-wrap').querySelector('.zed-panel'));});
-    zonasOverlay.appendChild(el);
+  /* Botón dibujar segmento */
+  btnAddSeg.addEventListener('click',function(){
+    refs.drawing=!refs.drawing;
+    campoEl.style.cursor=refs.drawing?'crosshair':'default';
+    btnAddSeg.style.background=refs.drawing?'var(--rm-blue)':'';
+    btnAddSeg.style.color=refs.drawing&&'#fff'||'';
   });
 
-  /* Líneas horizontales arrastrables */
-  lines.h.forEach(function(pct,idx){
-    var el=document.createElement('div');el.className='zed-hline';
-    el.style.top=(pct*(100/118))+'%';
-    var handle=document.createElement('div');handle.className='zed-hline-label';handle.textContent='H'+(idx+1)+' ↕';
-    el.appendChild(handle);
-    bindLineDrag(el,campoEl,'h',idx,lines,linesOverlay,zonasOverlay);
-    linesOverlay.appendChild(el);
+  /* Botón añadir zona */
+  btnAddZona.addEventListener('click',function(){
+    var zonas=getZonas(zedFt);
+    var nz={id:'z_'+Date.now(),label:'Nueva zona',short:'NZ',x:20,y:20,width:60,height:20,visible:true,active:true};
+    zonas.push(nz);saveZonas(zedFt,zonas);zedSelId=nz.id;
+    renderZedFull(refs);
   });
 
-  /* Líneas verticales arrastrables */
-  lines.v.forEach(function(pct,idx){
-    var el=document.createElement('div');el.className='zed-vline';
-    el.style.left=pct+'%';
-    var handle=document.createElement('div');handle.style.cssText='position:absolute;top:4px;left:3px;font-size:8px;color:rgba(255,255,200,.8);white-space:nowrap;pointer-events:none;';handle.textContent='V'+(idx+1)+' ↔';
-    el.appendChild(handle);
-    bindLineDrag(el,campoEl,'v',idx,lines,linesOverlay,zonasOverlay);
-    linesOverlay.appendChild(el);
+  /* Restaurar */
+  btnReset.addEventListener('click',function(){
+    if(!confirm('\xbfRestaurar por defecto para '+zedFt+'?'))return;
+    localStorage.removeItem(getSegsKey(zedFt));
+    localStorage.removeItem('campograma_position_zones_'+zedFt);
+    zedSelId=null;zedSelSeg=null;refs.drawing=false;campoEl.style.cursor='default';
+    renderZedFull(refs);
   });
-}
 
-function bindLineDrag(el,campoEl,axis,idx,lines,linesOverlay,zonasOverlay){
-  el.addEventListener('pointerdown',function(ev){
-    ev.preventDefault();ev.stopPropagation();
-    el.classList.add('dragging');
-    var startX=ev.clientX,startY=ev.clientY;
-    var moved=false;
+  /* Clic en campo: dibujar segmento */
+  campoEl.addEventListener('pointerdown',function(ev){
+    if(ev.target!==campoEl&&ev.target.tagName!=='svg'&&ev.target.tagName!=='circle'&&ev.target.tagName!=='image'&&ev.target.tagName!=='img')return;
+    if(!refs.drawing)return;
+    ev.preventDefault();
+    var r=campoEl.getBoundingClientRect();
+    var x=((ev.clientX-r.left)/r.width)*100;
+    var y=((ev.clientY-r.top)/r.height)*118;
+    refs.drawStart={x:Math.round(x*10)/10,y:Math.round(y*10)/10};
+    var previewLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+    previewLine.setAttribute('stroke','#ffd400');previewLine.setAttribute('stroke-width','1');
+    previewLine.setAttribute('stroke-dasharray','3,2');previewLine.setAttribute('opacity','0.8');
+    previewLine.setAttribute('x1',refs.drawStart.x);previewLine.setAttribute('y1',refs.drawStart.y);
+    previewLine.setAttribute('x2',refs.drawStart.x);previewLine.setAttribute('y2',refs.drawStart.y);
+    previewSvg.innerHTML='';previewSvg.appendChild(previewLine);
     function mv(e){
-      moved=true;
-      var r=campoEl.getBoundingClientRect();
-      if(axis==='h'){
-        var pct=Math.max(2,Math.min(98,((e.clientY-r.top)/r.height)*100));
-        /* convertir de CSS% a campo% (118 unidades) */
-        lines.h[idx]=pct*(118/100);
-        el.style.top=pct+'%';
-      } else {
-        var pct2=Math.max(2,Math.min(98,((e.clientX-r.left)/r.width)*100));
-        lines.v[idx]=pct2;
-        el.style.left=pct2+'%';
+      var x2=((e.clientX-r.left)/r.width)*100;
+      var y2=((e.clientY-r.top)/r.height)*118;
+      previewLine.setAttribute('x2',x2);previewLine.setAttribute('y2',y2);
+    }
+    function up(e){
+      campoEl.removeEventListener('pointermove',mv);
+      campoEl.removeEventListener('pointerup',up);
+      previewSvg.innerHTML='';
+      var x2=((e.clientX-r.left)/r.width)*100;
+      var y2=((e.clientY-r.top)/r.height)*118;
+      var dx=Math.abs(x2-refs.drawStart.x),dy=Math.abs(y2-refs.drawStart.y);
+      if(dx>2||dy>2){
+        var segs=getSegs(zedFt);
+        segs.push({id:'s'+Date.now(),x1:Math.round(refs.drawStart.x*10)/10,y1:Math.round(refs.drawStart.y*10)/10,x2:Math.round(x2*10)/10,y2:Math.round(y2*10)/10});
+        saveSegs(zedFt,segs);refs.drawing=false;
+        campoEl.style.cursor='default';btnAddSeg.style.background='';btnAddSeg.style.color='';
+        renderZedFull(refs);
       }
-      /* actualizar zonas en tiempo real */
-      regenZonas(zedFt);
-      renderZedZonas(zonasOverlay,regenZonas(zedFt),campoEl,linesOverlay,zonasOverlay);
+    }
+    campoEl.addEventListener('pointermove',mv);
+    campoEl.addEventListener('pointerup',up);
+  });
+
+  renderZedFull(refs);
+}
+
+function renderZedFull(refs){
+  renderZedSegs(refs);
+  renderZedZonasOverlay(refs);
+  renderZedPanel(refs.panelEl,refs);
+}
+
+function renderZedSegs(refs){
+  var svg=refs.segSvg;
+  while(svg.firstChild)svg.removeChild(svg.firstChild);
+  var segs=getSegs(zedFt);
+  segs.forEach(function(seg){
+    /* Línea */
+    var line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',seg.x1);line.setAttribute('y1',seg.y1);
+    line.setAttribute('x2',seg.x2);line.setAttribute('y2',seg.y2);
+    var isSel=seg.id===zedSelSeg;
+    line.setAttribute('stroke',isSel?'#ffd400':'rgba(255,255,200,.75)');
+    line.setAttribute('stroke-width',isSel?'1.5':'1');
+    line.setAttribute('stroke-dasharray','4,2');
+    line.style.cursor='pointer';
+    line.addEventListener('click',function(e){e.stopPropagation();zedSelSeg=seg.id;zedSelId=null;renderZedFull(refs);});
+    svg.appendChild(line);
+
+    /* Extremo 1 */
+    appendEndpoint(svg,seg,refs,'start');
+    /* Extremo 2 */
+    appendEndpoint(svg,seg,refs,'end');
+  });
+}
+
+function appendEndpoint(svg,seg,refs,which){
+  var cx=which==='start'?seg.x1:seg.x2;
+  var cy=which==='start'?seg.y1:seg.y2;
+  var c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx',cx);c.setAttribute('cy',cy);c.setAttribute('r','2.5');
+  c.setAttribute('fill',seg.id===zedSelSeg?'#ffd400':'rgba(255,255,180,.9)');
+  c.setAttribute('stroke','#000');c.setAttribute('stroke-width','0.5');
+  c.style.cursor='grab';
+  c.addEventListener('pointerdown',function(ev){
+    ev.preventDefault();ev.stopPropagation();
+    zedSelSeg=seg.id;
+    var campo=refs.campoEl;
+    var r=campo.getBoundingClientRect();
+    c.style.cursor='grabbing';
+    function mv(e){
+      var nx=Math.max(0,Math.min(100,((e.clientX-r.left)/r.width)*100));
+      var ny=Math.max(0,Math.min(118,((e.clientY-r.top)/r.height)*118));
+      if(which==='start'){seg.x1=Math.round(nx*10)/10;seg.y1=Math.round(ny*10)/10;}
+      else{seg.x2=Math.round(nx*10)/10;seg.y2=Math.round(ny*10)/10;}
+      /* actualizar SVG en tiempo real */
+      var segs=getSegs(zedFt);
+      var idx=segs.findIndex(function(s){return s.id===seg.id;});
+      if(idx>=0)segs[idx]=seg;
+      saveSegs(zedFt,segs);
+      renderZedSegs(refs);
     }
     function up(){
-      el.classList.remove('dragging');
+      c.style.cursor='grab';
       document.removeEventListener('pointermove',mv);
       document.removeEventListener('pointerup',up);
-      if(moved){saveLines(zedFt,lines);regenZonas(zedFt);
-        var wrap=campoEl.closest('.zed-wrap');
-        if(wrap){var panel=wrap.querySelector('.zed-panel');if(panel)renderZedPanel(panel);}
-      }
+      renderZedFull(refs);
     }
     document.addEventListener('pointermove',mv);
     document.addEventListener('pointerup',up);
   });
+  svg.appendChild(c);
 }
 
-function renderZedZonas(overlay,zonas,campoEl,linesOverlay,zonasOverlay){
-  overlay.innerHTML='';
+function renderZedZonasOverlay(refs){
+  var overlay=refs.zonaOverlayEl;overlay.innerHTML='';
+  var zonas=getZonas(zedFt);
   zonas.forEach(function(z){
-    var el=document.createElement('div');el.className='zed-zona-rect'+(z.id===zedSelId?' sel':'');
+    if(!z.visible)return;
+    var el=document.createElement('div');
+    el.style.cssText='position:absolute;border:1.5px dashed rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;';
     el.style.left=z.x+'%';
     el.style.top=(z.y*(100/118))+'%';
     el.style.width=z.width+'%';
     el.style.height=(z.height*(100/118))+'%';
+    if(z.id===zedSelId){el.style.borderColor='#ffd400';el.style.background='rgba(255,212,0,.18)';}
+    if(!z.active)el.style.opacity='0.35';
     var lbl=document.createElement('div');lbl.className='zed-zona-label';
-    lbl.innerHTML='<strong style="font-size:12px;">'+esc(z.short)+'</strong><br><span style="font-size:8px;opacity:.8;">'+esc(z.label)+'</span>';
+    lbl.innerHTML='<strong style="font-size:11px;display:block;">'+esc(z.short)+'</strong><span style="font-size:8px;opacity:.75;">'+esc(z.label)+'</span>';
     el.appendChild(lbl);
-    el.addEventListener('click',function(e){e.stopPropagation();zedSelId=z.id;
-      renderZedCampo(campoEl,linesOverlay,zonasOverlay);
-      var wrap=campoEl.closest('.zed-wrap');if(wrap){var panel=wrap.querySelector('.zed-panel');if(panel)renderZedPanel(panel);}
+    el.addEventListener('click',function(e){e.stopPropagation();zedSelId=z.id;zedSelSeg=null;renderZedFull(refs);});
+
+    /* Arrastrar zona */
+    el.addEventListener('pointerdown',function(ev){
+      if(ev.target!==el&&ev.target!==lbl&&!lbl.contains(ev.target))return;
+      ev.preventDefault();ev.stopPropagation();
+      var r=refs.campoEl.getBoundingClientRect();
+      var ox=ev.clientX,oy=ev.clientY;
+      var oz={x:z.x,y:z.y};
+      function mv(e){
+        var dx=((e.clientX-ox)/r.width)*100;
+        var dy=((e.clientY-oy)/r.height)*118;
+        z.x=Math.max(0,Math.min(100-z.width,oz.x+dx));
+        z.y=Math.max(0,Math.min(118-z.height,oz.y+dy));
+        el.style.left=z.x+'%';
+        el.style.top=(z.y*(100/118))+'%';
+      }
+      function up(){
+        document.removeEventListener('pointermove',mv);
+        document.removeEventListener('pointerup',up);
+        var zs=getZonas(zedFt);var zi=zs.findIndex(function(x){return x.id===z.id;});
+        if(zi>=0)zs[zi]=z;saveZonas(zedFt,zs);renderZedFull(refs);
+      }
+      document.addEventListener('pointermove',mv);
+      document.addEventListener('pointerup',up);
     });
     overlay.appendChild(el);
   });
 }
 
-function renderZedPanel(panelEl){
+function renderZedPanel(panelEl,refs){
   panelEl.innerHTML='';
   var zonas=getZonas(zedFt);
-  var lines=getLines(zedFt);
+  var segs=getSegs(zedFt);
+
+  /* Lista segmentos seleccionado */
+  if(zedSelSeg){
+    var seg=segs.find(function(s){return s.id===zedSelSeg;});
+    if(seg){
+      var segTitle=document.createElement('div');segTitle.style.cssText='font-size:10px;font-weight:700;color:var(--rm-blue);text-transform:uppercase;margin-bottom:6px;';
+      segTitle.textContent='Segmento seleccionado';panelEl.appendChild(segTitle);
+      var segInfo=document.createElement('div');segInfo.style.cssText='font-size:10px;color:var(--text-sec);margin-bottom:6px;background:var(--surface-alt);padding:6px 8px;border-radius:var(--rs);';
+      segInfo.textContent='('+Math.round(seg.x1)+','+Math.round(seg.y1)+') \u2192 ('+Math.round(seg.x2)+','+Math.round(seg.y2)+')';
+      panelEl.appendChild(segInfo);
+      var delSegBtn=document.createElement('button');delSegBtn.className='btn dan sm';delSegBtn.textContent='Eliminar segmento';
+      delSegBtn.addEventListener('click',function(){
+        var ss=getSegs(zedFt).filter(function(s){return s.id!==zedSelSeg;});
+        saveSegs(zedFt,ss);zedSelSeg=null;renderZedFull(refs);
+      });
+      panelEl.appendChild(delSegBtn);
+      var sep=document.createElement('hr');sep.style.cssText='border:none;border-top:1px solid var(--border);margin:10px 0;';
+      panelEl.appendChild(sep);
+    }
+  }
 
   /* Lista de zonas */
-  var listTitle=document.createElement('div');listTitle.style.cssText='font-size:10px;font-weight:700;color:var(--text-mut);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px;';
-  listTitle.textContent='Zonas ('+zonas.length+') — haz clic en el campo o aquí para editar';
-  panelEl.appendChild(listTitle);
+  var zonaTitle=document.createElement('div');zonaTitle.style.cssText='font-size:10px;font-weight:700;color:var(--text-mut);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px;';
+  zonaTitle.textContent='Zonas ('+zonas.length+') — arrastra para mover, clic para editar';
+  panelEl.appendChild(zonaTitle);
 
   var list=document.createElement('div');list.className='zed-zonalist';
   zonas.forEach(function(z){
     var item=document.createElement('div');item.className='zed-zitem'+(z.id===zedSelId?' sel':'');
     item.innerHTML='<span class="zed-zitem-short">'+esc(z.short)+'</span><span class="zed-zitem-label">'+esc(z.label)+'</span>';
-    item.addEventListener('click',function(){zedSelId=z.id;
-      var wrap=panelEl.closest('.zed-wrap');
-      if(wrap){
-        var ce=wrap.querySelector('.zed-campo');
-        var lo=wrap.querySelector('.zed-campo > div:nth-child(4)');
-        var zo=wrap.querySelector('.zed-campo > div:nth-child(5)');
-        if(ce&&lo&&zo)renderZedCampo(ce,lo,zo);
-      }
-      renderZedPanel(panelEl);
+    var del=document.createElement('button');del.className='zed-zitem-del';del.textContent='\xd7';del.title='Eliminar zona';
+    del.addEventListener('click',function(e){e.stopPropagation();
+      var zs=getZonas(zedFt).filter(function(x){return x.id!==z.id;});
+      saveZonas(zedFt,zs);if(zedSelId===z.id)zedSelId=null;renderZedFull(refs);
     });
+    item.appendChild(del);
+    item.addEventListener('click',function(){zedSelId=z.id;zedSelSeg=null;renderZedFull(refs);});
     list.appendChild(item);
   });
   panelEl.appendChild(list);
 
-  /* Líneas con botón eliminar */
-  var linesTitle=document.createElement('div');linesTitle.style.cssText='font-size:10px;font-weight:700;color:var(--text-mut);text-transform:uppercase;letter-spacing:.3px;margin:8px 0 4px;';
-  linesTitle.textContent='Líneas divisorias';panelEl.appendChild(linesTitle);
-  var linesRow=document.createElement('div');linesRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap;';
-  lines.h.forEach(function(pct,idx){
-    var tag=document.createElement('span');tag.style.cssText='display:inline-flex;align-items:center;gap:3px;font-size:10px;background:var(--surface-alt);border:1px solid var(--border);border-radius:4px;padding:2px 6px;';
-    tag.innerHTML='H'+(idx+1)+' ('+Math.round(pct*(100/118))+'%)';
-    var del=document.createElement('button');del.style.cssText='background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:0 2px;';del.textContent='×';
-    del.addEventListener('click',function(){
-      var ls=getLines(zedFt);ls.h.splice(idx,1);saveLines(zedFt,ls);regenZonas(zedFt);
-      var wrap=panelEl.closest('.zed-wrap');
-      if(wrap){var ce=wrap.querySelector('.zed-campo');var lo=wrap.querySelector('.zed-campo > div:nth-child(4)');var zo=wrap.querySelector('.zed-campo > div:nth-child(5)');if(ce&&lo&&zo)renderZedCampo(ce,lo,zo);}
-      renderZedPanel(panelEl);
-    });
-    tag.appendChild(del);linesRow.appendChild(tag);
-  });
-  lines.v.forEach(function(pct,idx){
-    var tag=document.createElement('span');tag.style.cssText='display:inline-flex;align-items:center;gap:3px;font-size:10px;background:var(--surface-alt);border:1px solid var(--border);border-radius:4px;padding:2px 6px;';
-    tag.innerHTML='V'+(idx+1)+' ('+Math.round(pct)+'%)';
-    var del=document.createElement('button');del.style.cssText='background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:0 2px;';del.textContent='×';
-    del.addEventListener('click',function(){
-      var ls=getLines(zedFt);ls.v.splice(idx,1);saveLines(zedFt,ls);regenZonas(zedFt);
-      var wrap=panelEl.closest('.zed-wrap');
-      if(wrap){var ce=wrap.querySelector('.zed-campo');var lo=wrap.querySelector('.zed-campo > div:nth-child(4)');var zo=wrap.querySelector('.zed-campo > div:nth-child(5)');if(ce&&lo&&zo)renderZedCampo(ce,lo,zo);}
-      renderZedPanel(panelEl);
-    });
-    tag.appendChild(del);linesRow.appendChild(tag);
-  });
-  panelEl.appendChild(linesRow);
+  /* Editor zona seleccionada */
+  if(!zedSelId)return;
+  var z=zonas.find(function(x){return x.id===zedSelId;});if(!z)return;
 
-  /* Editor de zona seleccionada */
-  if(!zedSelId){return;}
-  var z=zonas.find(function(x){return x.id===zedSelId;});
-  if(!z)return;
+  var sep2=document.createElement('hr');sep2.style.cssText='border:none;border-top:1px solid var(--border);margin:8px 0;';
+  panelEl.appendChild(sep2);
 
-  var editDiv=document.createElement('div');editDiv.className='zed-edit';
-  editDiv.innerHTML='<div class="zed-field" style="grid-column:span 2"><label>Short (inicial visible)</label>'
-    +'<input type="text" id="zeShortCfg" value="'+esc(z.short)+'" maxlength="6" placeholder="MC" style="font-size:14px;font-weight:700;text-transform:uppercase;"></div>'
-    +'<div class="zed-field" style="grid-column:span 2"><label>Nombre completo</label>'
-    +'<input type="text" id="zeLabelCfg" value="'+esc(z.label)+'" maxlength="40" placeholder="Mediocentro"></div>';
-  var saveZonaBtn=document.createElement('button');saveZonaBtn.className='btn pri sm';saveZonaBtn.style.gridColumn='span 2';saveZonaBtn.textContent='Guardar zona';
-  saveZonaBtn.addEventListener('click',function(){
-    var newShort=(document.getElementById('zeShortCfg').value||'').trim().toUpperCase();
-    var newLabel=(document.getElementById('zeLabelCfg').value||'').trim();
-    var zs=getZonas(zedFt);
-    var zz=zs.find(function(x){return x.id===zedSelId;});
-    if(zz){if(newShort)zz.short=newShort;if(newLabel)zz.label=newLabel;saveZonas(zedFt,zs);}
-    /* Re-detectar jugadores */
+  var editTitle=document.createElement('div');editTitle.style.cssText='font-size:10px;font-weight:700;color:var(--rm-blue);text-transform:uppercase;margin-bottom:6px;';
+  editTitle.textContent='Editar zona: '+z.short;panelEl.appendChild(editTitle);
+
+  var grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px;';
+
+  function addField(label,id,value,col){
+    var d=document.createElement('div');d.className='zed-field';
+    if(col)d.style.gridColumn=col;
+    d.innerHTML='<label>'+label+'</label><input type="'+(isNaN(value)?'text':'number')+'" id="'+id+'" value="'+esc(String(value))+'" '+(isNaN(value)?'maxlength="10"':'step="1" min="0" max="100"')+'>';
+    grid.appendChild(d);
+  }
+  addField('Short','ze_short',z.short,'span 1');
+  addField('Nombre','ze_label',z.label,'span 1');
+  addField('X (%)','ze_x',Math.round(z.x));
+  addField('Y (%)','ze_y',Math.round(z.y));
+  addField('Ancho (%)','ze_w',Math.round(z.width));
+  addField('Alto (%)','ze_h',Math.round(z.height));
+
+  /* Checks */
+  var checks=document.createElement('div');checks.style.cssText='display:flex;gap:10px;grid-column:span 2;';
+  checks.innerHTML='<label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;"><input type="checkbox" id="ze_vis" '+(z.visible?'checked':'')+' style="accent-color:var(--rm-blue);"> Visible</label>'
+    +'<label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;"><input type="checkbox" id="ze_act" '+(z.active?'checked':'')+' style="accent-color:var(--rm-blue);"> Activa (detectar)</label>';
+  grid.appendChild(checks);
+
+  var saveBtn=document.createElement('button');saveBtn.className='btn pri sm';saveBtn.textContent='Guardar zona';
+  saveBtn.style.gridColumn='span 2';
+  saveBtn.addEventListener('click',function(){
+    var zs=getZonas(zedFt);var zi=zs.findIndex(function(x){return x.id===zedSelId;});if(zi<0)return;
+    var ns=(document.getElementById('ze_short').value||'').trim().toUpperCase();
+    var nl=(document.getElementById('ze_label').value||'').trim();
+    zs[zi].short=ns||zs[zi].short;
+    zs[zi].label=nl||zs[zi].label;
+    zs[zi].x=parseFloat(document.getElementById('ze_x').value)||0;
+    zs[zi].y=parseFloat(document.getElementById('ze_y').value)||0;
+    zs[zi].width=parseFloat(document.getElementById('ze_w').value)||10;
+    zs[zi].height=parseFloat(document.getElementById('ze_h').value)||10;
+    zs[zi].visible=document.getElementById('ze_vis').checked;
+    zs[zi].active=document.getElementById('ze_act').checked;
+    saveZonas(zedFt,zs);
     if(getTeamFieldType(activeTeam)===zedFt){
       state.players.forEach(function(p){if(p.onPitch)detectAndUpdateZone(p);});
       persist();renderPlist();renderRoster();
     }
-    /* Actualizar también el overlay de la pestaña Posiciones si está activo */
     if(activeInnerTab==='zonas')renderZonaOverlay();
-    var wrap=panelEl.closest('.zed-wrap');
-    if(wrap){var ce=wrap.querySelector('.zed-campo');var lo=wrap.querySelector('.zed-campo > div:nth-child(4)');var zo=wrap.querySelector('.zed-campo > div:nth-child(5)');if(ce&&lo&&zo)renderZedCampo(ce,lo,zo);}
-    renderZedPanel(panelEl);
-    saveZonaBtn.textContent='✓ Guardado';setTimeout(function(){saveZonaBtn.textContent='Guardar zona';},1200);
+    renderZedFull(refs);
+    saveBtn.textContent='\u2713 Guardado';setTimeout(function(){saveBtn.textContent='Guardar zona';},1200);
   });
-  editDiv.appendChild(saveZonaBtn);
-  panelEl.appendChild(editDiv);
+  grid.appendChild(saveBtn);
+  panelEl.appendChild(grid);
 }
+
 
 </script>
 </body>
