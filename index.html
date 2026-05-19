@@ -462,7 +462,7 @@ button,input,select,textarea{font-family:inherit}
     <div class="col">
       <div class="card">
         <div class="card-h">Todos los jugadores</div>
-        <div class="card-b" style="padding:6px 8px;"><div class="rlist" id="rosterTodos" style="max-height:500px;"></div></div>
+        <div class="card-b" style="padding:6px 8px;"><div id="rosterTodos" style="max-height:560px;overflow-y:auto;display:flex;flex-direction:column;gap:0;"></div></div>
       </div>
       <div style="padding:8px 0 0">
         <button class="btn pri" id="btnNew" style="width:100%;justify-content:center;display:flex;padding:9px;font-size:12px;">+ A&ntilde;adir jugador</button>
@@ -840,6 +840,8 @@ function loadTeam(){
     var d=snap.exists?snap.data():{};
     if(d.version)localVersions[docId(activeTeam)]=d.version;
     var incoming={players:d.players||[],necesidades:d.necesidades||'',observaciones:d.observaciones||''};
+    /* Re-detectar zonas siempre al cargar — corrige valores obsoletos guardados en FB */
+    incoming.players.forEach(function(p){if(p.onPitch)detectAndUpdateZone(p);});
     state=incoming;
     try{localStorage.setItem('plt_cache_'+docId(activeTeam),JSON.stringify(incoming));}catch(e){}
     renderAll();
@@ -1022,7 +1024,7 @@ function renderRoster(){
     var grp=grupos[st];
     var col=COLORS[st];
     var bloque=document.createElement('div');
-    bloque.style.cssText='margin-bottom:8px;border-radius:var(--rs);overflow:hidden;border:1px solid '+col.border+';';
+    bloque.style.cssText='margin-bottom:6px;border-radius:var(--rs);overflow:hidden;border:1px solid '+col.border+';flex-shrink:0;';
     var hdr=document.createElement('div');
     hdr.style.cssText='background:'+col.bg+';color:'+col.text+';padding:6px 10px;'
       +'display:flex;justify-content:space-between;align-items:center;'
@@ -1050,7 +1052,7 @@ function renderRoster(){
         mini.setAttribute('style',chipSt(p.status,p.isPor));
         mini.innerHTML='<span class="chip-mini-text">'+esc(p.name||'')+'</span>';
         var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
-        var posLabel=p.isPor?'POR':(p.detectedZoneShort||'');
+        var posLabel=p.isPor?'PO':(p.detectedZoneShort||'');
         var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:9px;font-weight:700;"> \u2713</span>':'';
         info.innerHTML='<div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
           +esc(p.name||'(sin nombre)')+enCampo+'</div>'
@@ -1079,8 +1081,8 @@ function renderPlist(){
   var totalP=activos.filter(function(p){return p.isPor;}).length;
   document.getElementById('plistTotal').textContent=totalC+'+'+totalP;
   var sorted=activos.slice().sort(function(a,b){
-    var pa=a.isPor?'POR':(a.detectedZoneShort||'');
-    var pb=b.isPor?'POR':(b.detectedZoneShort||'');
+    var pa=a.isPor?'PO':(a.detectedZoneShort||'');
+    var pb=b.isPor?'PO':(b.detectedZoneShort||'');
     var ia=POS_ORDER.indexOf(pa); var ib=POS_ORDER.indexOf(pb);
     if(ia<0)ia=999; if(ib<0)ib=999;
     if(ia!==ib)return ia-ib;
@@ -1091,7 +1093,7 @@ function renderPlist(){
     var row=document.createElement('div');row.className='plist-item';row.style.marginBottom='2px';
     var badge=document.createElement('div');badge.className='plist-badge'+(p.isPor?' por':'');
     badge.setAttribute('style',chipSt(p.status,p.isPor));
-    badge.textContent=p.isPor?'POR':(p.detectedZoneShort||'---');
+    badge.textContent=p.isPor?'PO':(p.detectedZoneShort||'---');
     var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
     var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:9px;font-weight:700;"> \u2713</span>':'';
     info.innerHTML='<div class="plist-name">'+esc(p.name||'(sin nombre)')+enCampo+'</div>';
@@ -1116,7 +1118,7 @@ function renderPlist(){
       mini.innerHTML='<span class="chip-mini-text">'+esc(p.name||'')+'</span>';
       var info=document.createElement('div');info.className='ritem-info';
       info.innerHTML='<div class="ritem-name">'+esc(p.name||'(sin nombre)')+'</div>'
-        +'<div class="ritem-meta">'+(p.isPor?'POR':(p.detectedZoneShort||'---'))+'</div>';
+        +'<div class="ritem-meta">'+(p.isPor?'PO':(p.detectedZoneShort||'---'))+'</div>';
       var addBtn=document.createElement('button');addBtn.className='plist-addbtn';addBtn.textContent='+ Campo';
       addBtn.addEventListener('click',function(e){e.stopPropagation();p.onPitch=true;selectedId=p.id;persist();renderAll();});
       row.appendChild(mini);row.appendChild(info);row.appendChild(addBtn);
@@ -1446,7 +1448,7 @@ function renderCfgPlantillas(body){
     var row=document.createElement('div');row.className='pt-pitem';
     var num=document.createElement('span');num.className='pt-pnum';num.textContent=i+1;
     var name=document.createElement('span');name.className='pt-pname';name.textContent=p.name||'(sin nombre)';
-    var porBtn=document.createElement('button');porBtn.className='pt-por-btn'+(p.isPor?' on':'');porBtn.textContent=p.isPor?'POR \u2713':'POR';
+    var porBtn=document.createElement('button');porBtn.className='pt-por-btn'+(p.isPor?' on':'');porBtn.textContent=p.isPor?'PO \u2713':'PO';
     porBtn.addEventListener('click',function(e){e.stopPropagation();var tdd=loadState(activePtTeam)||{players:[]};var pp=tdd.players.find(function(x){return x.id===p.id;});if(pp){pp.isPor=!pp.isPor;saveState(activePtTeam,tdd);}if(activePtTeam===activeTeam){state=tdd;renderAll();}renderCfg();});
     var del=document.createElement('button');del.className='pt-pdel';del.textContent='\xd7';
     del.addEventListener('click',function(e){e.stopPropagation();var tdd=loadState(activePtTeam)||{players:[]};tdd.players=(tdd.players||[]).filter(function(x){return x.id!==p.id;});saveState(activePtTeam,tdd);if(activePtTeam===activeTeam){state=tdd;renderAll();}renderCfg();});
