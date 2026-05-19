@@ -1134,7 +1134,7 @@ function renderPlist(){
 /* ══ STATS ══ */
 function renderStats(){
   var enCampo=state.players.filter(function(p){
-    if(!p.onPitch||p.status==='baja')return false;
+    if(!p.onPitch)return false;
     if(activeFilters[0]==='all')return true;
     return activeFilters.indexOf(p.status)>=0;
   });
