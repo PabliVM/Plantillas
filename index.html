@@ -310,19 +310,15 @@ button,input,select,textarea{font-family:inherit}
   overflow:hidden;border-radius:8px;cursor:crosshair;user-select:none;-webkit-user-select:none;}
 .zed-campo svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
 .zed-campo-lines{position:absolute;inset:0;pointer-events:none;}
-/* líneas horizontales divisorias */
 .zed-hline{position:absolute;left:0;right:0;height:2px;background:rgba(255,255,200,.7);cursor:ns-resize;pointer-events:all;z-index:5;}
 .zed-hline:hover,.zed-hline.dragging{background:#ffd400;box-shadow:0 0 6px rgba(255,212,0,.6);}
 .zed-hline-label{position:absolute;right:4px;top:-9px;font-size:8px;color:rgba(255,255,200,.8);white-space:nowrap;pointer-events:none;}
-/* líneas verticales divisorias */
 .zed-vline{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,200,.7);cursor:ew-resize;pointer-events:all;z-index:5;}
 .zed-vline:hover,.zed-vline.dragging{background:#ffd400;box-shadow:0 0 6px rgba(255,212,0,.6);}
-/* zonas resultado */
 .zed-zona-rect{position:absolute;border:1.5px dashed rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;pointer-events:all;cursor:pointer;transition:background .15s;}
 .zed-zona-rect:hover{background:rgba(255,255,255,.12);}
 .zed-zona-rect.sel{border-color:#ffd400;background:rgba(255,212,0,.15);}
 .zed-zona-label{color:#fff;font-size:10px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.9);text-align:center;pointer-events:none;line-height:1.2;}
-/* panel inferior */
 .zed-panel{display:flex;flex-direction:column;gap:8px;}
 .zed-zonalist{display:flex;flex-direction:column;gap:3px;max-height:160px;overflow-y:auto;}
 .zed-zitem{display:flex;align-items:center;gap:6px;padding:4px 7px;border-radius:4px;background:var(--surface-alt);border:1px solid var(--border-light);cursor:pointer;transition:all var(--tr);}
@@ -392,46 +388,46 @@ button,input,select,textarea{font-family:inherit}
   </div>
 
   <!-- CAMPO PRINCIPAL -->
-    <div class="layout">
-      <div class="campo-outer">
-        <div class="campo-filter" id="campoFilter">
-          <button class="cfilter-btn active" data-filter="all">Todos</button>
-          <button class="cfilter-btn" data-filter="renovado">Renovado</button>
-          <button class="cfilter-btn" data-filter="fichaje">Fichaje</button>
-          <button class="cfilter-btn" data-filter="futurible">Futurible</button>
-          <button class="cfilter-btn" data-filter="duda">Duda</button>
-          <button class="cfilter-btn" data-filter="baja">Baja</button>
+  <div class="layout">
+
+    <!-- COL 1: campo + necesidades/observaciones DENTRO del mismo campo-outer -->
+    <div class="campo-outer">
+      <div class="campo-filter" id="campoFilter">
+        <button class="cfilter-btn active" data-filter="all">Todos</button>
+        <button class="cfilter-btn" data-filter="renovado">Renovado</button>
+        <button class="cfilter-btn" data-filter="fichaje">Fichaje</button>
+        <button class="cfilter-btn" data-filter="futurible">Futurible</button>
+        <button class="cfilter-btn" data-filter="duda">Duda</button>
+        <button class="cfilter-btn" data-filter="baja">Baja</button>
+      </div>
+      <span class="campo-hint">Arrastra fichas al campo &middot; Hover para sacar (&times;)</span>
+      <div class="campo-card">
+        <div class="campo-hdr">
+          <div class="campo-hdr-title" id="campoTitle">&mdash;</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="campo-hdr-count" id="campoCount">0+0P</div>
+            <button class="campo-foto-btn" id="btnFoto" title="Exportar imagen">&#128247;</button>
+          </div>
         </div>
-        <span class="campo-hint">Arrastra fichas al campo &middot; Hover para sacar (&times;)</span>
-        <div class="campo-card">
-          <div class="campo-hdr">
-            <div class="campo-hdr-title" id="campoTitle">&mdash;</div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <div class="campo-hdr-count" id="campoCount">0+0P</div>
-              <button class="campo-foto-btn" id="btnFoto" title="Exportar imagen">&#128247;</button>
-            </div>
-          </div>
-          <!-- CAMPO PRINCIPAL LIMPIO — sin zonas visibles -->
-          <div class="campo-wrap" id="campoWrap">
-            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none">
-              <rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/>
-              <line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/>
-              <rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
-              <rect x="38" y="2" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
-              <rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
-              <rect x="38" y="109" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
-            </svg>
-            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet">
-              <circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>
-              <circle cx="50" cy="59" r="1" fill="rgba(255,255,255,.35)"/>
-            </svg>
-            <img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
-            <div class="campo-players" id="campoPlayers"></div>
-            <!-- NO TOCAR: sin zona-overlay aquí -->
-          </div>
+        <div class="campo-wrap" id="campoWrap">
+          <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none">
+            <rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/>
+            <line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/>
+            <rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
+            <rect x="38" y="2" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
+            <rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
+            <rect x="38" y="109" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
+          </svg>
+          <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet">
+            <circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>
+            <circle cx="50" cy="59" r="1" fill="rgba(255,255,255,.35)"/>
+          </svg>
+          <img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
+          <div class="campo-players" id="campoPlayers"></div>
         </div>
       </div>
-      <!-- Necesidades y Observaciones justo debajo del campo -->
+
+      <!-- ✅ FIX: Necesidades y Observaciones DENTRO del campo-outer, mismo ancho que el campo -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:546px;">
         <div class="card">
           <div class="card-h" style="padding:6px 10px;font-size:10px;">Necesidades del equipo</div>
@@ -446,41 +442,38 @@ button,input,select,textarea{font-family:inherit}
           </div>
         </div>
       </div>
-    </div>
+    </div><!-- /campo-outer -->
 
-      <!-- COL 2 IZQUIERDA: PLANTILLA TOTAL arriba + FALTAN abajo -->
-      <div class="col">
-        <!-- Plantilla total sin scroll, ordenada por posición -->
-        <div class="card">
-          <div class="card-h" style="background:var(--rm-blue);color:#fff;font-size:12px;letter-spacing:.5px;">PLANTILLA <span class="cnt" id="plistTotal" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);font-weight:800;">0+0</span></div>
-          <div class="card-b" style="padding:6px 8px;"><div id="plistBody"><div class="plist-empty">Sin jugadores a&uacute;n.</div></div></div>
-        </div>
-        <!-- Faltan por poner -->
-        <div class="card">
-          <div class="card-h">Faltan por poner <span class="cnt" id="cntFaltan">0</span></div>
-          <div class="card-b" style="padding:6px 8px;"><div class="rlist" id="rosterFaltan" style="max-height:220px;"></div></div>
-        </div>
+    <!-- COL 2 IZQUIERDA: PLANTILLA TOTAL arriba + FALTAN abajo -->
+    <div class="col">
+      <!-- Plantilla total sin scroll, ordenada por posición -->
+      <div class="card">
+        <div class="card-h" style="background:var(--rm-blue);color:#fff;font-size:12px;letter-spacing:.5px;">PLANTILLA <span class="cnt" id="plistTotal" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);font-weight:800;">0+0</span></div>
+        <div class="card-b" style="padding:6px 8px;"><div id="plistBody"><div class="plist-empty">Sin jugadores a&uacute;n.</div></div></div>
       </div>
-
-      <!-- COL 3 DERECHA: TODOS LOS JUGADORES con scroll -->
-      <div class="col">
-        <div class="card">
-          <div class="card-h">Todos los jugadores</div>
-          <div class="card-b" style="padding:6px 8px;"><div class="rlist" id="rosterTodos" style="max-height:500px;"></div></div>
-        </div>
-        <div style="padding:8px 0 0">
-          <button class="btn pri" id="btnNew" style="width:100%;justify-content:center;display:flex;padding:9px;font-size:12px;">+ A&ntilde;adir jugador</button>
-        </div>
+      <!-- Faltan por poner -->
+      <div class="card">
+        <div class="card-h">Faltan por poner <span class="cnt" id="cntFaltan">0</span></div>
+        <div class="card-b" style="padding:6px 8px;"><div class="rlist" id="rosterFaltan" style="max-height:220px;"></div></div>
       </div>
     </div>
 
-  </div>
+    <!-- COL 3 DERECHA: TODOS LOS JUGADORES con scroll -->
+    <div class="col">
+      <div class="card">
+        <div class="card-h">Todos los jugadores</div>
+        <div class="card-b" style="padding:6px 8px;"><div class="rlist" id="rosterTodos" style="max-height:500px;"></div></div>
+      </div>
+      <div style="padding:8px 0 0">
+        <button class="btn pri" id="btnNew" style="width:100%;justify-content:center;display:flex;padding:9px;font-size:12px;">+ A&ntilde;adir jugador</button>
+      </div>
+    </div>
+
+  </div><!-- /layout -->
 
   <!-- PESTAÑA CONFIGURAR ZONAS -->
-  <!-- CAMPO REPLICADO PARA CONFIGURAR ZONAS -->
   <div id="tabZonas" style="display:none">
     <div class="zonas-layout">
-      <!-- Campo replicado con overlay de zonas -->
       <div class="campo-outer">
         <span class="campo-hint">Selecciona una zona en el panel para editarla</span>
         <div class="campo-card">
@@ -502,65 +495,35 @@ button,input,select,textarea{font-family:inherit}
               <circle cx="50" cy="59" r="1" fill="rgba(255,255,255,.35)"/>
             </svg>
             <img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
-            <!-- ZONA OVERLAY VISIBLE AQUÍ -->
             <div class="zona-overlay" id="zonaOverlay"></div>
           </div>
         </div>
       </div>
 
-      <!-- Panel edición zonas -->
       <div class="zona-panel">
         <h3>Editar zonas</h3>
-
-        <!-- Tipo de campo -->
         <div class="field-type-sel">
           <label>Tipo:</label>
           <button class="field-type-btn active" data-ft="F11">F11</button>
           <button class="field-type-btn" data-ft="F7">F7</button>
         </div>
-
-
-
-        <!-- Lista de zonas -->
         <div class="zona-list" id="zonaList"></div>
-
-        <!-- Botones crear / restaurar -->
         <div style="display:flex;gap:6px;margin-bottom:10px;">
           <button class="btn pri sm" id="btnNuevaZona">+ Nueva zona</button>
           <button class="btn sm" id="btnRestaurarZonas">Restaurar por defecto</button>
         </div>
-
-        <!-- Formulario edición zona seleccionada -->
         <div class="zona-edit-form" id="zonaEditForm" style="display:none">
           <div class="ze-row">
-            <div class="ze-field">
-              <label>Short (inicial)</label>
-              <input type="text" id="zeShort" maxlength="6" placeholder="MC">
-            </div>
-            <div class="ze-field">
-              <label>Label (nombre)</label>
-              <input type="text" id="zeLabel" maxlength="30" placeholder="Mediocentro">
-            </div>
+            <div class="ze-field"><label>Short (inicial)</label><input type="text" id="zeShort" maxlength="6" placeholder="MC"></div>
+            <div class="ze-field"><label>Label (nombre)</label><input type="text" id="zeLabel" maxlength="30" placeholder="Mediocentro"></div>
           </div>
           <div class="ze-row">
-            <div class="ze-field">
-              <label>X % (izq&rarr;der)</label>
-              <input type="number" id="zeX" min="0" max="100" step="1">
-            </div>
-            <div class="ze-field">
-              <label>Y % (arr&rarr;abj)</label>
-              <input type="number" id="zeY" min="0" max="100" step="1">
-            </div>
+            <div class="ze-field"><label>X % (izq&rarr;der)</label><input type="number" id="zeX" min="0" max="100" step="1"></div>
+            <div class="ze-field"><label>Y % (arr&rarr;abj)</label><input type="number" id="zeY" min="0" max="100" step="1"></div>
           </div>
           <div class="ze-row">
-            <div class="ze-field">
-              <label>Ancho %</label>
-              <input type="number" id="zeW" min="1" max="100" step="1">
-            </div>
-            <div class="ze-field">
-              <label>Alto %</label>
-              <input type="number" id="zeH" min="1" max="100" step="1">
-            </div>
+            <div class="ze-field"><label>Ancho %</label><input type="number" id="zeW" min="1" max="100" step="1"></div>
+            <div class="ze-field"><label>Alto %</label><input type="number" id="zeH" min="1" max="100" step="1"></div>
           </div>
           <div class="ze-checks">
             <label class="ze-check"><input type="checkbox" id="zeVisible"> Visible</label>
@@ -777,9 +740,7 @@ function saveState(tk,s){
   }
 }
 
-/* ══════════════════════════════════════
-   CONFIGURACIÓN DE ZONAS F11
-══════════════════════════════════════ */
+/* ══ ZONAS ══ */
 var ZONAS_DEFAULT_F11=[
   {id:'z_por', label:'Portero',           short:'POR',x:30, y:88,width:40,height:12,visible:true,active:true},
   {id:'z_dci', label:'Def. Central Izq.', short:'DCI',x:20, y:72,width:28,height:14,visible:true,active:true},
@@ -793,10 +754,6 @@ var ZONAS_DEFAULT_F11=[
   {id:'z_ed',  label:'Extremo Derecho',   short:'ED', x:75, y:20,width:25,height:22,visible:true,active:true},
   {id:'z_dc',  label:'Delantero Centro',  short:'DC', x:25, y:6, width:50,height:18,visible:true,active:true}
 ];
-
-/* ══════════════════════════════════════
-   CONFIGURACIÓN DE ZONAS F7
-══════════════════════════════════════ */
 var ZONAS_DEFAULT_F7=[
   {id:'z7_por',label:'Portero',           short:'POR',x:25, y:85,width:50,height:15,visible:true,active:true},
   {id:'z7_ci', label:'Central Izquierdo', short:'CI', x:10, y:65,width:38,height:18,visible:true,active:true},
@@ -809,26 +766,15 @@ var ZONAS_DEFAULT_F7=[
   {id:'z7_dc', label:'Delantero Centro',  short:'DC', x:25, y:4, width:50,height:18,visible:true,active:true}
 ];
 
-/* ══════════════════════════════════════
-   CARGA DE ZONAS DESDE LOCALSTORAGE
-══════════════════════════════════════ */
 function getZonas(ft){
   var key='campograma_position_zones_'+ft;
   try{var s=localStorage.getItem(key);if(s)return JSON.parse(s);}catch(e){}
-  return []; /* sin zonas por defecto — el usuario las crea */
+  return[];
 }
-
-/* ══════════════════════════════════════
-   GUARDADO DE ZONAS
-══════════════════════════════════════ */
 function saveZonas(ft,zonas){
   var key='campograma_position_zones_'+ft;
   try{localStorage.setItem(key,JSON.stringify(zonas));}catch(e){}
 }
-
-/* ══════════════════════════════════════
-   TIPO DE CAMPO POR EQUIPO
-══════════════════════════════════════ */
 function getTeamFieldType(tk){
   try{return localStorage.getItem('campograma_team_field_type_'+tk)||'F11';}catch(e){return'F11';}
 }
@@ -836,20 +782,14 @@ function setTeamFieldType(tk,ft){
   try{localStorage.setItem('campograma_team_field_type_'+tk,ft);}catch(e){}
 }
 
-/* ══════════════════════════════════════
-   DETECCIÓN DE ZONA POR MAYOR SOLAPE DE LA FICHA
-   POSICIÓN VISIBLE = SHORT CONFIGURADO EN LA ZONA
-══════════════════════════════════════ */
-var PLAYER_TOKEN_W=11; /* % ancho ficha respecto al campo (eje X: 0-100) */
-var PLAYER_TOKEN_H=13; /* % alto ficha respecto al campo (eje Y: 0-118) */
+var PLAYER_TOKEN_W=11;
+var PLAYER_TOKEN_H=13;
 
 function detectZoneByOverlap(px,py,zones){
-  /* px en 0-100, py en 0-118 — igual que las zonas */
   var hw=PLAYER_TOKEN_W/2;
   var hh=PLAYER_TOKEN_H/2;
   var chipLeft=px-hw, chipRight=px+hw;
   var chipTop=py-hh,  chipBottom=py+hh;
-
   var best=null,bestArea=0;
   zones.forEach(function(z){
     if(!z.active)return;
@@ -868,13 +808,10 @@ function detectZoneByOverlap(px,py,zones){
 function detectAndUpdateZone(p){
   var ft=getTeamFieldType(activeTeam);
   var zones=getZonas(ft);
-  /* p.x en 0-100, p.y en 0-118 — mismo sistema que las zonas */
   var result=detectZoneByOverlap(p.x,p.y,zones);
   p.detectedZoneId=result.id;
   p.detectedZoneShort=result.short;
   p.detectedZoneLabel=result.label;
-  /* DEBUG temporal — eliminar después */
-  console.log('DETECT player:',p.name,'x='+Math.round(p.x)+'%','y='+Math.round(p.y)+'/118','→',result.short,'zones:',zones.map(function(z){return z.short+'(x:'+Math.round(z.x)+'-'+Math.round(z.x+z.width)+' y:'+Math.round(z.y)+'-'+Math.round(z.y+z.height)+')';}).join(' '));
 }
 
 /* ══ ESTADO ══ */
@@ -887,7 +824,7 @@ var activePtTeam=activeTeam;
 var DRAG_T=5;
 var unsubscribeSnapshot=null;
 var activeInnerTab='campograma';
-var activeFilters=['all']; /* multi-selección */
+var activeFilters=['all'];
 var activeZonaFt='F11';
 var selectedZonaId=null;
 
@@ -1032,9 +969,7 @@ var FOOT_R='https://raw.githubusercontent.com/PabliVM/Plantillas/main/izquierdo.
 var FOOT_L='https://raw.githubusercontent.com/PabliVM/Plantillas/main/izquierdo.png';
 function footHtmlFor(lat){
   if(!lat)return'';
-  /* diestro: izquierdo.png espejado = pie derecho */
   var stR='<img src="'+FOOT_R+'" style="width:11px;height:16px;display:block;opacity:.9;transform:scaleX(-1);">';
-  /* zurdo: izquierdo.png sin espejo = pie izquierdo */
   var stL='<img src="'+FOOT_L+'" style="width:11px;height:16px;display:block;opacity:.9;">';
   if(lat==='diestro')return'<span class="pchip-foot right">'+stR+'</span>';
   if(lat==='zurdo')return'<span class="pchip-foot left">'+stL+'</span>';
@@ -1042,7 +977,7 @@ function footHtmlFor(lat){
   return'';
 }
 
-/* ══ RENDER CAMPO (NO TOCAR: CAMPO PRINCIPAL LIMPIO) ══ */
+/* ══ RENDER CAMPO ══ */
 function renderCampo(){
   var cont=document.getElementById('campoPlayers');cont.innerHTML='';
   state.players.forEach(function(p){
@@ -1068,7 +1003,6 @@ function renderCampo(){
 }
 
 /* ══ RENDER ROSTER ══ */
-/* ══ RENDER ROSTER — COL DER: 5 bloques con scroll individual ══ */
 function renderRoster(){
   var body=document.getElementById('rosterTodos');body.innerHTML='';
   var ORDER=['renovado','fichaje','futurible','duda','baja'];
@@ -1084,16 +1018,11 @@ function renderRoster(){
   state.players.forEach(function(p){
     if(grupos[p.status])grupos[p.status].push(p);
   });
-
   ORDER.forEach(function(st){
     var grp=grupos[st];
     var col=COLORS[st];
-
-    /* Bloque contenedor */
     var bloque=document.createElement('div');
     bloque.style.cssText='margin-bottom:8px;border-radius:var(--rs);overflow:hidden;border:1px solid '+col.border+';';
-
-    /* Cabecera coloreada */
     var hdr=document.createElement('div');
     hdr.style.cssText='background:'+col.bg+';color:'+col.text+';padding:6px 10px;'
       +'display:flex;justify-content:space-between;align-items:center;'
@@ -1103,11 +1032,8 @@ function renderRoster(){
     cnt.textContent=grp.length;
     hdr.innerHTML='<span>'+LABELS[st].toUpperCase()+'</span>';
     hdr.appendChild(cnt);
-
-    /* Lista con scroll */
     var lista=document.createElement('div');
     lista.style.cssText='max-height:140px;overflow-y:auto;background:var(--surface);';
-
     if(!grp.length){
       var empty=document.createElement('div');
       empty.style.cssText='font-size:10px;color:var(--text-mut);font-style:italic;padding:6px 10px;';
@@ -1119,50 +1045,39 @@ function renderRoster(){
           +'border-bottom:1px solid var(--border-light);cursor:pointer;transition:background var(--tr);';
         item.addEventListener('mouseenter',function(){this.style.background='var(--rm-blue-bg)';});
         item.addEventListener('mouseleave',function(){this.style.background='';});
-
         var mini=document.createElement('div');mini.className='chip-mini'+(p.isPor?' por':'')+(p.res?' residencia':'');
         if(p.res)mini.setAttribute('data-res-label',p.res);
         mini.setAttribute('style',chipSt(p.status,p.isPor));
         mini.innerHTML='<span class="chip-mini-text">'+esc(p.name||'')+'</span>';
-
         var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
         var posLabel=p.isPor?'POR':(p.detectedZoneShort||'');
         var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:9px;font-weight:700;"> \u2713</span>':'';
         info.innerHTML='<div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
           +esc(p.name||'(sin nombre)')+enCampo+'</div>'
           +'<div style="font-size:9px;color:var(--text-mut);">'+(posLabel||'---')+'</div>';
-
         var pen=document.createElement('button');pen.className='ritem-edit';pen.title='Editar';pen.textContent='\u270f';
         pen.addEventListener('click',function(e){e.stopPropagation();openModal(p.id);});
-
         item.appendChild(mini);item.appendChild(info);item.appendChild(pen);
         item.addEventListener('click',function(){openModal(p.id);});
         lista.appendChild(item);
       });
     }
-
-    /* Toggle colapsar al clicar cabecera */
     hdr.addEventListener('click',function(){
       lista.style.display=lista.style.display==='none'?'':'none';
     });
-
     bloque.appendChild(hdr);bloque.appendChild(lista);
     body.appendChild(bloque);
   });
 }
 
-/* ══ RENDER COL 2 IZQ: PLANTILLA ordenada por posición + FALTAN con drag ══ */
+/* ══ RENDER PLIST ══ */
 function renderPlist(){
   var POS_ORDER=['POR','LD','CD','CI','CT','LI','MC','ID','II','IN','ED','EI','DC'];
-
-  /* ── PLANTILLA TOTAL sin scroll, ordenada por posición, sin bajas ── */
   var body=document.getElementById('plistBody');body.innerHTML='';
   var activos=state.players.filter(function(p){return p.status!=='baja';});
   var totalC=activos.filter(function(p){return!p.isPor;}).length;
   var totalP=activos.filter(function(p){return p.isPor;}).length;
   document.getElementById('plistTotal').textContent=totalC+'+'+totalP;
-
-  /* Ordenar: primero por orden de posición, luego los sin posición al final */
   var sorted=activos.slice().sort(function(a,b){
     var pa=a.isPor?'POR':(a.detectedZoneShort||'');
     var pb=b.isPor?'POR':(b.detectedZoneShort||'');
@@ -1171,7 +1086,6 @@ function renderPlist(){
     if(ia!==ib)return ia-ib;
     return(a.name||'').localeCompare(b.name||'');
   });
-
   if(!sorted.length){body.innerHTML='<div class="plist-empty">Sin jugadores a\xfan.</div>';}
   else sorted.forEach(function(p){
     var row=document.createElement('div');row.className='plist-item';row.style.marginBottom='2px';
@@ -1188,8 +1102,6 @@ function renderPlist(){
     row.addEventListener('click',function(){openModal(p.id);});
     body.appendChild(row);
   });
-
-  /* ── FALTAN POR PONER: todos sin campo, drag desde aquí ── */
   var faltan=document.getElementById('rosterFaltan');faltan.innerHTML='';
   var sinCampo=state.players.filter(function(p){return!p.onPitch;});
   document.getElementById('cntFaltan').textContent=sinCampo.length;
@@ -1209,13 +1121,13 @@ function renderPlist(){
       addBtn.addEventListener('click',function(e){e.stopPropagation();p.onPitch=true;selectedId=p.id;persist();renderAll();});
       row.appendChild(mini);row.appendChild(info);row.appendChild(addBtn);
       row.addEventListener('click',function(){openModal(p.id);});
-      mini.addEventListener('pointerdown',function(ev){dragFromRoster(ev,p.id);}); /* DRAG */
+      mini.addEventListener('pointerdown',function(ev){dragFromRoster(ev,p.id);});
       faltan.appendChild(row);
     });
   }
 }
 
-/* ══ STATS — jugadores en campo filtrados por activeFilters ══ */
+/* ══ STATS ══ */
 function renderStats(){
   var enCampo=state.players.filter(function(p){
     if(!p.onPitch)return false;
@@ -1312,7 +1224,7 @@ function bindModal(){
   document.getElementById('btnNew').addEventListener('click',function(){openModal(null);});
 }
 
-/* ══ DRAG ON CAMPO (NO TOCAR: SISTEMA DE FICHAS EXISTENTE) ══ */
+/* ══ DRAG ON CAMPO ══ */
 function dragOnCampo(ev,pid){
   ev.preventDefault();
   var p=getPlayer(pid);if(!p)return;
@@ -1366,16 +1278,11 @@ function dragFromRoster(ev,pid){
   src.addEventListener('pointermove',mv);src.addEventListener('pointerup',up);src.addEventListener('pointercancel',up);
 }
 
-/* ══ PESTAÑA CONFIGURAR ZONAS ══ */
-/* GUARDADO DE ZONAS EN LOCALSTORAGE */
-/* DETECCIÓN DE POSICIÓN POR MAYOR SOLAPE */
-/* POSICIÓN VISIBLE = SHORT DE LA ZONA */
+/* ══ ZONAS OVERLAY ══ */
 function renderOneOverlay(overlayId,ft){
   var overlay=document.getElementById(overlayId);if(!overlay)return;
   overlay.innerHTML='';
   var zonas=getZonas(ft);
-  var cntEl=ft==='F7'?document.getElementById('zonasF7Count'):document.getElementById('zonasF11Count');
-  if(cntEl)cntEl.textContent=zonas.length+' zonas';
   zonas.forEach(function(z){
     if(!z.visible)return;
     var el=document.createElement('div');
@@ -1394,7 +1301,6 @@ function renderOneOverlay(overlayId,ft){
 }
 function renderZonaOverlay(){
   renderOneOverlay('zonaOverlay','F11');
-  renderOneOverlay('zonaOverlayF7','F7');
 }
 
 function renderZonaPanel(){
@@ -1430,7 +1336,6 @@ function renderZonaEditForm(){
 }
 
 function bindZonas(){
-  /* Botones tipo campo F11/F7 */
   document.querySelectorAll('.field-type-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
       activeZonaFt=this.dataset.ft;selectedZonaId=null;
@@ -1438,23 +1343,17 @@ function bindZonas(){
       renderZonaOverlay();renderZonaPanel();
     });
   });
-
-  /* Nueva zona */
   document.getElementById('btnNuevaZona').addEventListener('click',function(){
     var zonas=getZonas(activeZonaFt);
     var nz={id:'z_'+Date.now(),label:'Nueva zona',short:'NZ',x:30,y:30,width:40,height:20,visible:true,active:true};
     zonas.push(nz);saveZonas(activeZonaFt,zonas);
     selectedZonaId=nz.id;renderZonaOverlay();renderZonaPanel();
   });
-
-  /* Restaurar por defecto */
   document.getElementById('btnRestaurarZonas').addEventListener('click',function(){
     if(!confirm('\xbfRestaurar zonas por defecto para '+activeZonaFt+'?'))return;
     saveZonas(activeZonaFt,[]);selectedZonaId=null;
     renderZonaOverlay();renderZonaPanel();
   });
-
-  /* Guardar zona */
   document.getElementById('btnGuardarZona').addEventListener('click',function(){
     if(!selectedZonaId)return;
     var zonas=getZonas(activeZonaFt);
@@ -1468,15 +1367,12 @@ function bindZonas(){
     z.visible=document.getElementById('zeVisible').checked;
     z.active=document.getElementById('zeActive').checked;
     saveZonas(activeZonaFt,zonas);
-    /* re-detectar jugadores si es el tipo activo del equipo */
     if(getTeamFieldType(activeTeam)===activeZonaFt){
       state.players.forEach(function(p){if(p.onPitch)detectAndUpdateZone(p);});
       persist();renderPlist();renderRoster();
     }
     renderZonaOverlay();renderZonaPanel();
   });
-
-  /* Eliminar zona */
   document.getElementById('btnEliminarZona').addEventListener('click',function(){
     if(!selectedZonaId||!confirm('\xbfEliminar esta zona?'))return;
     var zonas=getZonas(activeZonaFt);
@@ -1492,7 +1388,7 @@ function bindInnerTabs(){
     tab.addEventListener('click',function(){
       activeInnerTab=this.dataset.itab;
       document.querySelectorAll('.inner-tab').forEach(function(t){t.classList.toggle('active',t.dataset.itab===activeInnerTab);});
-      document.getElementById('tabCampograma').style.display=activeInnerTab==='campograma'?'block':'none';
+      document.getElementById('tabCampograma')&&(document.getElementById('tabCampograma').style.display=activeInnerTab==='campograma'?'block':'none');
       document.getElementById('tabZonas').style.display=activeInnerTab==='zonas'?'block':'none';
       if(activeInnerTab==='zonas'){renderZonaOverlay();renderZonaPanel();}
     });
@@ -1599,105 +1495,31 @@ function toggleDark(){document.body.classList.toggle('dark');var d=document.body
 function restoreDark(){if(localStorage.getItem('plt_dark')==='1'){document.body.classList.add('dark');document.getElementById('darkBtn').innerHTML='\u2600';}}
 function renderAll(){renderTeamBar();renderRoster();renderCampo();renderCounter();renderPlist();renderStats();}
 
-/* TIPO DE CAMPO POR EQUIPO — asignados al arranque */
+/* ══ TIPOS DE CAMPO POR DEFECTO ══ */
 (function(){
-  if(!localStorage.getItem('campograma_team_field_type_CAS'))localStorage.setItem('campograma_team_field_type_CAS','F11');
-  if(!localStorage.getItem('campograma_team_field_type_RMC'))localStorage.setItem('campograma_team_field_type_RMC','F11');
-  if(!localStorage.getItem('campograma_team_field_type_JA'))localStorage.setItem('campograma_team_field_type_JA','F11');
-  if(!localStorage.getItem('campograma_team_field_type_JB'))localStorage.setItem('campograma_team_field_type_JB','F11');
-  if(!localStorage.getItem('campograma_team_field_type_JC'))localStorage.setItem('campograma_team_field_type_JC','F11');
-  if(!localStorage.getItem('campograma_team_field_type_CA'))localStorage.setItem('campograma_team_field_type_CA','F11');
-  if(!localStorage.getItem('campograma_team_field_type_CB'))localStorage.setItem('campograma_team_field_type_CB','F11');
-  if(!localStorage.getItem('campograma_team_field_type_IA'))localStorage.setItem('campograma_team_field_type_IA','F11');
-  if(!localStorage.getItem('campograma_team_field_type_IB'))localStorage.setItem('campograma_team_field_type_IB','F11');
-  if(!localStorage.getItem('campograma_team_field_type_AA'))localStorage.setItem('campograma_team_field_type_AA','F11');
-  if(!localStorage.getItem('campograma_team_field_type_AB'))localStorage.setItem('campograma_team_field_type_AB','F7');
-  if(!localStorage.getItem('campograma_team_field_type_AC'))localStorage.setItem('campograma_team_field_type_AC','F7');
-  if(!localStorage.getItem('campograma_team_field_type_BA'))localStorage.setItem('campograma_team_field_type_BA','F7');
-  if(!localStorage.getItem('campograma_team_field_type_BB'))localStorage.setItem('campograma_team_field_type_BB','F7');
-  if(!localStorage.getItem('campograma_team_field_type_PA'))localStorage.setItem('campograma_team_field_type_PA','F7');
-  if(!localStorage.getItem('campograma_team_field_type_PB'))localStorage.setItem('campograma_team_field_type_PB','F7');
-  if(!localStorage.getItem('campograma_team_field_type_DB'))localStorage.setItem('campograma_team_field_type_DB','F7');
-})();
-/* ══ BOOT ══ */
-try{restoreDark();}catch(e){}
-try{buildStatusBtns();}catch(e){}
-try{bindModal();}catch(e){console.error('bindModal',e);}
-try{bindFilter();}catch(e){}
-try{bindFoto();}catch(e){}
-try{bindInnerTabs();}catch(e){}
-try{bindZonas();}catch(e){console.error('bindZonas',e);}
-try{renderSeasonSel();}catch(e){}
-try{renderTeamBar();}catch(e){}
-
-document.getElementById('txtNecesidades').addEventListener('input',function(){if(state){state.necesidades=this.value;persist();}});
-document.getElementById('txtObservaciones').addEventListener('input',function(){if(state){state.observaciones=this.value;persist();}});
-document.getElementById('btnHome').addEventListener('click',showHome);
-
-try{
-  var lastView=localStorage.getItem('plt_last_view');
-  if(lastView==='app'&&activeTeam)showApp(activeTeam);
-  else showHome();
-}catch(e){showHome();}
-
-setSync('connecting');
-firebase.auth().signInAnonymously().then(function(){
-  return db.collection('config').doc('global').get().then(function(snap){
-    if(snap.exists){
-      var d=snap.data();
-      if(d.colors){ALL_COLOR_KEYS.forEach(function(k){if(d.colors[k])colors[k]=Object.assign({},STATUS_DEF[k],d.colors[k]);});try{localStorage.setItem(COL_KEY,JSON.stringify(d.colors));}catch(e){}}
-      if(d.seasons&&d.seasons.length){seasons=d.seasons;try{localStorage.setItem(SZN_KEY,JSON.stringify(seasons));}catch(e){}if(seasons.indexOf(activeSzn)===-1)activeSzn=seasons[seasons.length-1];try{renderSeasonSel();}catch(e){}}
-    }
+  var defaults={CAS:'F11',RMC:'F11',JA:'F11',JB:'F11',JC:'F11',CA:'F11',CB:'F11',IA:'F11',IB:'F11',AA:'F11',AB:'F7',AC:'F7',BA:'F7',BB:'F7',PA:'F7',PB:'F7',DB:'F7'};
+  Object.keys(defaults).forEach(function(k){
+    if(!localStorage.getItem('campograma_team_field_type_'+k))localStorage.setItem('campograma_team_field_type_'+k,defaults[k]);
   });
-}).then(function(){
-  try{buildStatusBtns();}catch(e){}
-  try{renderHomeGrid();}catch(e){}
-  setSync('saved');
-}).catch(function(e){
-  console.error('Firebase error',e);
-  setSync('error','Sin conexi\xf3n Firebase');
-});
+})();
 
-
-/* ══════════════════════════════════════════════════════
-   EDITOR DE ZONAS — SEGMENTOS LIBRES
-   Cada segmento tiene x1,y1 → x2,y2 en % del campo.
-   Las zonas se definen manualmente (short + coordenadas).
-   Los segmentos sirven como guías visuales para dibujar.
-══════════════════════════════════════════════════════ */
-
+/* ══ EDITOR DE ZONAS EN CFG ══ */
 var zedFt='F11';
 var zedSelId=null;
-var zedSelSeg=null; /* segmento seleccionado */
-var zedDrawing=false;
-var zedDrawStart=null;
+var zedSelSeg=null;
 
-/* ── SEGMENTOS (líneas libres) ── */
 function getSegsKey(ft){return'campograma_segs_'+ft;}
 function getSegs(ft){
   try{var s=localStorage.getItem(getSegsKey(ft));if(s)return JSON.parse(s);}catch(e){}
-  /* Defaults parecidos a la foto: líneas que no cruzan todo el campo */
-  return[]; /* campo limpio — el usuario crea sus propios segmentos */
+  return[];
 }
 function saveSegs(ft,segs){
   try{localStorage.setItem(getSegsKey(ft),JSON.stringify(segs));}catch(e){}
 }
 
-/* GUARDADO DE ZONAS EN LOCALSTORAGE */
-function getLinesKey(ft){return'campograma_lines_'+ft;}
-function getLines(ft){return{h:[],v:[]};}
-function saveLines(ft,l){}
-function zonasFromLines(ft){return getZonas(ft);}
-function regenZonas(ft){return getZonas(ft);}
-
-/* ── RENDER CONFIGURACIÓN ZONAS ── */
 function renderCfgZonas(body){
   body.innerHTML='';
   var wrap=document.createElement('div');wrap.className='zed-wrap';
-
-
-
-  /* Botones F11/F7 integrados — sin selector de equipo */
   var teamRow=document.createElement('div');
   teamRow.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:8px;';
   var btnF11=document.createElement('button');btnF11.className='zed-tipo-btn'+(zedFt==='F11'?' active':'');
@@ -1714,12 +1536,10 @@ function renderCfgZonas(body){
   teamRow.appendChild(btnF11);teamRow.appendChild(btnF7);
   wrap.appendChild(teamRow);
 
-  /* Hint */
   var hint=document.createElement('div');hint.className='zed-hint';
-  hint.innerHTML='<b>1. Dibuja segmentos</b> como gu\xedas visuales. <b>2. Pulsa "+ Zona"</b> para crear una zona de detecci\xf3n (rect\xe1ngulo). Arrastra la zona para posicionarla y edita su nombre/iniciales haciendo clic en ella.';
+  hint.innerHTML='<b>1. Dibuja segmentos</b> como gu\xedas visuales. <b>2. Pulsa "+ Zona"</b> para crear una zona de detecci\xf3n. Arrastra para posicionar y haz clic para editar nombre/iniciales.';
   wrap.appendChild(hint);
 
-  /* Botones */
   var btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;';
   var btnAddSeg=document.createElement('button');btnAddSeg.className='btn sm';btnAddSeg.innerHTML='&#9998; Dibujar segmento';
   var btnAddZona=document.createElement('button');btnAddZona.className='btn sm pri';btnAddZona.textContent='+ Zona';
@@ -1727,7 +1547,6 @@ function renderCfgZonas(body){
   btnRow.appendChild(btnAddSeg);btnRow.appendChild(btnAddZona);btnRow.appendChild(btnReset);
   wrap.appendChild(btnRow);
 
-  /* Campo */
   var campoWrap=document.createElement('div');campoWrap.className='zed-campo-wrap';
   var campoEl=document.createElement('div');campoEl.className='zed-campo';
   campoEl.style.cursor='default';
@@ -1745,15 +1564,12 @@ function renderCfgZonas(body){
     +'</svg>'
     +'<img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" style="position:absolute;top:50%;left:50%;width:32%;transform:translate(-50%,-50%) translateY(-6%);opacity:.12;pointer-events:none;" onerror="this.style.display=\'none\'">';
 
-  /* SVG para segmentos (encima del campo) */
   var segSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
   segSvg.setAttribute('viewBox','0 0 100 118');
   segSvg.setAttribute('preserveAspectRatio','none');
   segSvg.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:4;overflow:visible;pointer-events:none;';
-  /* Zona overlay */
   var zonaOverlayEl=document.createElement('div');
   zonaOverlayEl.style.cssText='position:absolute;inset:0;z-index:5;';
-  /* Preview línea dibujando */
   var previewSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
   previewSvg.setAttribute('viewBox','0 0 100 118');
   previewSvg.setAttribute('preserveAspectRatio','none');
@@ -1765,22 +1581,19 @@ function renderCfgZonas(body){
   campoWrap.appendChild(campoEl);
   wrap.appendChild(campoWrap);
 
-  /* Panel */
   var panelEl=document.createElement('div');panelEl.className='zed-panel';
   wrap.appendChild(panelEl);
   body.appendChild(wrap);
 
   var refs={campoEl:campoEl,segSvg:segSvg,zonaOverlayEl:zonaOverlayEl,previewSvg:previewSvg,panelEl:panelEl,drawing:false,drawStart:null};
 
-  /* Botón dibujar segmento */
   btnAddSeg.addEventListener('click',function(){
     refs.drawing=!refs.drawing;
     campoEl.style.cursor=refs.drawing?'crosshair':'default';
     btnAddSeg.style.background=refs.drawing?'var(--rm-blue)':'';
-    btnAddSeg.style.color=refs.drawing&&'#fff'||'';
+    btnAddSeg.style.color=refs.drawing?'#fff':'';
   });
 
-  /* Botón añadir zona */
   btnAddZona.addEventListener('click',function(){
     var zonas=getZonas(zedFt);
     var nz={id:'z_'+Date.now(),label:'Nueva zona',short:'NZ',x:20,y:20,width:60,height:20,visible:true,active:true};
@@ -1788,7 +1601,6 @@ function renderCfgZonas(body){
     renderZedFull(refs);
   });
 
-  /* Restaurar */
   btnReset.addEventListener('click',function(){
     if(!confirm('\xbfRestaurar por defecto para '+zedFt+'?'))return;
     localStorage.removeItem(getSegsKey(zedFt));
@@ -1798,7 +1610,6 @@ function renderCfgZonas(body){
     renderZedFull(refs);
   });
 
-  /* Clic en campo: dibujar segmento */
   campoEl.addEventListener('pointerdown',function(ev){
     if(ev.target!==campoEl&&ev.target.tagName!=='svg'&&ev.target.tagName!=='circle'&&ev.target.tagName!=='image'&&ev.target.tagName!=='img')return;
     if(!refs.drawing)return;
@@ -1851,7 +1662,6 @@ function renderZedSegs(refs){
   while(svg.firstChild)svg.removeChild(svg.firstChild);
   var segs=getSegs(zedFt);
   segs.forEach(function(seg){
-    /* Línea */
     var line=document.createElementNS('http://www.w3.org/2000/svg','line');
     line.setAttribute('x1',seg.x1);line.setAttribute('y1',seg.y1);
     line.setAttribute('x2',seg.x2);line.setAttribute('y2',seg.y2);
@@ -1862,10 +1672,7 @@ function renderZedSegs(refs){
     line.style.cursor='pointer';
     line.addEventListener('click',function(e){e.stopPropagation();zedSelSeg=seg.id;zedSelId=null;renderZedFull(refs);});
     svg.appendChild(line);
-
-    /* Extremo 1 */
     appendEndpoint(svg,seg,refs,'start');
-    /* Extremo 2 */
     appendEndpoint(svg,seg,refs,'end');
   });
 }
@@ -1889,7 +1696,6 @@ function appendEndpoint(svg,seg,refs,which){
       var ny=Math.max(0,Math.min(118,((e.clientY-r.top)/r.height)*118));
       if(which==='start'){seg.x1=Math.round(nx*10)/10;seg.y1=Math.round(ny*10)/10;}
       else{seg.x2=Math.round(nx*10)/10;seg.y2=Math.round(ny*10)/10;}
-      /* actualizar SVG en tiempo real */
       var segs=getSegs(zedFt);
       var idx=segs.findIndex(function(s){return s.id===seg.id;});
       if(idx>=0)segs[idx]=seg;
@@ -1930,13 +1736,10 @@ function renderZedZonasOverlay(refs){
   zonas.forEach(function(z){
     if(!z.visible)return;
     var isSel=(z.id===zedSelId);
-
     var el=document.createElement('div');
     el.style.cssText='position:absolute;box-sizing:border-box;';
     el.style.left=z.x+'%'; el.style.top=toY(z.y)+'%';
     el.style.width=z.width+'%'; el.style.height=toY(z.height)+'%';
-
-    /* Cara visual — pointer-events:none */
     var face=document.createElement('div');
     face.style.cssText='position:absolute;inset:0;'
       +'border:'+(isSel?'2px solid #ffd400':'1.5px dashed rgba(255,255,255,.6)')+';'
@@ -1949,7 +1752,6 @@ function renderZedZonasOverlay(refs){
       +'</div>';
     el.appendChild(face);
 
-    /* Helper: crear handle arrastrable */
     function addHandle(styleStr,cursor,onDrag){
       var h=document.createElement('div');
       h.style.cssText='position:absolute;'+styleStr+'cursor:'+cursor+';z-index:10;';
@@ -1986,47 +1788,27 @@ function renderZedZonasOverlay(refs){
     }
 
     var S=10;
-
-    /* MOVER centro */
     el.appendChild(addHandle('top:'+S+'px;left:'+S+'px;right:'+S+'px;bottom:'+S+'px;','move',
-      function(dx,dy,oz){
-        z.x=snapV(oz.x+dx,z.id);
-        z.y=snapH(oz.y+dy,z.id);
-      }
+      function(dx,dy,oz){z.x=snapV(oz.x+dx,z.id);z.y=snapH(oz.y+dy,z.id);}
     ));
-    /* NORTE */
     el.appendChild(addHandle('top:0;left:'+S+'px;right:'+S+'px;height:'+S+'px;','n-resize',
-      function(dx,dy,oz){
-        var ny=Math.min(oz.y+oz.h-3,snapH(oz.y+dy,z.id));
-        z.y=ny;z.height=Math.max(3,oz.y+oz.h-ny);
-      }
+      function(dx,dy,oz){var ny=Math.min(oz.y+oz.h-3,snapH(oz.y+dy,z.id));z.y=ny;z.height=Math.max(3,oz.y+oz.h-ny);}
     ));
-    /* SUR */
     el.appendChild(addHandle('bottom:0;left:'+S+'px;right:'+S+'px;height:'+S+'px;','s-resize',
-      function(dx,dy,oz){ z.height=Math.max(3,snapH(oz.y+oz.h+dy,z.id)-oz.y); }
+      function(dx,dy,oz){z.height=Math.max(3,snapH(oz.y+oz.h+dy,z.id)-oz.y);}
     ));
-    /* OESTE */
     el.appendChild(addHandle('left:0;top:'+S+'px;bottom:'+S+'px;width:'+S+'px;','w-resize',
-      function(dx,dy,oz){
-        var nx=Math.min(oz.x+oz.w-3,snapV(oz.x+dx,z.id));
-        z.x=nx;z.width=Math.max(3,oz.x+oz.w-nx);
-      }
+      function(dx,dy,oz){var nx=Math.min(oz.x+oz.w-3,snapV(oz.x+dx,z.id));z.x=nx;z.width=Math.max(3,oz.x+oz.w-nx);}
     ));
-    /* ESTE */
     el.appendChild(addHandle('right:0;top:'+S+'px;bottom:'+S+'px;width:'+S+'px;','e-resize',
-      function(dx,dy,oz){ z.width=Math.max(3,snapV(oz.x+oz.w+dx,z.id)-oz.x); }
+      function(dx,dy,oz){z.width=Math.max(3,snapV(oz.x+oz.w+dx,z.id)-oz.x);}
     ));
 
-    /* ESQUINAS con dot */
     [
-      {s:'top:0;left:0;',c:'nw-resize',
-       fn:function(dx,dy,oz){var nx=Math.min(oz.x+oz.w-3,snapV(oz.x+dx,z.id));var ny=Math.min(oz.y+oz.h-3,snapH(oz.y+dy,z.id));z.x=nx;z.y=ny;z.width=Math.max(3,oz.x+oz.w-nx);z.height=Math.max(3,oz.y+oz.h-ny);}},
-      {s:'top:0;right:0;',c:'ne-resize',
-       fn:function(dx,dy,oz){var ny=Math.min(oz.y+oz.h-3,snapH(oz.y+dy,z.id));z.y=ny;z.height=Math.max(3,oz.y+oz.h-ny);z.width=Math.max(3,snapV(oz.x+oz.w+dx,z.id)-oz.x);}},
-      {s:'bottom:0;left:0;',c:'sw-resize',
-       fn:function(dx,dy,oz){var nx=Math.min(oz.x+oz.w-3,snapV(oz.x+dx,z.id));z.x=nx;z.width=Math.max(3,oz.x+oz.w-nx);z.height=Math.max(3,snapH(oz.y+oz.h+dy,z.id)-oz.y);}},
-      {s:'bottom:0;right:0;',c:'se-resize',
-       fn:function(dx,dy,oz){z.width=Math.max(3,snapV(oz.x+oz.w+dx,z.id)-oz.x);z.height=Math.max(3,snapH(oz.y+oz.h+dy,z.id)-oz.y);}}
+      {s:'top:0;left:0;',c:'nw-resize',fn:function(dx,dy,oz){var nx=Math.min(oz.x+oz.w-3,snapV(oz.x+dx,z.id));var ny=Math.min(oz.y+oz.h-3,snapH(oz.y+dy,z.id));z.x=nx;z.y=ny;z.width=Math.max(3,oz.x+oz.w-nx);z.height=Math.max(3,oz.y+oz.h-ny);}},
+      {s:'top:0;right:0;',c:'ne-resize',fn:function(dx,dy,oz){var ny=Math.min(oz.y+oz.h-3,snapH(oz.y+dy,z.id));z.y=ny;z.height=Math.max(3,oz.y+oz.h-ny);z.width=Math.max(3,snapV(oz.x+oz.w+dx,z.id)-oz.x);}},
+      {s:'bottom:0;left:0;',c:'sw-resize',fn:function(dx,dy,oz){var nx=Math.min(oz.x+oz.w-3,snapV(oz.x+dx,z.id));z.x=nx;z.width=Math.max(3,oz.x+oz.w-nx);z.height=Math.max(3,snapH(oz.y+oz.h+dy,z.id)-oz.y);}},
+      {s:'bottom:0;right:0;',c:'se-resize',fn:function(dx,dy,oz){z.width=Math.max(3,snapV(oz.x+oz.w+dx,z.id)-oz.x);z.height=Math.max(3,snapH(oz.y+oz.h+dy,z.id)-oz.y);}}
     ].forEach(function(c){
       var h=addHandle(c.s+'width:'+S+'px;height:'+S+'px;',c.c,c.fn);
       var dot=document.createElement('div');
@@ -2039,15 +1821,11 @@ function renderZedZonasOverlay(refs){
   });
 }
 
-
-
-
 function renderZedPanel(panelEl,refs){
   panelEl.innerHTML='';
   var zonas=getZonas(zedFt);
   var segs=getSegs(zedFt);
 
-  /* Lista segmentos seleccionado */
   if(zedSelSeg){
     var seg=segs.find(function(s){return s.id===zedSelSeg;});
     if(seg){
@@ -2067,9 +1845,8 @@ function renderZedPanel(panelEl,refs){
     }
   }
 
-  /* Lista de zonas */
   var zonaTitle=document.createElement('div');zonaTitle.style.cssText='font-size:10px;font-weight:700;color:var(--text-mut);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px;';
-  zonaTitle.textContent='Zonas ('+zonas.length+') — arrastra para mover, clic para editar';
+  zonaTitle.textContent='Zonas ('+zonas.length+') \u2014 arrastra para mover, clic para editar';
   panelEl.appendChild(zonaTitle);
 
   var list=document.createElement('div');list.className='zed-zonalist';
@@ -2087,7 +1864,6 @@ function renderZedPanel(panelEl,refs){
   });
   panelEl.appendChild(list);
 
-  /* Editor zona seleccionada */
   if(!zedSelId)return;
   var z=zonas.find(function(x){return x.id===zedSelId;});if(!z)return;
 
@@ -2112,7 +1888,6 @@ function renderZedPanel(panelEl,refs){
   addField('Ancho (%)','ze_w',Math.round(z.width));
   addField('Alto (%)','ze_h',Math.round(z.height));
 
-  /* Checks */
   var checks=document.createElement('div');checks.style.cssText='display:flex;gap:10px;grid-column:span 2;';
   checks.innerHTML='<label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;"><input type="checkbox" id="ze_vis" '+(z.visible?'checked':'')+' style="accent-color:var(--rm-blue);"> Visible</label>'
     +'<label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;"><input type="checkbox" id="ze_act" '+(z.active?'checked':'')+' style="accent-color:var(--rm-blue);"> Activa (detectar)</label>';
@@ -2145,7 +1920,44 @@ function renderZedPanel(panelEl,refs){
   panelEl.appendChild(grid);
 }
 
+/* ══ BOOT ══ */
+try{restoreDark();}catch(e){}
+try{buildStatusBtns();}catch(e){}
+try{bindModal();}catch(e){console.error('bindModal',e);}
+try{bindFilter();}catch(e){}
+try{bindFoto();}catch(e){}
+try{bindInnerTabs();}catch(e){}
+try{bindZonas();}catch(e){console.error('bindZonas',e);}
+try{renderSeasonSel();}catch(e){}
+try{renderTeamBar();}catch(e){}
 
+document.getElementById('txtNecesidades').addEventListener('input',function(){if(state){state.necesidades=this.value;persist();}});
+document.getElementById('txtObservaciones').addEventListener('input',function(){if(state){state.observaciones=this.value;persist();}});
+document.getElementById('btnHome').addEventListener('click',showHome);
+
+try{
+  var lastView=localStorage.getItem('plt_last_view');
+  if(lastView==='app'&&activeTeam)showApp(activeTeam);
+  else showHome();
+}catch(e){showHome();}
+
+setSync('connecting');
+firebase.auth().signInAnonymously().then(function(){
+  return db.collection('config').doc('global').get().then(function(snap){
+    if(snap.exists){
+      var d=snap.data();
+      if(d.colors){ALL_COLOR_KEYS.forEach(function(k){if(d.colors[k])colors[k]=Object.assign({},STATUS_DEF[k],d.colors[k]);});try{localStorage.setItem(COL_KEY,JSON.stringify(d.colors));}catch(e){}}
+      if(d.seasons&&d.seasons.length){seasons=d.seasons;try{localStorage.setItem(SZN_KEY,JSON.stringify(seasons));}catch(e){}if(seasons.indexOf(activeSzn)===-1)activeSzn=seasons[seasons.length-1];try{renderSeasonSel();}catch(e){}}
+    }
+  });
+}).then(function(){
+  try{buildStatusBtns();}catch(e){}
+  try{renderHomeGrid();}catch(e){}
+  setSync('saved');
+}).catch(function(e){
+  console.error('Firebase error',e);
+  setSync('error','Sin conexi\xf3n Firebase');
+});
 </script>
 </body>
 </html>
