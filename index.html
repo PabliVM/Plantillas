@@ -1053,13 +1053,12 @@ function renderRoster(){
         var mini=document.createElement('div');mini.className='chip-mini'+(p.isPor?' por':'')+(p.res?' residencia':'');
         if(p.res)mini.setAttribute('data-res-label',p.res);
         mini.setAttribute('style',chipSt(p.status,p.isPor));
-        mini.innerHTML='<span class="chip-mini-text">'+esc(p.name||'')+'</span>';
+        var posLabel=p.isPor?'PO':(p.detectedZoneShort||'---');
+        mini.innerHTML='<span class="chip-mini-text">'+esc(posLabel)+'</span>';
         var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
-        var posLabel=p.isPor?'PO':(p.detectedZoneShort||'');
         var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:9px;font-weight:700;"> \u2713</span>':'';
         info.innerHTML='<div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
-          +esc(p.name||'(sin nombre)')+enCampo+'</div>'
-          +'<div style="font-size:9px;color:var(--text-mut);">'+(posLabel||'---')+'</div>';
+          +esc(p.name||'(sin nombre)')+enCampo+'</div>';
         var pen=document.createElement('button');pen.className='ritem-edit';pen.title='Editar';pen.textContent='\u270f';
         pen.addEventListener('click',function(e){e.stopPropagation();openModal(p.id);});
         item.appendChild(mini);item.appendChild(info);item.appendChild(pen);
