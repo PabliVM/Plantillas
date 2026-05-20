@@ -392,7 +392,7 @@ button,input,select,textarea{font-family:inherit}
         style="width:76px;padding:3px 7px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);"
         title="A&ntilde;o de nacimiento de la generaci&oacute;n">
       <span id="genYearAge" style="font-size:11px;font-weight:700;color:var(--rm-blue);white-space:nowrap;"></span>
-      <button class="btn sm pri" id="btnSaveGenYear">Guardar</button>
+      <button class="btn sm pri" id="btnSaveGenYear" style="display:none;">Guardar</button>
     </div>
     <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
       <div class="stat-pill">Plantilla <strong id="statTotal">0+0</strong></div>
@@ -1034,7 +1034,17 @@ function renderTeamBar(){
   var nm=t?t.name:'\u2014';
   document.getElementById('teamName').firstChild.textContent=nm;
   document.getElementById('teamKey').textContent=activeTeam;
-  var gyEl=document.getElementById('genYearInput');if(gyEl)gyEl.value=getGenYear(activeTeam)||'';
+  var gyEl=document.getElementById('genYearInput');
+  if(gyEl){
+    gyEl.value=getGenYear(activeTeam)||'';
+    var isJA=activeTeam==='JA';
+    gyEl.readOnly=!isJA;
+    gyEl.style.background=isJA?'':'var(--surface-alt)';
+    gyEl.style.color=isJA?'var(--text)':'var(--text-mut)';
+    gyEl.style.cursor=isJA?'text':'default';
+    var saveBtn=document.getElementById('btnSaveGenYear');
+    if(saveBtn)saveBtn.style.display=isJA?'inline-flex':'none';
+  }
   updateGenYearAge();
   document.getElementById('campoTitle').textContent=nm;
 }
@@ -1145,7 +1155,7 @@ function renderCampo(){
     chip.setAttribute('style',chipSt(p.status,p.isPor));
     chip.innerHTML=renderSelectionIcons(p)+'<span class="pchip-text">'+esc(p.name||'')+'</span>'
       +((p.proc&&(p.status==='fichaje'||p.status==='futurible'))?'<span class="pchip-proc">'+esc(p.proc)+'</span>':'')
-      +(p.birthYear?'<span class="pchip-proc" style="color:rgba(255,180,0,.9);">'+p.birthYear+'</span>':'')
+      +(p.birthYear?'<span class="pchip-proc" style="color:#1e3a5f;font-weight:800;">'+p.birthYear+'</span>':'')
       +footHtmlFor(p.lat||'');
     var xBtn=document.createElement('button');xBtn.className='chip-remove-btn';xBtn.textContent='\xd7';
     xBtn.addEventListener('pointerdown',function(e){e.stopPropagation();});
