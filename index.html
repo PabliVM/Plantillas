@@ -733,7 +733,8 @@ var colors=(function(){
 function saveColors(){
   var m={};ALL_COLOR_KEYS.forEach(function(k){m[k]={bg:colors[k].bg,text:colors[k].text,border:colors[k].border};});
   try{localStorage.setItem(COL_KEY,JSON.stringify(m));}catch(e){}
-  db.collection('config').doc('global').set({colors:m,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
+  db.collection('config').doc('global').set({colors:m,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
+    .catch(function(e){console.error('saveColors error',e);setSync('error');});
 }
 function chipSt(status,isPor){
   var c=colors[status]||STATUS_DEF.renovado;
@@ -749,7 +750,8 @@ var activeSzn=localStorage.getItem(ASZN_KEY)||seasons[seasons.length-1];
 if(seasons.indexOf(activeSzn)===-1)activeSzn=seasons[seasons.length-1];
 function saveSeasons(){
   try{localStorage.setItem(SZN_KEY,JSON.stringify(seasons));}catch(e){}
-  db.collection('config').doc('global').set({seasons:seasons,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
+  db.collection('config').doc('global').set({seasons:seasons,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
+    .catch(function(e){console.error('saveSeasons error',e);setSync('error');});
 }
 
 /* ══ PERSISTENCIA ══ */
@@ -834,21 +836,29 @@ var ZONAS_DEFAULT_F7=[
 ];
 
 /* ══════════════════════════════════════
-   CARGA DE ZONAS DESDE LOCALSTORAGE
+   ZONAS Y TIPOS — solo Firebase, cache en memoria
+   Inicializado con defaults para que funcione sin Firebase
 ══════════════════════════════════════ */
-/* ZONAS Y TIPOS — solo Firebase, cache en memoria */
-var _zonasCache={};   /* {F11:[...], F7:[...]} */
-var _segsCache={};    /* {F11:[...], F7:[...]} */
-var _teamFtCache={};  /* {CAS:'F11', ...} */
+var _zonasCache={
+  F11: JSON.parse(JSON.stringify(ZONAS_DEFAULT_F11)),
+  F7:  JSON.parse(JSON.stringify(ZONAS_DEFAULT_F7))
+};
+var _segsCache={};
+var _teamFtCache={};
 
 function getZonas(ft){
-  return _zonasCache[ft]||[];
+  var z=_zonasCache[ft];
+  if(z&&z.length>0)return z;
+  /* fallback a defaults si vacío */
+  return JSON.parse(JSON.stringify(ft==='F7'?ZONAS_DEFAULT_F7:ZONAS_DEFAULT_F11));
 }
 function saveZonas(ft,zonas){
   _zonasCache[ft]=zonas;
   var data={ts:firebase.firestore.FieldValue.serverTimestamp()};
   data['campograma_position_zones_'+ft]=zonas;
-  db.collection('config').doc('zonas').set(data,{merge:true}).catch(function(){});
+  db.collection('config').doc('zonas').set(data,{merge:true}).catch(function(e){
+    console.error('saveZonas error',e);setSync('error');
+  });
 }
 function getTeamFieldType(tk){
   return _teamFtCache[tk]||'F11';
@@ -857,7 +867,9 @@ function setTeamFieldType(tk,ft){
   _teamFtCache[tk]=ft;
   var data={ts:firebase.firestore.FieldValue.serverTimestamp()};
   data['team_field_type_'+tk]=ft;
-  db.collection('config').doc('zonas').set(data,{merge:true}).catch(function(){});
+  db.collection('config').doc('zonas').set(data,{merge:true}).catch(function(e){
+    console.error('setTeamFieldType error',e);setSync('error');
+  });
 }
 
 /* ══════════════════════════════════════
@@ -1531,7 +1543,8 @@ function bindZonas(){
   /* Restaurar por defecto */
   document.getElementById('btnRestaurarZonas').addEventListener('click',function(){
     if(!confirm('\xbfRestaurar zonas por defecto para '+activeZonaFt+'?'))return;
-    saveZonas(activeZonaFt,[]);selectedZonaId=null;
+    var def=JSON.parse(JSON.stringify(activeZonaFt==='F7'?ZONAS_DEFAULT_F7:ZONAS_DEFAULT_F11));
+    saveZonas(activeZonaFt,def);selectedZonaId=null;
     renderZonaOverlay();renderZonaPanel();
   });
 
@@ -1702,14 +1715,30 @@ document.getElementById('txtNecesidades').addEventListener('input',function(){if
 document.getElementById('txtObservaciones').addEventListener('input',function(){if(state){state.observaciones=this.value;persist();}});
 document.getElementById('btnHome').addEventListener('click',showHome);
 
-try{
-  var lastView=localStorage.getItem('plt_last_view');
-  if(lastView==='app'&&activeTeam)showApp(activeTeam);
-  else showHome();
-}catch(e){showHome();}
+/* Mostrar spinner mientras carga */
+document.getElementById('homeScreen').innerHTML='<div style="display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:16px;">'
+  +'<div style="font-size:28px;animation:blink 1s ease-in-out infinite;">⚽</div>'
+  +'<div style="font-size:14px;color:var(--text-mut);">Cargando datos&hellip;</div></div>';
+document.getElementById('appScreen').style.display='none';
+
+/* Sincronizar todos los equipos desde Firebase a localStorage */
+function syncAllTeamsToLocal(){
+  var promises=TEAMS.map(function(t){
+    return teamDoc(t.key).get().then(function(snap){
+      if(snap.exists){
+        var d=snap.data();
+        var data={players:d.players||[],necesidades:d.necesidades||'',observaciones:d.observaciones||''};
+        try{localStorage.setItem('plt_cache_'+docId(t.key),JSON.stringify(data));}catch(e){}
+        if(d.version)localVersions[docId(t.key)]=d.version;
+      }
+    }).catch(function(){/* equipo sin datos, ok */});
+  });
+  return Promise.all(promises);
+}
 
 setSync('connecting');
 firebase.auth().signInAnonymously().then(function(){
+  /* 1. Cargar config/global */
   return db.collection('config').doc('global').get().then(function(snap){
     if(snap.exists){
       var d=snap.data();
@@ -1718,29 +1747,47 @@ firebase.auth().signInAnonymously().then(function(){
     }
   });
 }).then(function(){
-  /* Cargar zonas, segmentos y tipos de campo desde Firebase a memoria */
+  /* 2. Cargar config/zonas — solo sustituir si tiene datos */
   return db.collection('config').doc('zonas').get().then(function(snap){
     if(!snap.exists)return;
     var d=snap.data();
     ['F11','F7'].forEach(function(ft){
       var zk='campograma_position_zones_'+ft;
       var sk='campograma_segs_'+ft;
-      if(d[zk]&&Array.isArray(d[zk]))_zonasCache[ft]=d[zk];
+      /* Solo sustituir defaults si Firebase tiene zonas con longitud > 0 */
+      if(d[zk]&&Array.isArray(d[zk])&&d[zk].length>0)_zonasCache[ft]=d[zk];
       if(d[sk]&&Array.isArray(d[sk]))_segsCache[ft]=d[sk];
     });
-    /* Tipos de campo por equipo */
     TEAMS.forEach(function(t){
       var tk='team_field_type_'+t.key;
       if(d[tk])_teamFtCache[t.key]=d[tk];
     });
   });
 }).then(function(){
+  /* 3. Sincronizar todos los equipos desde Firebase */
+  return syncAllTeamsToLocal();
+}).then(function(){
+  /* 4. Ahora sí renderizar */
   try{buildStatusBtns();}catch(e){}
   try{renderHomeGrid();}catch(e){}
   setSync('saved');
+  /* Restaurar última vista */
+  try{
+    var lastView=localStorage.getItem('plt_last_view');
+    if(lastView==='app'&&activeTeam)showApp(activeTeam);
+    else showHome();
+  }catch(e){showHome();}
 }).catch(function(e){
   console.error('Firebase error',e);
   setSync('error','Sin conexi\xf3n Firebase');
+  /* Fallback: mostrar con datos locales */
+  try{buildStatusBtns();}catch(ex){}
+  try{renderHomeGrid();}catch(ex){}
+  try{
+    var lastView=localStorage.getItem('plt_last_view');
+    if(lastView==='app'&&activeTeam)showApp(activeTeam);
+    else showHome();
+  }catch(ex){showHome();}
 });
 
 
@@ -1789,7 +1836,9 @@ function saveSegs(ft,segs){
   _segsCache[ft]=segs;
   var data={ts:firebase.firestore.FieldValue.serverTimestamp()};
   data[getSegsKey(ft)]=segs;
-  db.collection('config').doc('zonas').set(data,{merge:true}).catch(function(){});
+  db.collection('config').doc('zonas').set(data,{merge:true}).catch(function(e){
+    console.error('saveSegs error',e);setSync('error');
+  });
 }
 
 /* GUARDADO DE ZONAS EN LOCALSTORAGE */
@@ -1900,9 +1949,8 @@ function renderCfgZonas(body){
   /* Restaurar */
   btnReset.addEventListener('click',function(){
     if(!confirm('\xbfRestaurar por defecto para '+zedFt+'?'))return;
-    localStorage.removeItem(getSegsKey(zedFt));
-    localStorage.removeItem('campograma_position_zones_'+zedFt);
-    saveSegs(zedFt,[]);saveZonas(zedFt,[]);
+    var def=JSON.parse(JSON.stringify(zedFt==='F7'?ZONAS_DEFAULT_F7:ZONAS_DEFAULT_F11));
+    saveSegs(zedFt,[]);saveZonas(zedFt,def);
     zedSelId=null;zedSelSeg=null;refs.drawing=false;campoEl.style.cursor='default';
     renderZedFull(refs);
   });
