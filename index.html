@@ -920,13 +920,15 @@ function getPlayer(id){return state.players.find(function(p){return p.id===id})}
 
 function loadTeam(){
   if(unsubscribeSnapshot){unsubscribeSnapshot();unsubscribeSnapshot=null;}
-  try{var r=localStorage.getItem('plt_cache_'+docId(activeTeam));if(r){state=JSON.parse(r);renderAll();}}catch(e){}
+  try{var r=localStorage.getItem('plt_cache_'+docId(activeTeam));if(r){state=JSON.parse(r);state.players.forEach(function(p){if(p.onPitch)detectAndUpdateZone(p);});renderAll();}}catch(e){}
   setSync('connecting');
   unsubscribeSnapshot=teamDoc(activeTeam).onSnapshot(function(snap){
     if(saveInFlight)return;
     var d=snap.exists?snap.data():{};
     if(d.version)localVersions[docId(activeTeam)]=d.version;
     var incoming={players:d.players||[],necesidades:d.necesidades||'',observaciones:d.observaciones||''};
+    /* Re-detectar posición de todos los jugadores en campo */
+    incoming.players.forEach(function(p){if(p.onPitch)detectAndUpdateZone(p);});
     state=incoming;
     try{localStorage.setItem('plt_cache_'+docId(activeTeam),JSON.stringify(incoming));}catch(e){}
     renderAll();
