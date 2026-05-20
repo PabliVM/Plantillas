@@ -656,6 +656,17 @@ button,input,select,textarea{font-family:inherit}
         </div>
       </div>
       <div class="frow">
+        <label>A&ntilde;os en el club</label>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <button class="lat-btn" data-years="1">1er a&ntilde;o</button>
+          <button class="lat-btn" data-years="2">2 a&ntilde;os</button>
+          <button class="lat-btn" data-years="3">3 a&ntilde;os</button>
+          <button class="lat-btn" data-years="4">4 a&ntilde;os</button>
+          <button class="lat-btn" data-years="5">5+ a&ntilde;os</button>
+          <button class="lat-btn" data-years="">— Ninguno</button>
+        </div>
+      </div>
+      <div class="frow">
         <label>A&ntilde;o de nacimiento (si no es de la generaci&oacute;n)</label>
         <input type="number" id="fBirthYear" min="1990" max="2030" placeholder="Ej: 2008" style="width:120px;">
       </div>
@@ -1289,7 +1300,13 @@ function renderPlist(){
     var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:9px;font-weight:700;"> \u2713</span>':'';
     var byTxt=p.birthYear?'<span style="font-size:9px;color:#1e3a5f;font-weight:800;margin-left:4px;">'+p.birthYear+'</span>':'';
     var cmtIcon=p.comment?'<span title="'+esc(p.comment)+'" style="font-size:11px;margin-left:3px;" >&#128172;</span>':'';
-    info.innerHTML='<div class="plist-name" style="display:flex;align-items:center;gap:3px;">'+esc(p.name||'(sin nombre)')+byTxt+cmtIcon+enCampo+'</div>';
+    var yrsLabel='';
+    if(p.yearsInClub){
+      yrsLabel=p.yearsInClub===1
+        ?'<span style="font-size:9px;background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 5px;font-weight:700;margin-left:4px;flex-shrink:0;">1er a\xf1o</span>'
+        :'<span style="font-size:9px;background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 5px;font-weight:700;margin-left:4px;flex-shrink:0;">'+p.yearsInClub+' a\xf1os</span>';
+    }
+    info.innerHTML='<div class="plist-name" style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;">'+esc(p.name||'(sin nombre)')+byTxt+cmtIcon+yrsLabel+enCampo+'</div>';
     var btn=document.createElement('button');btn.className='plist-addbtn'+(p.onPitch?' in':'');
     btn.textContent=p.onPitch?'Sacar':'+ Campo';
     btn.addEventListener('click',function(e){e.stopPropagation();if(p.onPitch){p.onPitch=false;}else{p.onPitch=true;selectedId=p.id;}persist();renderAll();});
@@ -1372,7 +1389,7 @@ function showProcRow(status){
 function openModal(pid){
   var isNew=!pid;
   if(isNew){
-    var p={id:uid(),name:'',status:'renovado',isPor:false,res:'',proc:'',lat:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona',selecciones:[],birthYear:null,comment:''};
+    var p={id:uid(),name:'',status:'renovado',isPor:false,res:'',proc:'',lat:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona',selecciones:[],birthYear:null,comment:'',yearsInClub:null};
     state.players.push(p);selectedId=p.id;persist();
     document.getElementById('edModalTitle').textContent='Nuevo jugador';
     document.getElementById('btnDelete').style.display='none';
@@ -1391,6 +1408,7 @@ function openModal(pid){
   var pSels=p.selecciones||[];document.querySelectorAll('[data-sel]').forEach(function(b){b.classList.toggle('active',pSels.indexOf(b.dataset.sel)>=0);});
   document.getElementById('fBirthYear').value=p.birthYear||'';
   document.getElementById('fComment').value=p.comment||'';
+  document.querySelectorAll('[data-years]').forEach(function(b){b.classList.toggle('active',String(b.dataset.years)===String(p.yearsInClub||''));});
   document.querySelectorAll('.status-btn').forEach(function(b){b.classList.toggle('active',b.dataset.status===p.status);});
   document.getElementById('edModal').style.display='flex';
   setTimeout(function(){document.getElementById('fName').focus();},80);
@@ -1435,6 +1453,14 @@ function bindModal(){
   });
   document.getElementById('fProc').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.proc=this.value;persist();}});
   document.getElementById('fBirthYear').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.birthYear=this.value?parseInt(this.value):null;persist();}});
+  document.querySelectorAll('[data-years]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var p=getPlayer(selectedId);if(!p)return;
+      p.yearsInClub=this.dataset.years?parseInt(this.dataset.years):null;
+      persist();
+      document.querySelectorAll('[data-years]').forEach(function(b){b.classList.toggle('active',String(b.dataset.years)===String(p.yearsInClub||''));});
+    });
+  });
   document.getElementById('fComment').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.comment=this.value;persist();}});
   document.getElementById('fName').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.name=this.value;persist();}});
   document.getElementById('fPor').addEventListener('change',function(){var p=getPlayer(selectedId);if(p){p.isPor=this.checked;persist();}});
@@ -1679,7 +1705,7 @@ function renderCfgPlantillas(body){
     var name=(inp.value||'').trim();if(!name)return;
     var tdd=loadState(activePtTeam)||{players:[]};if(!tdd.players)tdd.players=[];
     if(tdd.players.some(function(p){return p.name===name;})){inp.select();return;}
-    tdd.players.push({id:uid(),name:name,status:'renovado',isPor:false,res:'',lat:'',proc:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona',selecciones:[],birthYear:null,comment:''});
+    tdd.players.push({id:uid(),name:name,status:'renovado',isPor:false,res:'',lat:'',proc:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona',selecciones:[],birthYear:null,comment:'',yearsInClub:null});
     saveState(activePtTeam,tdd);inp.value='';renderCfg();setTimeout(function(){var el=document.getElementById('ptInp');if(el)el.focus();},50);
   }
   addBtn.addEventListener('click',doAdd);inp.addEventListener('keydown',function(e){if(e.key==='Enter')doAdd();});
