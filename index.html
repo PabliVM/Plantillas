@@ -429,7 +429,10 @@ button,input,select,textarea{font-family:inherit}
           <span class="campo-hint">Arrastra fichas al campo &middot; Hover para sacar (&times;)</span>
           <div class="campo-card">
             <div class="campo-hdr">
-              <div class="campo-hdr-title" id="campoTitle">&mdash;</div>
+              <div>
+                <div class="campo-hdr-title" id="campoTitle">&mdash;</div>
+                <div id="campoGen" style="font-size:10px;color:rgba(255,255,255,.55);font-weight:600;margin-top:1px;"></div>
+              </div>
               <div style="display:flex;align-items:center;gap:8px">
                 <div class="campo-hdr-count" id="campoCount">0+0P</div>
                 <button class="campo-foto-btn" id="btnFoto" title="Exportar imagen">&#128247;</button>
@@ -1035,7 +1038,7 @@ function renderSeasonSel(){
 }
 document.getElementById('seasonSel').addEventListener('change',function(){
   activeSzn=this.value;localStorage.setItem(ASZN_KEY,activeSzn);
-  state={players:[]};selectedId=null;renderAll();loadTeam();
+  state={players:[]};selectedId=null;renderAll();loadTeam();updateGenYearAge();
 });
 document.getElementById('btnSeasonAdd').addEventListener('click',function(){
   var last=seasons[seasons.length-1];var y=parseInt(last.split('/')[1]||last)+1;var next=y+'/'+(y+1);
@@ -1728,6 +1731,7 @@ document.addEventListener('click',function(e){
   if(e.target&&e.target.id==='btnSaveGenYear'){
     var val=document.getElementById('genYearInput').value.trim();
     setGenYear(activeTeam,val);
+    updateGenYearAge();
     var btn=document.getElementById('btnSaveGenYear');
     btn.textContent='✓';setTimeout(function(){btn.textContent='Guardar';},1200);
   }
@@ -1850,23 +1854,49 @@ function renderSelectionIcons(p){
 
 /* ── CÁLCULO DE EDAD SEGÚN TEMPORADA ── */
 function updateGenYearAge(){
-  var el=document.getElementById('genYearAge');if(!el)return;
-  var yr=parseInt(getGenYear(activeTeam));if(!yr){el.textContent='';return;}
-  /* La temporada activa "2025/2026" → el primer año es el inicio */
-  var parts=activeSzn.split('/');
-  var sznStart=parseInt(parts[0]);
-  /* Edad = año inicio temporada - año generación */
-  var age1=sznStart-yr;
-  var age2=age1+1;
-  el.textContent=age1+'-'+age2+' a\xf1os';
+  var ageEl=document.getElementById('genYearAge');
+  var campoGenEl=document.getElementById('campoGen');
+  var yr=getGenYear(activeTeam);
+  if(!yr){
+    if(ageEl)ageEl.textContent='';
+    if(campoGenEl)campoGenEl.textContent='';
+    return;
+  }
+  if(ageEl)ageEl.textContent='';
+  if(campoGenEl)campoGenEl.textContent='Generaci\xf3n '+yr;
 }
 
-var _genYearCache={};  /* {CAS: 2008, JA: 2010, ...} */
-function getGenYear(tk){ return _genYearCache[tk]||''; }
+var _genYearCache={};
+
+/* Escala relativa a JA (0 = más mayor, va sumando hacia más joven) */
+var GEN_OFFSETS={JA:0,JB:1,JC:2,CA:3,CB:4,IA:5,IB:6,AA:7,AB:8,AC:8,BA:9,BB:10,PA:11,PB:12,DB:13};
+
+function getGenYear(tk){
+  if(_genYearCache[tk])return _genYearCache[tk];
+  /* Calcular desde JA si tiene año guardado */
+  if(GEN_OFFSETS[tk]!==undefined&&_genYearCache['JA']){
+    return parseInt(_genYearCache['JA'])+GEN_OFFSETS[tk];
+  }
+  return '';
+}
+
 function setGenYear(tk,yr){
-  _genYearCache[tk]=yr;
+  if(!yr)return;
+  yr=parseInt(yr);
   var data={ts:firebase.firestore.FieldValue.serverTimestamp()};
-  data['gen_year_'+tk]=yr;
+  if(GEN_OFFSETS[tk]!==undefined){
+    /* Calcular año de JA y propagar a todos con offset */
+    var jaYear=yr-GEN_OFFSETS[tk];
+    Object.keys(GEN_OFFSETS).forEach(function(k){
+      var v=jaYear+GEN_OFFSETS[k];
+      _genYearCache[k]=v;
+      data['gen_year_'+k]=v;
+    });
+  } else {
+    /* CAS, RMC — independiente */
+    _genYearCache[tk]=yr;
+    data['gen_year_'+tk]=yr;
+  }
   db.collection('config').doc('zonas').set(data,{merge:true})
     .catch(function(e){console.error('setGenYear error',e);setSync('error');});
 }
