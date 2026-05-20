@@ -403,87 +403,89 @@ button,input,select,textarea{font-family:inherit}
   </div>
 
   <!-- CAMPO PRINCIPAL -->
-    <div class="layout">
-      <div class="campo-outer">
-        <div class="campo-filter" id="campoFilter">
-          <button class="cfilter-btn active" data-filter="all">Todos</button>
-          <button class="cfilter-btn" data-filter="renovado">Renovado</button>
-          <button class="cfilter-btn" data-filter="fichaje">Fichaje</button>
-          <button class="cfilter-btn" data-filter="futurible">Futurible</button>
-          <button class="cfilter-btn" data-filter="duda">Duda</button>
-          <button class="cfilter-btn" data-filter="baja">Baja</button>
-          <button class="cfilter-btn" data-filter="destacados">Destacados</button>
-        </div>
-        <span class="campo-hint">Arrastra fichas al campo &middot; Hover para sacar (&times;)</span>
-        <div class="campo-card">
-          <div class="campo-hdr">
-            <div class="campo-hdr-title" id="campoTitle">&mdash;</div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <div class="campo-hdr-count" id="campoCount">0+0P</div>
-              <button class="campo-foto-btn" id="btnFoto" title="Exportar imagen">&#128247;</button>
+    <!-- LAYOUT PRINCIPAL: campo a la izquierda, listas a la derecha -->
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 280px 270px;gap:14px;align-items:start;">
+
+      <!-- COL 1: CAMPO + NECESIDADES/OBSERVACIONES debajo -->
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="campo-outer">
+          <div class="campo-filter" id="campoFilter">
+            <button class="cfilter-btn active" data-filter="all">Todos</button>
+            <button class="cfilter-btn" data-filter="renovado">Renovado</button>
+            <button class="cfilter-btn" data-filter="fichaje">Fichaje</button>
+            <button class="cfilter-btn" data-filter="futurible">Futurible</button>
+            <button class="cfilter-btn" data-filter="duda">Duda</button>
+            <button class="cfilter-btn" data-filter="baja">Baja</button>
+            <button class="cfilter-btn" data-filter="destacados">Destacados</button>
+          </div>
+          <span class="campo-hint">Arrastra fichas al campo &middot; Hover para sacar (&times;)</span>
+          <div class="campo-card">
+            <div class="campo-hdr">
+              <div class="campo-hdr-title" id="campoTitle">&mdash;</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="campo-hdr-count" id="campoCount">0+0P</div>
+                <button class="campo-foto-btn" id="btnFoto" title="Exportar imagen">&#128247;</button>
+              </div>
+            </div>
+            <div class="campo-wrap" id="campoWrap">
+              <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none">
+                <rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/>
+                <line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/>
+                <rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
+                <rect x="38" y="2" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
+                <rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
+                <rect x="38" y="109" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
+              </svg>
+              <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet">
+                <circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>
+                <circle cx="50" cy="59" r="1" fill="rgba(255,255,255,.35)"/>
+              </svg>
+              <img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
+              <div class="campo-players" id="campoPlayers"></div>
             </div>
           </div>
-          <!-- CAMPO PRINCIPAL LIMPIO — sin zonas visibles -->
-          <div class="campo-wrap" id="campoWrap">
-            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none">
-              <rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/>
-              <line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/>
-              <rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
-              <rect x="38" y="2" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
-              <rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
-              <rect x="38" y="109" width="24" height="7" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".5"/>
-            </svg>
-            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet">
-              <circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>
-              <circle cx="50" cy="59" r="1" fill="rgba(255,255,255,.35)"/>
-            </svg>
-            <img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
-            <div class="campo-players" id="campoPlayers"></div>
-            <!-- NO TOCAR: sin zona-overlay aquí -->
+        </div>
+        <!-- Necesidades y Observaciones debajo del campo -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="card">
+            <div class="card-h" style="padding:6px 10px;font-size:10px;">Necesidades del equipo</div>
+            <div class="card-b" style="padding:6px 8px;">
+              <textarea id="txtNecesidades" placeholder="Necesidades..." style="width:100%;min-height:70px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.4;font-family:var(--font);"></textarea>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-h" style="padding:6px 10px;font-size:10px;">Observaciones</div>
+            <div class="card-b" style="padding:6px 8px;">
+              <textarea id="txtObservaciones" placeholder="Observaciones..." style="width:100%;min-height:70px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.4;font-family:var(--font);"></textarea>
+            </div>
           </div>
         </div>
       </div>
-      <!-- Necesidades y Observaciones justo debajo del campo -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:546px;">
-        <div class="card">
-          <div class="card-h" style="padding:6px 10px;font-size:10px;">Necesidades del equipo</div>
-          <div class="card-b" style="padding:6px 8px;">
-            <textarea id="txtNecesidades" placeholder="Necesidades..." style="width:100%;min-height:70px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.4;font-family:var(--font);"></textarea>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-h" style="padding:6px 10px;font-size:10px;">Observaciones</div>
-          <div class="card-b" style="padding:6px 8px;">
-            <textarea id="txtObservaciones" placeholder="Observaciones..." style="width:100%;min-height:70px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;line-height:1.4;font-family:var(--font);"></textarea>
-          </div>
-        </div>
-      </div>
-    </div>
 
-      <!-- COL 2 IZQUIERDA: PLANTILLA TOTAL arriba + FALTAN abajo -->
+      <!-- COL 2: PLANTILLA arriba + FALTAN abajo -->
       <div class="col">
-        <!-- Plantilla total sin scroll, ordenada por posición -->
         <div class="card">
           <div class="card-h" style="background:var(--rm-blue);color:#fff;font-size:12px;letter-spacing:.5px;">PLANTILLA <span class="cnt" id="plistTotal" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);font-weight:800;">0+0</span></div>
           <div class="card-b" style="padding:6px 8px;"><div id="plistBody"><div class="plist-empty">Sin jugadores a&uacute;n.</div></div></div>
         </div>
-        <!-- Faltan por poner -->
         <div class="card">
           <div class="card-h">Faltan por poner <span class="cnt" id="cntFaltan">0</span></div>
           <div class="card-b" style="padding:6px 8px;"><div class="rlist" id="rosterFaltan" style="max-height:220px;"></div></div>
         </div>
       </div>
 
-      <!-- COL 3 DERECHA: TODOS LOS JUGADORES con scroll -->
+      <!-- COL 3: TODOS LOS JUGADORES -->
       <div class="col">
         <div class="card">
           <div class="card-h">Todos los jugadores</div>
-          <div class="card-b" style="padding:6px 8px;"><div class="rlist" id="rosterTodos" style="max-height:500px;"></div></div>
+          <div class="card-b" style="padding:6px 8px;"><div class="rlist" id="rosterTodos" style="max-height:600px;"></div></div>
         </div>
         <div style="padding:8px 0 0">
           <button class="btn pri" id="btnNew" style="width:100%;justify-content:center;display:flex;padding:9px;font-size:12px;">+ A&ntilde;adir jugador</button>
         </div>
       </div>
+
+    </div>
     </div>
 
   </div>
