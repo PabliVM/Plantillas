@@ -339,11 +339,11 @@ button,input,select,textarea{font-family:inherit}
 .zed-hint{font-size:10px;color:var(--text-mut);font-style:italic;text-align:center;padding:4px;}
 .zed-add-line-row{display:flex;gap:6px;flex-wrap:wrap;}
 
-/* Esquina superior izquierda — pegado al borde, segunda justo después */
-.selection-icons{position:absolute;top:0;left:0;display:flex;gap:1px;z-index:9;pointer-events:none;}
-.selection-icon{width:16px;height:16px;border-radius:50%;background:#fff;border:1.5px solid rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:5px;font-weight:800;color:#000;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+/* Esquina superior izquierda — pegado al borde como residencia pero al lado contrario */
+.selection-icons{position:absolute;top:-7px;left:-7px;display:flex;gap:1px;z-index:9;pointer-events:none;}
+.selection-icon{width:16px;height:16px;border-radius:50%;background:#fff;border:1.5px solid #000;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:5px;font-weight:800;color:#000;box-shadow:0 1px 3px rgba(0,0,0,.4);}
 .selection-icon img{width:100%;height:100%;object-fit:cover;}
-.chip-mini .selection-icons{top:0;left:0;}
+.chip-mini .selection-icons{top:-5px;left:-5px;}
 .chip-mini .selection-icon{width:12px;height:12px;}
 </style>
 </head>
