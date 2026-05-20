@@ -478,7 +478,7 @@ button,input,select,textarea{font-family:inherit}
       <div class="col">
         <div class="card">
           <div class="card-h">Todos los jugadores</div>
-          <div class="card-b" style="padding:6px 8px;"><div class="rlist" id="rosterTodos" style="max-height:700px;"></div></div>
+          <div class="card-b" style="padding:6px 8px;"><div id="rosterTodos" style="max-height:80vh;overflow-y:auto;"></div></div>
         </div>
         <div style="padding:8px 0 0">
           <button class="btn pri" id="btnNew" style="width:100%;justify-content:center;display:flex;padding:9px;font-size:12px;">+ A&ntilde;adir jugador</button>
@@ -1133,7 +1133,7 @@ function renderRoster(){
 
     /* Lista con scroll */
     var lista=document.createElement('div');
-    lista.style.cssText='max-height:200px;overflow-y:auto;background:var(--surface);';
+    lista.style.cssText='background:var(--surface);';
 
     if(!grp.length){
       var empty=document.createElement('div');
