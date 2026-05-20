@@ -961,7 +961,7 @@ function showHome(){
 function showApp(teamKey){
   if(teamKey&&teamKey!==activeTeam){
     activeTeam=teamKey;localStorage.setItem(ATM_KEY,activeTeam);
-    state={players:[]};selectedId=null;
+    state={players:[]};selectedId=null;activeFilters=['all'];syncFilterBtns();
   }
   localStorage.setItem('plt_last_view','app');
   document.getElementById('homeScreen').style.display='none';
@@ -992,7 +992,7 @@ function renderTeamBar(){
     b.addEventListener('click',function(){
       if(t.key===activeTeam)return;
       activeTeam=t.key;localStorage.setItem(ATM_KEY,activeTeam);
-      state={players:[]};selectedId=null;renderAll();loadTeam();
+      state={players:[]};selectedId=null;activeFilters=['all'];syncFilterBtns();renderAll();loadTeam();
     });
     bar.appendChild(b);
   });
@@ -1046,6 +1046,13 @@ function renderCounter(){
 }
 
 /* ══ FILTRO ══ */
+
+function syncFilterBtns(){
+  document.querySelectorAll('.cfilter-btn').forEach(function(b){
+    var bf=b.dataset.filter;
+    b.classList.toggle('active',bf==='all'?activeFilters[0]==='all':activeFilters.indexOf(bf)>=0);
+  });
+}
 function bindFilter(){
   document.querySelectorAll('.cfilter-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
