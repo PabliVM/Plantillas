@@ -927,8 +927,8 @@ function loadTeam(){
     var d=snap.exists?snap.data():{};
     if(d.version)localVersions[docId(activeTeam)]=d.version;
     var incoming={players:d.players||[],necesidades:d.necesidades||'',observaciones:d.observaciones||''};
-    /* Re-detectar posición de todos los jugadores en campo */
-    incoming.players.forEach(function(p){if(p.onPitch)detectAndUpdateZone(p);});
+    /* Re-detectar posición de TODOS los jugadores en campo */
+    incoming.players.forEach(function(p){if(p.onPitch){detectAndUpdateZone(p);}});
     state=incoming;
     try{localStorage.setItem('plt_cache_'+docId(activeTeam),JSON.stringify(incoming));}catch(e){}
     renderAll();
@@ -1154,6 +1154,8 @@ function renderRoster(){
 
         var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;display:flex;align-items:center;gap:6px;';
         var posLabel=p.isPor?'PO':(p.detectedZoneShort||'');
+        /* Si está en campo y sin posición, re-detectar */
+        if(p.onPitch&&!posLabel&&!p.isPor){detectAndUpdateZone(p);posLabel=p.detectedZoneShort||'';}
         var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:9px;font-weight:700;">\u2713</span>':'';
         var posBadge=posLabel
           ?'<span style="flex-shrink:0;font-size:9px;font-weight:800;color:var(--rm-blue);background:var(--rm-blue-bg);border:1px solid var(--rm-blue);border-radius:4px;padding:1px 5px;">'+esc(posLabel)+'</span>'
@@ -1207,7 +1209,9 @@ function renderPlist(){
     var row=document.createElement('div');row.className='plist-item';row.style.marginBottom='2px';
     var badge=document.createElement('div');badge.className='plist-badge'+(p.isPor?' por':'');
     badge.setAttribute('style',chipSt(p.status,p.isPor));
-    badge.textContent=p.isPor?'PO':(p.detectedZoneShort||'---');
+    var posP=p.isPor?'PO':(p.detectedZoneShort||'');
+    if(p.onPitch&&!posP&&!p.isPor){detectAndUpdateZone(p);posP=p.detectedZoneShort||'';}
+    badge.textContent=posP||'---';
     var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
     var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:9px;font-weight:700;"> \u2713</span>':'';
     info.innerHTML='<div class="plist-name">'+esc(p.name||'(sin nombre)')+enCampo+'</div>';
