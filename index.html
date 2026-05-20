@@ -927,14 +927,23 @@ function loadTeam(){
     var d=snap.exists?snap.data():{};
     if(d.version)localVersions[docId(activeTeam)]=d.version;
     var incoming={players:d.players||[],necesidades:d.necesidades||'',observaciones:d.observaciones||''};
-    /* Re-detectar posición de TODOS los jugadores en campo */
-    incoming.players.forEach(function(p){if(p.onPitch){detectAndUpdateZone(p);}});
+    /* Re-detectar posición de TODOS los jugadores en campo y guardar */
+    var changed=false;
+    incoming.players.forEach(function(p){
+      if(p.onPitch){
+        var prev=p.detectedZoneShort;
+        detectAndUpdateZone(p);
+        if(p.detectedZoneShort!==prev)changed=true;
+      }
+    });
     state=incoming;
     try{localStorage.setItem('plt_cache_'+docId(activeTeam),JSON.stringify(incoming));}catch(e){}
     renderAll();
     var tn=document.getElementById('txtNecesidades');if(tn)tn.value=state.necesidades||'';
     var to=document.getElementById('txtObservaciones');if(to)to.value=state.observaciones||'';
     setSync('saved');
+    /* Si hubo cambios en posiciones detectadas, guardar en Firebase */
+    if(changed)persist();
   },function(err){
     console.warn('onSnapshot error',err);
     setSync(navigator.onLine?'error':'offline');
@@ -1185,7 +1194,9 @@ function renderPlist(){
 
   /* ── PLANTILLA TOTAL sin scroll, ordenada por posición, sin bajas ── */
   var body=document.getElementById('plistBody');body.innerHTML='';
-  var activos=state.players.filter(function(p){return p.status!=='baja';});
+  var activos=state.players.filter(function(p){
+    return p.status==='renovado'||p.status==='fichaje'||p.status==='duda';
+  });
   var totalC=activos.filter(function(p){return!p.isPor;}).length;
   var totalP=activos.filter(function(p){return p.isPor;}).length;
   document.getElementById('plistTotal').textContent=totalC+'+'+totalP;
