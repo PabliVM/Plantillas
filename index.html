@@ -1155,7 +1155,7 @@ function renderCampo(){
     chip.setAttribute('style',chipSt(p.status,p.isPor));
     chip.innerHTML=renderSelectionIcons(p)+'<span class="pchip-text">'+esc(p.name||'')+'</span>'
       +((p.proc&&(p.status==='fichaje'||p.status==='futurible'))?'<span class="pchip-proc">'+esc(p.proc)+'</span>':'')
-      +(p.birthYear?'<span class="pchip-proc" style="color:#1e3a5f;font-weight:800;">'+p.birthYear+'</span>':'')
+      +(p.birthYear?'<span class="pchip-proc" style="color:#1e3a5f;font-weight:900;font-size:11px;">'+p.birthYear+'</span>':'')
       +footHtmlFor(p.lat||'');
     var xBtn=document.createElement('button');xBtn.className='chip-remove-btn';xBtn.textContent='\xd7';
     xBtn.addEventListener('pointerdown',function(e){e.stopPropagation();});
@@ -1229,7 +1229,7 @@ function renderRoster(){
           +'">'+(posLabel||'---')+'</span>';
 
         var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;display:flex;align-items:center;gap:6px;';
-        var byLabel=p.birthYear?'<span style="font-size:9px;color:var(--orange);font-weight:700;flex-shrink:0;">'+p.birthYear+'</span>':'';
+        var byLabel=p.birthYear?'<span style="font-size:9px;color:#1e3a5f;font-weight:800;flex-shrink:0;">'+p.birthYear+'</span>':'';
         var cmtEmoji=p.comment?'<span title="'+esc(p.comment)+'" style="font-size:12px;flex-shrink:0;cursor:help;" >&#128172;</span>':'';
         info.innerHTML=posBadge
           +'<span style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">'+esc(p.name||'(sin nombre)')+'</span>'
@@ -1287,7 +1287,7 @@ function renderPlist(){
     badge.textContent=posP||'---';
     var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
     var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:9px;font-weight:700;"> \u2713</span>':'';
-    var byTxt=p.birthYear?'<span style="font-size:9px;color:var(--orange);font-weight:700;margin-left:4px;">'+p.birthYear+'</span>':'';
+    var byTxt=p.birthYear?'<span style="font-size:9px;color:#1e3a5f;font-weight:800;margin-left:4px;">'+p.birthYear+'</span>':'';
     var cmtIcon=p.comment?'<span title="'+esc(p.comment)+'" style="font-size:11px;margin-left:3px;" >&#128172;</span>':'';
     info.innerHTML='<div class="plist-name" style="display:flex;align-items:center;gap:3px;">'+esc(p.name||'(sin nombre)')+byTxt+cmtIcon+enCampo+'</div>';
     var btn=document.createElement('button');btn.className='plist-addbtn'+(p.onPitch?' in':'');
@@ -1339,9 +1339,8 @@ function renderStats(){
   document.getElementById('statAmbi').textContent=enCampo.filter(function(p){return p.lat==='ambidiestro';}).length;
   document.getElementById('statRes').textContent=enCampo.filter(function(p){return p.res==='R';}).length;
   document.getElementById('statMP').textContent=enCampo.filter(function(p){return p.res==='MP';}).length;
-  /* Promocionado = birthYear < año generación del equipo */
-  var genYr=parseInt(getGenYear(activeTeam))||0;
-  document.getElementById('statProm').textContent=enCampo.filter(function(p){return p.birthYear&&genYr&&p.birthYear<genYr;}).length;
+  /* Promocionado = cualquier jugador con birthYear relleno */
+  document.getElementById('statProm').textContent=enCampo.filter(function(p){return p.birthYear;}).length;
   document.getElementById('statMad').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('madrilena')>=0;}).length;
   document.getElementById('statEsp').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('espanola')>=0;}).length;
   document.getElementById('statInt').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('internacional')>=0;}).length;
