@@ -404,6 +404,9 @@ button,input,select,textarea{font-family:inherit}
       <div class="stat-pill">Residencia <strong id="statRes">0</strong></div>
       <div class="stat-pill">Media pens. <strong id="statMP">0</strong></div>
       <div class="stat-sep"></div>
+      <div class="stat-sep"></div>
+      <div class="stat-pill">Promocionados <strong id="statProm">0</strong></div>
+      <div class="stat-sep"></div>
       <div class="stat-pill">Madrile&ntilde;a <strong id="statMad">0</strong></div>
       <div class="stat-pill">Espa&ntilde;ola <strong id="statEsp">0</strong></div>
       <div class="stat-pill">Internacional <strong id="statInt">0</strong></div>
@@ -645,12 +648,20 @@ button,input,select,textarea{font-family:inherit}
       </div>
 
       <div class="frow">
-        <label>Selecciones (máx. 2)</label>
+        <label>Selecciones (m&aacute;x. 2)</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;" id="selBtns">
-          <button class="lat-btn" data-sel="madrilena">Madrileña</button>
-          <button class="lat-btn" data-sel="espanola">Española</button>
+          <button class="lat-btn" data-sel="madrilena">Madrile&ntilde;a</button>
+          <button class="lat-btn" data-sel="espanola">Espa&ntilde;ola</button>
           <button class="lat-btn" data-sel="internacional">Internacional</button>
         </div>
+      </div>
+      <div class="frow">
+        <label>A&ntilde;o de nacimiento (si no es de la generaci&oacute;n)</label>
+        <input type="number" id="fBirthYear" min="1990" max="2030" placeholder="Ej: 2008" style="width:120px;">
+      </div>
+      <div class="frow">
+        <label>Comentarios</label>
+        <textarea id="fComment" maxlength="200" placeholder="Observaciones sobre el jugador..." rows="2" style="width:100%;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);line-height:1.4;"></textarea>
       </div>
     </div>
     <div class="ed-modal-f">
@@ -1134,6 +1145,7 @@ function renderCampo(){
     chip.setAttribute('style',chipSt(p.status,p.isPor));
     chip.innerHTML=renderSelectionIcons(p)+'<span class="pchip-text">'+esc(p.name||'')+'</span>'
       +((p.proc&&(p.status==='fichaje'||p.status==='futurible'))?'<span class="pchip-proc">'+esc(p.proc)+'</span>':'')
+      +(p.birthYear?'<span class="pchip-proc" style="color:rgba(255,180,0,.9);">'+p.birthYear+'</span>':'')
       +footHtmlFor(p.lat||'');
     var xBtn=document.createElement('button');xBtn.className='chip-remove-btn';xBtn.textContent='\xd7';
     xBtn.addEventListener('pointerdown',function(e){e.stopPropagation();});
@@ -1207,9 +1219,11 @@ function renderRoster(){
           +'">'+(posLabel||'---')+'</span>';
 
         var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;display:flex;align-items:center;gap:6px;';
+        var byLabel=p.birthYear?'<span style="font-size:9px;color:var(--orange);font-weight:700;flex-shrink:0;">'+p.birthYear+'</span>':'';
+        var cmtEmoji=p.comment?'<span title="'+esc(p.comment)+'" style="font-size:12px;flex-shrink:0;cursor:help;" >&#128172;</span>':'';
         info.innerHTML=posBadge
           +'<span style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">'+esc(p.name||'(sin nombre)')+'</span>'
-          +enCampo;
+          +byLabel+cmtEmoji+enCampo;
 
         var pen=document.createElement('button');pen.className='ritem-edit';pen.title='Editar';pen.textContent='\u270f';
         pen.addEventListener('click',function(e){e.stopPropagation();openModal(p.id);});
@@ -1263,7 +1277,9 @@ function renderPlist(){
     badge.textContent=posP||'---';
     var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
     var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:9px;font-weight:700;"> \u2713</span>':'';
-    info.innerHTML='<div class="plist-name">'+esc(p.name||'(sin nombre)')+enCampo+'</div>';
+    var byTxt=p.birthYear?'<span style="font-size:9px;color:var(--orange);font-weight:700;margin-left:4px;">'+p.birthYear+'</span>':'';
+    var cmtIcon=p.comment?'<span title="'+esc(p.comment)+'" style="font-size:11px;margin-left:3px;" >&#128172;</span>':'';
+    info.innerHTML='<div class="plist-name" style="display:flex;align-items:center;gap:3px;">'+esc(p.name||'(sin nombre)')+byTxt+cmtIcon+enCampo+'</div>';
     var btn=document.createElement('button');btn.className='plist-addbtn'+(p.onPitch?' in':'');
     btn.textContent=p.onPitch?'Sacar':'+ Campo';
     btn.addEventListener('click',function(e){e.stopPropagation();if(p.onPitch){p.onPitch=false;}else{p.onPitch=true;selectedId=p.id;}persist();renderAll();});
@@ -1313,6 +1329,9 @@ function renderStats(){
   document.getElementById('statAmbi').textContent=enCampo.filter(function(p){return p.lat==='ambidiestro';}).length;
   document.getElementById('statRes').textContent=enCampo.filter(function(p){return p.res==='R';}).length;
   document.getElementById('statMP').textContent=enCampo.filter(function(p){return p.res==='MP';}).length;
+  /* Promocionado = birthYear < año generación del equipo */
+  var genYr=parseInt(getGenYear(activeTeam))||0;
+  document.getElementById('statProm').textContent=enCampo.filter(function(p){return p.birthYear&&genYr&&p.birthYear<genYr;}).length;
   document.getElementById('statMad').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('madrilena')>=0;}).length;
   document.getElementById('statEsp').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('espanola')>=0;}).length;
   document.getElementById('statInt').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('internacional')>=0;}).length;
@@ -1344,7 +1363,7 @@ function showProcRow(status){
 function openModal(pid){
   var isNew=!pid;
   if(isNew){
-    var p={id:uid(),name:'',status:'renovado',isPor:false,res:'',proc:'',lat:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona',selecciones:[]};
+    var p={id:uid(),name:'',status:'renovado',isPor:false,res:'',proc:'',lat:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona',selecciones:[],birthYear:null,comment:''};
     state.players.push(p);selectedId=p.id;persist();
     document.getElementById('edModalTitle').textContent='Nuevo jugador';
     document.getElementById('btnDelete').style.display='none';
@@ -1361,6 +1380,8 @@ function openModal(pid){
   document.querySelectorAll('.res-btn').forEach(function(b){b.classList.toggle('active',b.dataset.res===(p.res||''));});
   document.querySelectorAll('.lat-btn[data-lat]').forEach(function(b){b.classList.toggle('active',b.dataset.lat===(p.lat||''));});
   var pSels=p.selecciones||[];document.querySelectorAll('[data-sel]').forEach(function(b){b.classList.toggle('active',pSels.indexOf(b.dataset.sel)>=0);});
+  document.getElementById('fBirthYear').value=p.birthYear||'';
+  document.getElementById('fComment').value=p.comment||'';
   document.querySelectorAll('.status-btn').forEach(function(b){b.classList.toggle('active',b.dataset.status===p.status);});
   document.getElementById('edModal').style.display='flex';
   setTimeout(function(){document.getElementById('fName').focus();},80);
@@ -1404,6 +1425,8 @@ function bindModal(){
     });
   });
   document.getElementById('fProc').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.proc=this.value;persist();}});
+  document.getElementById('fBirthYear').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.birthYear=this.value?parseInt(this.value):null;persist();}});
+  document.getElementById('fComment').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.comment=this.value;persist();}});
   document.getElementById('fName').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.name=this.value;persist();}});
   document.getElementById('fPor').addEventListener('change',function(){var p=getPlayer(selectedId);if(p){p.isPor=this.checked;persist();}});
   document.getElementById('btnSave').addEventListener('click',closeModal);
@@ -1647,7 +1670,7 @@ function renderCfgPlantillas(body){
     var name=(inp.value||'').trim();if(!name)return;
     var tdd=loadState(activePtTeam)||{players:[]};if(!tdd.players)tdd.players=[];
     if(tdd.players.some(function(p){return p.name===name;})){inp.select();return;}
-    tdd.players.push({id:uid(),name:name,status:'renovado',isPor:false,res:'',lat:'',proc:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona',selecciones:[]});
+    tdd.players.push({id:uid(),name:name,status:'renovado',isPor:false,res:'',lat:'',proc:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona',selecciones:[],birthYear:null,comment:''});
     saveState(activePtTeam,tdd);inp.value='';renderCfg();setTimeout(function(){var el=document.getElementById('ptInp');if(el)el.focus();},50);
   }
   addBtn.addEventListener('click',doAdd);inp.addEventListener('keydown',function(e){if(e.key==='Enter')doAdd();});
