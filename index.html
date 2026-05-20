@@ -1097,8 +1097,8 @@ function renderCampo(){
 /* ══ RENDER ROSTER — COL DER: 5 bloques con scroll individual ══ */
 function renderRoster(){
   var body=document.getElementById('rosterTodos');body.innerHTML='';
-  var ORDER=['renovado','fichaje','futurible','duda','baja','destacados'];
-  var LABELS={renovado:'Renovados',fichaje:'Fichados',futurible:'Futuribles',duda:'Dudas',baja:'Bajas',destacados:'Destacados'};
+  var ORDER=['renovado','fichaje','futurible','destacados','duda','baja'];
+  var LABELS={renovado:'Renovados',fichaje:'Fichados',futurible:'Futuribles',destacados:'Destacados',duda:'Dudas',baja:'Bajas'};
   var COLORS={
     renovado:{bg:'#f1f5f9',text:'#1e293b',border:'#cbd5e1'},
     fichaje: {bg:'#77ED85',text:'#003300',border:'#4ade80'},
@@ -1137,7 +1137,7 @@ function renderRoster(){
 
     if(!grp.length){
       var empty=document.createElement('div');
-      empty.style.cssText='font-size:10px;color:var(--text-mut);font-style:italic;padding:6px 10px;';
+      empty.style.cssText='font-size:10px;color:var(--text-mut);font-style:italic;padding:8px 10px;min-height:36px;display:flex;align-items:center;';
       empty.textContent='Ninguno';lista.appendChild(empty);
     } else {
       grp.forEach(function(p){
