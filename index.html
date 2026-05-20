@@ -836,28 +836,35 @@ var ZONAS_DEFAULT_F7=[
 /* ══════════════════════════════════════
    CARGA DE ZONAS DESDE LOCALSTORAGE
 ══════════════════════════════════════ */
+/* CARGA DE ZONAS DESDE LOCALSTORAGE + FIREBASE */
 function getZonas(ft){
   var key='campograma_position_zones_'+ft;
   try{var s=localStorage.getItem(key);if(s)return JSON.parse(s);}catch(e){}
-  return []; /* sin zonas por defecto — el usuario las crea */
+  return [];
 }
 
-/* ══════════════════════════════════════
-   GUARDADO DE ZONAS
-══════════════════════════════════════ */
+/* GUARDADO DE ZONAS EN LOCALSTORAGE + FIREBASE */
 function saveZonas(ft,zonas){
   var key='campograma_position_zones_'+ft;
   try{localStorage.setItem(key,JSON.stringify(zonas));}catch(e){}
+  /* Guardar en Firebase bajo config/zonas */
+  db.collection('config').doc('zonas').set(
+    JSON.parse(JSON.stringify({[key]:zonas,ts:firebase.firestore.FieldValue.serverTimestamp()})),
+    {merge:true}
+  ).catch(function(){});
 }
 
-/* ══════════════════════════════════════
-   TIPO DE CAMPO POR EQUIPO
-══════════════════════════════════════ */
+/* TIPO DE CAMPO POR EQUIPO */
 function getTeamFieldType(tk){
   try{return localStorage.getItem('campograma_team_field_type_'+tk)||'F11';}catch(e){return'F11';}
 }
 function setTeamFieldType(tk,ft){
   try{localStorage.setItem('campograma_team_field_type_'+tk,ft);}catch(e){}
+  /* Guardar en Firebase */
+  db.collection('config').doc('zonas').set(
+    {['team_field_type_'+tk]:ft,ts:firebase.firestore.FieldValue.serverTimestamp()},
+    {merge:true}
+  ).catch(function(){});
 }
 
 /* ══════════════════════════════════════
@@ -1714,6 +1721,29 @@ firebase.auth().signInAnonymously().then(function(){
     }
   });
 }).then(function(){
+  /* Cargar zonas, segmentos y tipos de campo desde Firebase */
+  return db.collection('config').doc('zonas').get().then(function(snap){
+    if(!snap.exists)return;
+    var d=snap.data();
+    ['F11','F7'].forEach(function(ft){
+      var zk='campograma_position_zones_'+ft;
+      var sk='campograma_segs_'+ft;
+      if(d[zk]&&Array.isArray(d[zk])){
+        try{localStorage.setItem(zk,JSON.stringify(d[zk]));}catch(e){}
+      }
+      if(d[sk]&&Array.isArray(d[sk])){
+        try{localStorage.setItem(sk,JSON.stringify(d[sk]));}catch(e){}
+      }
+    });
+    /* Tipos de campo por equipo */
+    TEAMS.forEach(function(t){
+      var tk='team_field_type_'+t.key;
+      if(d[tk]){
+        try{localStorage.setItem('campograma_team_field_type_'+t.key,d[tk]);}catch(e){}
+      }
+    });
+  });
+}).then(function(){
   try{buildStatusBtns();}catch(e){}
   try{renderHomeGrid();}catch(e){}
   setSync('saved');
@@ -1767,7 +1797,12 @@ function getSegs(ft){
   return[]; /* campo limpio — el usuario crea sus propios segmentos */
 }
 function saveSegs(ft,segs){
-  try{localStorage.setItem(getSegsKey(ft),JSON.stringify(segs));}catch(e){}
+  var key=getSegsKey(ft);
+  try{localStorage.setItem(key,JSON.stringify(segs));}catch(e){}
+  db.collection('config').doc('zonas').set(
+    JSON.parse(JSON.stringify({[key]:segs,ts:firebase.firestore.FieldValue.serverTimestamp()})),
+    {merge:true}
+  ).catch(function(){});
 }
 
 /* GUARDADO DE ZONAS EN LOCALSTORAGE */
