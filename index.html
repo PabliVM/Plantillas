@@ -1887,21 +1887,33 @@ function bindModal(){
   /* Botón añadir en vista combinada — pregunta equipo y añade sin poner en campo */
   document.addEventListener('click',function(e){
     if(e.target&&e.target.id==='btnNewComb'){
-      /* Añadir a AB por defecto — aparece en Faltan sin campo, desde ahí se elige AB o AC */
+      var tk='AB';
       var prev=activeTeam;
-      activeTeam='AB';
-      var s=null;try{var r=localStorage.getItem('plt_cache_'+docId('AB'));if(r)s=JSON.parse(r);}catch(ex){}
-      if(s)state=s;else state={players:[]};
-      openModal(null);
-      function restore(){
+      activeTeam=tk;
+      var sAB=null;
+      try{var rAB=localStorage.getItem('plt_cache_'+docId(tk));if(rAB)sAB=JSON.parse(rAB);}catch(exAB){}
+      if(!sAB)sAB={players:[],necesidades:'',observaciones:''};
+      state=sAB;
+      var np={id:uid(),name:'Nuevo jugador',status:'renovado',isPor:false,res:'',proc:'',lat:'',
+             onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona',
+             selecciones:[],birthYear:null,comment:'',yearsInClub:null};
+      state.players.push(np);
+      selectedId=np.id;
+      persist();
+      try{localStorage.setItem('plt_cache_'+docId(tk),JSON.stringify(state));}catch(exAB2){}
+      renderCombinedView();
+      openModal(np.id);
+      var combRestore=function(){
+        try{localStorage.setItem('plt_cache_'+docId(tk),JSON.stringify(state));}catch(exAB3){}
         activeTeam=prev;
-        var sp=null;try{var rp=localStorage.getItem('plt_cache_'+docId(prev));if(rp)sp=JSON.parse(rp);}catch(ex){}
-        if(sp)state=sp;
-        renderCombinedView();
-      }
-      document.getElementById('btnSave').addEventListener('click',restore,{once:true});
-      document.getElementById('edClose').addEventListener('click',restore,{once:true});
-      document.getElementById('edCancel').addEventListener('click',restore,{once:true});
+        var sp2=null;
+        try{var rp2=localStorage.getItem('plt_cache_'+docId(prev));if(rp2)sp2=JSON.parse(rp2);}catch(exPr){}
+        if(sp2)state=sp2;else state={players:[]};
+        setTimeout(renderCombinedView,100);
+      };
+      document.getElementById('btnSave').addEventListener('click',combRestore,{once:true});
+      document.getElementById('edClose').addEventListener('click',combRestore,{once:true});
+      document.getElementById('edCancel').addEventListener('click',combRestore,{once:true});
     }
   });
 }
