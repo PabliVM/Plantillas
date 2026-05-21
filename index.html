@@ -1738,7 +1738,10 @@ function renderCombinedView(){
         chip.className='player-chip'+(p.isPor?' por':'')+(p.res?' residencia':'');
         if(p.res)chip.setAttribute('data-res-label',p.res);
         chip.setAttribute('style',chipSt(p.status,p.isPor));
-        chip.innerHTML=renderSelectionIcons(p)+'<span class="pchip-text">'+esc(p.name||'')+'</span>';
+        chip.innerHTML=renderSelectionIcons(p)+'<span class="pchip-text">'+esc(p.name||'')+'</span>'
+          +((p.proc&&(p.status==='fichaje'||p.status==='futurible'))?'<span class="pchip-proc">'+esc(p.proc)+'</span>':'')
+          +(p.birthYear?'<span class="pchip-proc" style="color:#1e3a5f;font-weight:900;font-size:11px;">'+p.birthYear+'</span>':'')
+          +footHtmlFor(p.lat||'');
         /* Botón sacar */
         var xBtn=document.createElement('button');xBtn.className='chip-remove-btn';xBtn.textContent='\xd7';
         xBtn.addEventListener('pointerdown',function(e){e.stopPropagation();});
