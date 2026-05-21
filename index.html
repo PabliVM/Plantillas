@@ -870,6 +870,10 @@ button,input,select,textarea{font-family:inherit}
           <div class="card-h">Todos los jugadores</div>
           <div class="card-b" style="padding:6px 8px;"><div id="comb-roster" style="max-height:80vh;overflow-y:auto;"></div></div>
         </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 0 0;">
+          <button class="btn pri" id="btnNewAB" style="justify-content:center;display:flex;padding:8px;font-size:11px;">+ A&ntilde;adir a AB</button>
+          <button class="btn pri" id="btnNewAC" style="justify-content:center;display:flex;padding:8px;font-size:11px;">+ A&ntilde;adir a AC</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1495,10 +1499,11 @@ var PZ={top:{x1:26,y1:0,x2:74,y2:16},bot:{x1:26,y1:100,x2:74,y2:118}};
 function inGoal(x,y){return(x>=PZ.top.x1&&x<=PZ.top.x2&&y>=PZ.top.y1&&y<=PZ.top.y2)||(x>=PZ.bot.x1&&x<=PZ.bot.x2&&y>=PZ.bot.y1&&y<=PZ.bot.y2);}
 function countPitch(){var c=0,p=0;state.players.forEach(function(pl){if(!pl.onPitch||pl.status==='baja')return;if(pl.isPor&&inGoal(pl.x,pl.y))p++;else c++;});return{c:c,p:p};}
 function renderCounter(){
+  var allowed={renovado:1,fichaje:1,duda:1};
   var visibles=state.players.filter(function(p){
     if(!p.onPitch)return false;
-    if(activeFilters[0]==='all')return true;
-    return activeFilters.indexOf(p.status)>=0;
+    if(activeFilters[0]==='all')return allowed[p.status];
+    return activeFilters.indexOf(p.status)>=0&&allowed[p.status];
   });
   var c=visibles.filter(function(p){return!p.isPor;}).length;
   var p=visibles.filter(function(p){return p.isPor;}).length;
@@ -1880,6 +1885,28 @@ function bindModal(){
     selectedId=null;persist();document.getElementById('edModal').style.display='none';renderAll();
   });
   document.getElementById('btnNew').addEventListener('click',function(){openModal(null);});
+  /* Botones añadir jugador en vista combinada */
+  document.addEventListener('click',function(e){
+    if(e.target&&(e.target.id==='btnNewAB'||e.target.id==='btnNewAC')){
+      var tk=e.target.id==='btnNewAB'?'AB':'AC';
+      /* Cambiar temporalmente equipo activo para que openModal añada al equipo correcto */
+      var prev=activeTeam;
+      activeTeam=tk;
+      var s=null;try{var r=localStorage.getItem('plt_cache_'+docId(tk));if(r)s=JSON.parse(r);}catch(ex){}
+      if(s)state=s;else state={players:[]};
+      openModal(null);
+      /* Al cerrar modal, restaurar y refrescar vista combinada */
+      function restore(){
+        activeTeam=prev;
+        var sp=null;try{var rp=localStorage.getItem('plt_cache_'+docId(prev));if(rp)sp=JSON.parse(rp);}catch(ex){}
+        if(sp)state=sp;
+        renderCombinedView();
+      }
+      document.getElementById('btnSave').addEventListener('click',restore,{once:true});
+      document.getElementById('edClose').addEventListener('click',restore,{once:true});
+      document.getElementById('edCancel').addEventListener('click',restore,{once:true});
+    }
+  });
 }
 
 /* ══ DRAG ON CAMPO (NO TOCAR: SISTEMA DE FICHAS EXISTENTE) ══ */
