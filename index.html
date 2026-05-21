@@ -655,17 +655,30 @@ button,input,select,textarea{font-family:inherit}
         </div>
         <!-- Campo + Plantilla -->
         <div style="display:grid;grid-template-columns:minmax(0,1fr) 175px;gap:8px;align-items:start;">
-          <div class="campo-card">
-            <div class="campo-hdr">
-              <div style="display:flex;align-items:center;gap:6px;">
-                <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" style="width:22px;height:22px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;" onerror="this.style.display='none'">
-                <div class="campo-hdr-title">ALEVÍN B</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="campo-card">
+              <div class="campo-hdr">
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" style="width:22px;height:22px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;" onerror="this.style.display='none'">
+                  <div class="campo-hdr-title">ALEVÍN B</div>
+                </div>
+                <div class="campo-hdr-count" id="comb-countAB">0+0P</div>
               </div>
-              <div class="campo-hdr-count" id="comb-countAB">0+0P</div>
+              <div class="campo-wrap" id="comb-campoAB">
+                <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none"><rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/><line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/><rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/><rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/></svg><svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet"><circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/></svg><img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
+                <div class="campo-players" id="comb-playersAB"></div>
+              </div>
             </div>
-            <div class="campo-wrap" id="comb-campoAB">
-              <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none"><rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/><line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/><rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/><rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/></svg><svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet"><circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/></svg><img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
-              <div class="campo-players" id="comb-playersAB"></div>
+            <!-- Necesidades y Observaciones AB debajo del campo -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="card">
+                <div class="card-h" style="padding:5px 8px;font-size:10px;">Necesidades AB</div>
+                <div class="card-b" style="padding:4px 6px;"><textarea id="comb-necAB" style="width:100%;min-height:50px;padding:4px 6px;font-size:10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);" placeholder="Necesidades AB..."></textarea></div>
+              </div>
+              <div class="card">
+                <div class="card-h" style="padding:5px 8px;font-size:10px;">Observaciones AB</div>
+                <div class="card-b" style="padding:4px 6px;"><textarea id="comb-obsAB" style="width:100%;min-height:50px;padding:4px 6px;font-size:10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);" placeholder="Observaciones AB..."></textarea></div>
+              </div>
             </div>
           </div>
           <!-- Plantilla AB -->
@@ -673,14 +686,6 @@ button,input,select,textarea{font-family:inherit}
             <div class="card">
               <div class="card-h" style="background:var(--rm-blue);color:#fff;font-size:11px;">PLANTILLA AB <span class="cnt" id="comb-plistAB" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);">0+0</span></div>
               <div class="card-b" style="padding:4px 6px;"><div id="comb-plistBodyAB"></div></div>
-            </div>
-            <div class="card">
-              <div class="card-h" style="padding:5px 8px;font-size:10px;">Necesidades AB</div>
-              <div class="card-b" style="padding:4px 6px;"><textarea id="comb-necAB" style="width:100%;min-height:50px;padding:4px 6px;font-size:10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);" placeholder="Necesidades AB..."></textarea></div>
-            </div>
-            <div class="card">
-              <div class="card-h" style="padding:5px 8px;font-size:10px;">Observaciones AB</div>
-              <div class="card-b" style="padding:4px 6px;"><textarea id="comb-obsAB" style="width:100%;min-height:50px;padding:4px 6px;font-size:10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);" placeholder="Observaciones AB..."></textarea></div>
             </div>
           </div>
         </div>
@@ -708,17 +713,30 @@ button,input,select,textarea{font-family:inherit}
         </div>
         <!-- Campo + Plantilla -->
         <div style="display:grid;grid-template-columns:minmax(0,1fr) 175px;gap:8px;align-items:start;">
-          <div class="campo-card">
-            <div class="campo-hdr">
-              <div style="display:flex;align-items:center;gap:6px;">
-                <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" style="width:22px;height:22px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;" onerror="this.style.display='none'">
-                <div class="campo-hdr-title">ALEVÍN C</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="campo-card">
+              <div class="campo-hdr">
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" style="width:22px;height:22px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;" onerror="this.style.display='none'">
+                  <div class="campo-hdr-title">ALEVÍN C</div>
+                </div>
+                <div class="campo-hdr-count" id="comb-countAC">0+0P</div>
               </div>
-              <div class="campo-hdr-count" id="comb-countAC">0+0P</div>
+              <div class="campo-wrap" id="comb-campoAC">
+                <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none"><rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/><line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/><rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/><rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/></svg><svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet"><circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/></svg><img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
+                <div class="campo-players" id="comb-playersAC"></div>
+              </div>
             </div>
-            <div class="campo-wrap" id="comb-campoAC">
-              <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none"><rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/><line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/><rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/><rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/></svg><svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet"><circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/></svg><img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
-              <div class="campo-players" id="comb-playersAC"></div>
+            <!-- Necesidades y Observaciones AC debajo del campo -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="card">
+                <div class="card-h" style="padding:5px 8px;font-size:10px;">Necesidades AC</div>
+                <div class="card-b" style="padding:4px 6px;"><textarea id="comb-necAC" style="width:100%;min-height:50px;padding:4px 6px;font-size:10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);" placeholder="Necesidades AC..."></textarea></div>
+              </div>
+              <div class="card">
+                <div class="card-h" style="padding:5px 8px;font-size:10px;">Observaciones AC</div>
+                <div class="card-b" style="padding:4px 6px;"><textarea id="comb-obsAC" style="width:100%;min-height:50px;padding:4px 6px;font-size:10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);" placeholder="Observaciones AC..."></textarea></div>
+              </div>
             </div>
           </div>
           <!-- Plantilla AC -->
@@ -726,14 +744,6 @@ button,input,select,textarea{font-family:inherit}
             <div class="card">
               <div class="card-h" style="background:var(--rm-blue);color:#fff;font-size:11px;">PLANTILLA AC <span class="cnt" id="comb-plistAC" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);">0+0</span></div>
               <div class="card-b" style="padding:4px 6px;"><div id="comb-plistBodyAC"></div></div>
-            </div>
-            <div class="card">
-              <div class="card-h" style="padding:5px 8px;font-size:10px;">Necesidades AC</div>
-              <div class="card-b" style="padding:4px 6px;"><textarea id="comb-necAC" style="width:100%;min-height:50px;padding:4px 6px;font-size:10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);" placeholder="Necesidades AC..."></textarea></div>
-            </div>
-            <div class="card">
-              <div class="card-h" style="padding:5px 8px;font-size:10px;">Observaciones AC</div>
-              <div class="card-b" style="padding:4px 6px;"><textarea id="comb-obsAC" style="width:100%;min-height:50px;padding:4px 6px;font-size:10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);" placeholder="Observaciones AC..."></textarea></div>
             </div>
           </div>
         </div>
@@ -1622,14 +1632,8 @@ function bindModal(){
   });
   document.getElementById('fProc').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.proc=this.value;persist();}});
   document.getElementById('fBirthYear').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.birthYear=this.value?parseInt(this.value):null;persist();}});
-  document.querySelectorAll('[data-years]').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      var p=getPlayer(selectedId);if(!p)return;
-      p.yearsInClub=this.dataset.years?parseInt(this.dataset.years):null;
-      persist();
-      var fyEl=document.getElementById('fYearsInClub');if(fyEl)fyEl.value=p.yearsInClub||'';
-    });
-  });
+  var fyInput=document.getElementById('fYearsInClub');
+  if(fyInput)fyInput.addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.yearsInClub=this.value?parseInt(this.value):null;persist();}});
   document.getElementById('fComment').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.comment=this.value;persist();}});
   document.getElementById('fName').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.name=this.value;persist();}});
   document.getElementById('fPor').addEventListener('change',function(){var p=getPlayer(selectedId);if(p){p.isPor=this.checked;persist();}});
