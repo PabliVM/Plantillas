@@ -101,7 +101,7 @@ button,input,select,textarea{font-family:inherit}
 .campo-wrap{position:relative;width:100%;padding-bottom:118%;
   background:linear-gradient(180deg,var(--verde1) 0%,var(--verde2) 12.5%,var(--verde1) 12.5%,var(--verde1) 25%,var(--verde2) 25%,var(--verde2) 37.5%,var(--verde1) 37.5%,var(--verde1) 50%,var(--verde2) 50%,var(--verde2) 62.5%,var(--verde1) 62.5%,var(--verde1) 75%,var(--verde2) 75%,var(--verde2) 87.5%,var(--verde1) 87.5%,var(--verde1) 100%);overflow:hidden;}
 .campo-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
-.campo-shield{position:absolute;top:50%;left:50%;width:32%;transform:translate(-50%,-50%) translateY(-6%);opacity:.22;pointer-events:none;z-index:1;mix-blend-mode:screen;}
+.campo-shield{position:absolute;top:50%;left:50%;width:32%;transform:translate(-50%,-50%) translateY(-6%);opacity:.28;pointer-events:none;z-index:1;mix-blend-mode:screen;}
 .campo-players{position:absolute;inset:0;z-index:2;}
 .campo-wrap.drop-ok{outline:3px dashed #3b7cf5;outline-offset:-3px;}
 
@@ -433,9 +433,14 @@ button,input,select,textarea{font-family:inherit}
           <span class="campo-hint">Arrastra fichas al campo &middot; Hover para sacar (&times;)</span>
           <div class="campo-card">
             <div class="campo-hdr">
-              <div>
-                <div class="campo-hdr-title" id="campoTitle">&mdash;</div>
-                <div id="campoGen" style="font-size:10px;color:rgba(255,255,255,.55);font-weight:600;margin-top:1px;"></div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM"
+                  style="width:28px;height:28px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;flex-shrink:0;"
+                  onerror="this.style.display='none'">
+                <div>
+                  <div class="campo-hdr-title" id="campoTitle">&mdash;</div>
+                  <div id="campoGen" style="font-size:10px;color:rgba(255,255,255,.55);font-weight:600;margin-top:1px;"></div>
+                </div>
               </div>
               <div style="display:flex;align-items:center;gap:8px">
                 <div class="campo-hdr-count" id="campoCount">0+0P</div>
