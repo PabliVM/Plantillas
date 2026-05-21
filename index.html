@@ -1311,6 +1311,7 @@ function renderTeamBar(){
     bComb.style.color=activeCombined==='AB+AC'?'#fff':'';
     bComb.addEventListener('click',function(){
       activeCombined='AB+AC';
+      localStorage.setItem('plt_last_view','combined');
       document.getElementById('viewNormal').style.display='none';
       document.getElementById('viewCombined').style.display='block';
       bar.querySelectorAll('.team-btn').forEach(function(b){b.classList.remove('active');});
@@ -1881,7 +1882,17 @@ function bindModal(){
   document.getElementById('btnDelete').addEventListener('click',function(){
     if(!selectedId||!confirm('\xbfEliminar esta ficha?'))return;
     state.players=state.players.filter(function(p){return p.id!==selectedId;});
-    selectedId=null;persist();document.getElementById('edModal').style.display='none';renderAll();
+    selectedId=null;
+    persist();
+    document.getElementById('edModal').style.display='none';
+    if(activeCombined==='AB+AC'){
+      /* En vista combinada: guardar el estado del equipo que se estaba editando */
+      try{localStorage.setItem('plt_cache_'+docId(activeTeam),JSON.stringify(state));}catch(e){}
+      /* Restaurar equipo visual si se cambió temporalmente */
+      renderCombinedView();
+    } else {
+      renderAll();
+    }
   });
   document.getElementById('btnNew').addEventListener('click',function(){openModal(null);});
   /* Botón añadir en vista combinada — pregunta equipo y añade sin poner en campo */
@@ -2848,19 +2859,20 @@ function printCombinedPDF(){
           +'<img src="'+img+'" style="width:100%;max-height:120mm;object-fit:contain;display:block;border-radius:0 0 4px 4px;">'
           +'</div>'
         :'';
-      /* Página 1/3: stats + campo + plantilla */
       pages+='<div class="pg">'
         +hdr(info.name,info.gen)
         +statsHtml(players)
         +'<div style="display:grid;grid-template-columns:1fr 195px;gap:6mm;align-items:start;">'
         +campoImg+plantillaHtml(players)+'</div>'
         +'</div>';
-      /* Página 2/4: listas */
-      pages+='<div class="pg">'
-        +hdr(info.name,info.gen)
-        +listsHtml(players)
-        +'</div>';
     });
+
+    /* Página 3: listas conjuntas AB+AC */
+    var allPlayers=getPlayers('AB').concat(getPlayers('AC'));
+    pages+='<div class="pg">'
+      +hdr('Alev\xedn B + Alev\xedn C','')
+      +listsHtml(allPlayers)
+      +'</div>';
 
     var old=document.getElementById('_pif');if(old)old.remove();
     var f=document.createElement('iframe');f.id='_pif';
