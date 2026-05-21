@@ -2610,135 +2610,27 @@ function printTeamPDF(){
     +footer()
     +'</div>';
 
-  /* Abrir ventana de impresión separada */
-  var win=window.open('','_blank','width=1200,height=850');
-  win.document.write('<!DOCTYPE html><html><head><meta charset="utf-8">'
-    +'<style>'
+
+  /* Iframe oculto para imprimir sin popup bloqueado */
+  var existIf=document.getElementById('_pif');if(existIf)existIf.remove();
+  var pif=document.createElement('iframe');pif.id='_pif';
+  pif.style.cssText='position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;';
+  document.body.appendChild(pif);
+  var pdoc=pif.contentDocument||pif.contentWindow.document;
+  pdoc.open();
+  pdoc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><style>'
     +'@page{size:A4 landscape;margin:0;}'
     +'body{margin:0;padding:0;background:#fff;}'
-    +'div+div.page{page-break-before:always;break-before:page;}'
-    +'*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box;}'
+    +'.page{page-break-after:always;break-after:page;}'
+    +'.page:last-child{page-break-after:avoid;break-after:avoid;}'
+    +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;}'
     +'</style></head><body>'
     +'<div class="page">'+p1html+'</div>'
-    +'<div class="page" style="page-break-before:always;">'+p2html+'</div>'
+    +'<div class="page">'+p2html+'</div>'
     +'</body></html>');
-  win.document.close();
-  win.onload=function(){win.print();};
+  pdoc.close();
+  setTimeout(function(){pif.contentWindow.focus();pif.contentWindow.print();setTimeout(function(){pif.remove();},3000);},700);
 }
-  var gen=getGenYear(activeTeam);
-  var szn=activeSzn;
-
-  /* ── HEADER (se repite en ambas páginas vía CSS) ── */
-  var ph=document.createElement('div');ph.id='print-header';
-  ph.innerHTML='<img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" onerror="this.style.display=\'none\'">'
-    +'<span class="ph-name">'+nm+'</span>'
-    +(gen?'<span class="ph-gen">· Generación '+gen+'</span>':'')
-    +'<span class="ph-right">Confección de Plantillas · Cantera Real Madrid CF<br>Temporada '+szn+'</span>';
-  document.body.prepend(ph);
-
-  /* ── FOOTER ── */
-  var pf=document.createElement('div');pf.id='print-footer';
-  pf.innerHTML='<span>Real Madrid CF · Cantera · '+nm+'</span><span>Temporada '+szn+'</span>';
-  document.body.appendChild(pf);
-
-  /* ── PÁGINA 1: stats + campo filtrado (renovados+fichados+dudas) + plantilla ── */
-  var p1=document.createElement('div');p1.id='print-page1';
-
-  /* Clonar summary-bar */
-  var sb=document.querySelector('.summary-bar');
-  if(sb)p1.appendChild(sb.cloneNode(true));
-
-  /* Grid: campo | plantilla | col3 placeholder */
-  var g1=document.createElement('div');g1.className='p1-grid';
-
-  /* Campo — clonar pero filtrar fichas a solo renovados+fichados+dudas */
-  var campoOuter=document.querySelector('.campo-outer');
-  if(campoOuter){
-    var campoClone=campoOuter.cloneNode(true);
-    /* Ocultar fichas que no sean renovados, fichados o dudas */
-    campoClone.querySelectorAll('.player-pos').forEach(function(pos){
-      var chip=pos.querySelector('.player-chip');
-      if(!chip)return;
-      var style=chip.getAttribute('style')||'';
-      /* Identificar por color de fondo — bajas=rojo, futurible=azul, destacados=violeta */
-      var isBaja=style.indexOf('#e53e3e')>=0||style.indexOf('#c53030')>=0;
-      var isFuturible=style.indexOf('#3b82f6')>=0||style.indexOf('#2563eb')>=0;
-      var isDestacado=style.indexOf('#7c3aed')>=0||style.indexOf('#5b21b6')>=0;
-      if(isBaja||isFuturible||isDestacado)pos.style.display='none';
-    });
-    g1.appendChild(campoClone);
-  }
-
-  /* Plantilla */
-  var plistCard=document.querySelector('#plistBody');
-  if(plistCard){
-    var pcard=plistCard.closest('.card');
-    if(pcard)g1.appendChild(pcard.cloneNode(true));
-  }
-
-  /* Columna vacía (todos los jugadores — no en p1) */
-  var spacer=document.createElement('div');g1.appendChild(spacer);
-  p1.appendChild(g1);
-  document.body.appendChild(p1);
-
-  /* ── PÁGINA 2: listas + necesidades ── */
-  var p2=document.createElement('div');p2.id='print-page2';
-
-  /* Clonar summary-bar */
-  if(sb)p2.appendChild(sb.cloneNode(true));
-
-  /* Grid de 5 columnas con los grupos */
-  var g2=document.createElement('div');g2.className='p2-grid';
-  var STATUS_DEF2={
-    renovado:{label:'Renovados',bg:'#f1f5f9',text:'#1e293b',border:'#cbd5e1'},
-    fichaje: {label:'Fichados', bg:'#77ED85',text:'#003300',border:'#4ade80'},
-    destacados:{label:'Destacados',bg:'#7c3aed',text:'#fff',border:'#5b21b6'},
-    duda:    {label:'Dudas',    bg:'#f59e0b',text:'#1a1d23',border:'#d97706'},
-    baja:    {label:'Bajas',    bg:'#e53e3e',text:'#fff',  border:'#c53030'}
-  };
-  var ORDER2=['renovado','fichaje','destacados','duda','baja'];
-  ORDER2.forEach(function(st){
-    var def=STATUS_DEF2[st];
-    var grp=state.players.filter(function(p){return p.status===st;});
-    var blk=document.createElement('div');blk.className='p2-block';
-    blk.style.border='1px solid '+def.border;
-    var hdr=document.createElement('div');hdr.className='p2-block-hdr';
-    hdr.style.cssText='background:'+def.bg+';color:'+def.text+';';
-    hdr.innerHTML='<span>'+def.label.toUpperCase()+'</span><span>'+grp.length+'</span>';
-    blk.appendChild(hdr);
-    var lst=document.createElement('div');lst.className='p2-block-list';
-    if(!grp.length){
-      lst.innerHTML='<div style="font-size:6.5pt;color:#999;font-style:italic;padding:2mm 3mm;">Ninguno</div>';
-    } else {
-      grp.forEach(function(p){
-        var row=document.createElement('div');row.className='p2-player';
-        var badge=document.createElement('span');badge.className='p2-badge';
-        badge.setAttribute('style','background:'+def.bg+';color:'+def.text+';border-color:'+def.border+(p.isPor?';border-color:#ffd400':''));
-        badge.textContent=p.isPor?'PO':(p.detectedZoneShort||'---');
-        var name=document.createElement('span');name.style.cssText='flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:6.5pt;';
-        name.textContent=p.name||'(sin nombre)';
-        var onf=document.createElement('span');onf.style.cssText='font-size:7pt;color:#16a34a;flex-shrink:0;';
-        onf.textContent=p.onPitch?'✓':'';
-        row.appendChild(badge);row.appendChild(name);row.appendChild(onf);
-        lst.appendChild(row);
-      });
-    }
-    blk.appendChild(lst);
-    g2.appendChild(blk);
-  });
-  p2.appendChild(g2);
-
-  /* Necesidades y observaciones */
-  var necDiv=document.createElement('div');necDiv.className='p2-nec';
-  var necTxt=document.getElementById('txtNecesidades');
-  var obsTxt=document.getElementById('txtObservaciones');
-  var necCard='<div class="card"><div class="card-h">NECESIDADES DEL EQUIPO</div><div class="card-b"><textarea style="min-height:25mm;" readonly>'+(necTxt?necTxt.value:'')+'</textarea></div></div>';
-  var obsCard='<div class="card"><div class="card-h">OBSERVACIONES</div><div class="card-b"><textarea style="min-height:25mm;" readonly>'+(obsTxt?obsTxt.value:'')+'</textarea></div></div>';
-  necDiv.innerHTML=necCard+obsCard;
-  p2.appendChild(necDiv);
-  document.body.appendChild(p2);
-
-  window.print();
 
 /* ══ BOOT ══ */
 try{restoreDark();}catch(e){}
