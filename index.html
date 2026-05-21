@@ -870,9 +870,8 @@ button,input,select,textarea{font-family:inherit}
           <div class="card-h">Todos los jugadores</div>
           <div class="card-b" style="padding:6px 8px;"><div id="comb-roster" style="max-height:80vh;overflow-y:auto;"></div></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 0 0;">
-          <button class="btn pri" id="btnNewAB" style="justify-content:center;display:flex;padding:8px;font-size:11px;">+ A&ntilde;adir a AB</button>
-          <button class="btn pri" id="btnNewAC" style="justify-content:center;display:flex;padding:8px;font-size:11px;">+ A&ntilde;adir a AC</button>
+        <div style="padding:8px 0 0;">
+          <button class="btn pri" id="btnNewComb" style="width:100%;justify-content:center;display:flex;padding:9px;font-size:12px;">+ A&ntilde;adir jugador</button>
         </div>
       </div>
     </div>
@@ -1885,17 +1884,18 @@ function bindModal(){
     selectedId=null;persist();document.getElementById('edModal').style.display='none';renderAll();
   });
   document.getElementById('btnNew').addEventListener('click',function(){openModal(null);});
-  /* Botones añadir jugador en vista combinada */
+  /* Botón añadir en vista combinada — pregunta equipo y añade sin poner en campo */
   document.addEventListener('click',function(e){
-    if(e.target&&(e.target.id==='btnNewAB'||e.target.id==='btnNewAC')){
-      var tk=e.target.id==='btnNewAB'?'AB':'AC';
-      /* Cambiar temporalmente equipo activo para que openModal añada al equipo correcto */
+    if(e.target&&e.target.id==='btnNewComb'){
+      var tk=prompt('¿A qué equipo añadir?\nEscribe AB o AC','AB');
+      if(!tk)return;
+      tk=tk.trim().toUpperCase();
+      if(tk!=='AB'&&tk!=='AC'){alert('Solo AB o AC');return;}
       var prev=activeTeam;
       activeTeam=tk;
       var s=null;try{var r=localStorage.getItem('plt_cache_'+docId(tk));if(r)s=JSON.parse(r);}catch(ex){}
       if(s)state=s;else state={players:[]};
       openModal(null);
-      /* Al cerrar modal, restaurar y refrescar vista combinada */
       function restore(){
         activeTeam=prev;
         var sp=null;try{var rp=localStorage.getItem('plt_cache_'+docId(prev));if(rp)sp=JSON.parse(rp);}catch(ex){}
