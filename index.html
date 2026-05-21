@@ -615,79 +615,112 @@ button,input,select,textarea{font-family:inherit}
 <!-- VISTA COMBINADA AB+AC -->
 <div id="viewCombined" style="display:none;">
   <div class="main">
-    <!-- Stats arriba separados por equipo -->
-    <div class="summary-bar" style="margin-bottom:12px;">
-      <div class="summary-name">Alev&iacute;n B + Alev&iacute;n C<small>AB + AC</small></div>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <div class="stat-pill">AB Plantilla <strong id="comb-statAB">0+0</strong></div>
-        <div class="stat-pill">Diestros <strong id="comb-diestroAB">0</strong></div>
-        <div class="stat-pill">Zurdos <strong id="comb-zurdoAB">0</strong></div>
-        <div class="stat-sep"></div>
-        <div class="stat-pill">AC Plantilla <strong id="comb-statAC">0+0</strong></div>
-        <div class="stat-pill">Diestros <strong id="comb-diestroAC">0</strong></div>
-        <div class="stat-pill">Zurdos <strong id="comb-zurdoAC">0</strong></div>
-      </div>
-    </div>
-    <!-- 3 columnas: Campo+Plantilla AB | Campo+Plantilla AC | Todos jugadores -->
-    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 270px;gap:14px;align-items:start;">
-      <!-- COL AB -->
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <div class="campo-card">
-          <div class="campo-hdr">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" style="width:24px;height:24px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;" onerror="this.style.display='none'">
-              <div class="campo-hdr-title">ALEV&Iacute;N B</div>
+    <!-- Layout: AB | AC | Todos (3 cols) -->
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 260px;gap:14px;align-items:start;">
+
+      <!-- COL AB: campo + plantilla lado a lado -->
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <!-- Stats AB -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;box-shadow:var(--sh-sm);display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:11px;">
+          <span style="font-weight:700;color:var(--rm-blue);font-size:12px;">Alevín B</span>
+          <span class="stat-sep"></span>
+          <span class="stat-pill">Plantilla <strong id="comb-statAB">0+0</strong></span>
+          <span class="stat-pill">Diestros <strong id="comb-diestroAB">0</strong></span>
+          <span class="stat-pill">Zurdos <strong id="comb-zurdoAB">0</strong></span>
+          <span class="stat-pill">Ambi <strong id="comb-ambiAB">0</strong></span>
+          <span class="stat-sep"></span>
+          <span class="stat-pill">Resi <strong id="comb-resAB">0</strong></span>
+          <span class="stat-pill">MP <strong id="comb-mpAB">0</strong></span>
+          <span class="stat-sep"></span>
+          <span class="stat-pill">&#127988; <strong id="comb-madAB">0</strong></span>
+          <span class="stat-pill">&#127482;&#127480; <strong id="comb-espAB">0</strong></span>
+          <span class="stat-pill">&#127758; <strong id="comb-intAB">0</strong></span>
+          <span class="stat-sep"></span>
+          <span class="stat-pill">Prom <strong id="comb-promAB">0</strong></span>
+        </div>
+        <!-- Campo + Plantilla -->
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:8px;align-items:start;">
+          <div class="campo-card">
+            <div class="campo-hdr">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" style="width:22px;height:22px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;" onerror="this.style.display='none'">
+                <div class="campo-hdr-title">ALEVÍN B</div>
+              </div>
+              <div class="campo-hdr-count" id="comb-countAB">0+0P</div>
             </div>
-            <div class="campo-hdr-count" id="comb-countAB">0+0P</div>
+            <div class="campo-wrap" id="comb-campoAB">
+              <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none"><rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/><line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/><rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/><rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/></svg><svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet"><circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/></svg><img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
+              <div class="campo-players" id="comb-playersAB"></div>
+            </div>
           </div>
-          <div class="campo-wrap" id="comb-campoAB">
-            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none"><rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/><line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/><rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/><rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/></svg>
-            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet"><circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/></svg>
-            <img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
-            <div class="campo-players" id="comb-playersAB"></div>
+          <!-- Plantilla AB -->
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div class="card">
+              <div class="card-h" style="background:var(--rm-blue);color:#fff;font-size:11px;">PLANTILLA AB <span class="cnt" id="comb-plistAB" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);">0+0</span></div>
+              <div class="card-b" style="padding:4px 6px;"><div id="comb-plistBodyAB"></div></div>
+            </div>
+            <div class="card">
+              <div class="card-h" style="padding:5px 8px;font-size:10px;">Necesidades AB</div>
+              <div class="card-b" style="padding:4px 6px;"><textarea id="comb-necAB" style="width:100%;min-height:50px;padding:4px 6px;font-size:10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);" placeholder="Necesidades AB..."></textarea></div>
+            </div>
+            <div class="card">
+              <div class="card-h" style="padding:5px 8px;font-size:10px;">Observaciones AB</div>
+              <div class="card-b" style="padding:4px 6px;"><textarea id="comb-obsAB" style="width:100%;min-height:50px;padding:4px 6px;font-size:10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);" placeholder="Observaciones AB..."></textarea></div>
+            </div>
           </div>
-        </div>
-        <div class="card">
-          <div class="card-h" style="background:var(--rm-blue);color:#fff;">PLANTILLA AB <span class="cnt" id="comb-plistAB" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);">0+0</span></div>
-          <div class="card-b" style="padding:6px 8px;"><div id="comb-plistBodyAB"></div></div>
-        </div>
-        <div class="card">
-          <div class="card-h" style="padding:6px 10px;font-size:10px;">Necesidades AB</div>
-          <div class="card-b" style="padding:6px 8px;"><textarea id="comb-necAB" placeholder="Necesidades AB..." style="width:100%;min-height:60px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);"></textarea></div>
-        </div>
-        <div class="card">
-          <div class="card-h" style="padding:6px 10px;font-size:10px;">Observaciones AB</div>
-          <div class="card-b" style="padding:6px 8px;"><textarea id="comb-obsAB" placeholder="Observaciones AB..." style="width:100%;min-height:60px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);"></textarea></div>
         </div>
       </div>
-      <!-- COL AC -->
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <div class="campo-card">
-          <div class="campo-hdr">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" style="width:24px;height:24px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;" onerror="this.style.display='none'">
-              <div class="campo-hdr-title">ALEV&Iacute;N C</div>
+
+      <!-- COL AC: campo + plantilla lado a lado -->
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <!-- Stats AC -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;box-shadow:var(--sh-sm);display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:11px;">
+          <span style="font-weight:700;color:var(--rm-blue);font-size:12px;">Alevín C</span>
+          <span class="stat-sep"></span>
+          <span class="stat-pill">Plantilla <strong id="comb-statAC">0+0</strong></span>
+          <span class="stat-pill">Diestros <strong id="comb-diestroAC">0</strong></span>
+          <span class="stat-pill">Zurdos <strong id="comb-zurdoAC">0</strong></span>
+          <span class="stat-pill">Ambi <strong id="comb-ambiAC">0</strong></span>
+          <span class="stat-sep"></span>
+          <span class="stat-pill">Resi <strong id="comb-resAC">0</strong></span>
+          <span class="stat-pill">MP <strong id="comb-mpAC">0</strong></span>
+          <span class="stat-sep"></span>
+          <span class="stat-pill">&#127988; <strong id="comb-madAC">0</strong></span>
+          <span class="stat-pill">&#127482;&#127480; <strong id="comb-espAC">0</strong></span>
+          <span class="stat-pill">&#127758; <strong id="comb-intAC">0</strong></span>
+          <span class="stat-sep"></span>
+          <span class="stat-pill">Prom <strong id="comb-promAC">0</strong></span>
+        </div>
+        <!-- Campo + Plantilla -->
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:8px;align-items:start;">
+          <div class="campo-card">
+            <div class="campo-hdr">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" style="width:22px;height:22px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;" onerror="this.style.display='none'">
+                <div class="campo-hdr-title">ALEVÍN C</div>
+              </div>
+              <div class="campo-hdr-count" id="comb-countAC">0+0P</div>
             </div>
-            <div class="campo-hdr-count" id="comb-countAC">0+0P</div>
+            <div class="campo-wrap" id="comb-campoAC">
+              <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none"><rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/><line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/><rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/><rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/></svg><svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet"><circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/></svg><img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
+              <div class="campo-players" id="comb-playersAC"></div>
+            </div>
           </div>
-          <div class="campo-wrap" id="comb-campoAC">
-            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none"><rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/><line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/><rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/><rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/></svg>
-            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet"><circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/></svg>
-            <img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
-            <div class="campo-players" id="comb-playersAC"></div>
+          <!-- Plantilla AC -->
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div class="card">
+              <div class="card-h" style="background:var(--rm-blue);color:#fff;font-size:11px;">PLANTILLA AC <span class="cnt" id="comb-plistAC" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);">0+0</span></div>
+              <div class="card-b" style="padding:4px 6px;"><div id="comb-plistBodyAC"></div></div>
+            </div>
+            <div class="card">
+              <div class="card-h" style="padding:5px 8px;font-size:10px;">Necesidades AC</div>
+              <div class="card-b" style="padding:4px 6px;"><textarea id="comb-necAC" style="width:100%;min-height:50px;padding:4px 6px;font-size:10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);" placeholder="Necesidades AC..."></textarea></div>
+            </div>
+            <div class="card">
+              <div class="card-h" style="padding:5px 8px;font-size:10px;">Observaciones AC</div>
+              <div class="card-b" style="padding:4px 6px;"><textarea id="comb-obsAC" style="width:100%;min-height:50px;padding:4px 6px;font-size:10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);" placeholder="Observaciones AC..."></textarea></div>
+            </div>
           </div>
-        </div>
-        <div class="card">
-          <div class="card-h" style="background:var(--rm-blue);color:#fff;">PLANTILLA AC <span class="cnt" id="comb-plistAC" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);">0+0</span></div>
-          <div class="card-b" style="padding:6px 8px;"><div id="comb-plistBodyAC"></div></div>
-        </div>
-        <div class="card">
-          <div class="card-h" style="padding:6px 10px;font-size:10px;">Necesidades AC</div>
-          <div class="card-b" style="padding:6px 8px;"><textarea id="comb-necAC" placeholder="Necesidades AC..." style="width:100%;min-height:60px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);"></textarea></div>
-        </div>
-        <div class="card">
-          <div class="card-h" style="padding:6px 10px;font-size:10px;">Observaciones AC</div>
-          <div class="card-b" style="padding:6px 8px;"><textarea id="comb-obsAC" placeholder="Observaciones AC..." style="width:100%;min-height:60px;padding:5px 7px;font-size:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);"></textarea></div>
         </div>
       </div>
       <!-- COL 3: Todos los jugadores -->
@@ -1669,11 +1702,19 @@ function renderCombinedView(){
     var totalP=activos.filter(function(p){return p.isPor;}).length;
 
     /* Stats */
-    var statEl=document.getElementById('comb-stat'+tk);if(statEl)statEl.textContent=totalC+'+'+totalP;
-    var dEl=document.getElementById('comb-diestro'+tk);if(dEl)dEl.textContent=onPitch.filter(function(p){return p.lat==='diestro';}).length;
-    var zEl=document.getElementById('comb-zurdo'+tk);if(zEl)zEl.textContent=onPitch.filter(function(p){return p.lat==='zurdo';}).length;
-    var countEl=document.getElementById('comb-count'+tk);if(countEl)countEl.textContent=c+'+'+po+'P';
-    var plistCntEl=document.getElementById('comb-plist'+tk);if(plistCntEl)plistCntEl.textContent=totalC+'+'+totalP;
+    function ss(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+    ss('comb-stat'+tk,totalC+'+'+totalP);
+    ss('comb-count'+tk,c+'+'+po+'P');
+    ss('comb-plist'+tk,totalC+'+'+totalP);
+    ss('comb-diestro'+tk,onPitch.filter(function(p){return p.lat==='diestro';}).length);
+    ss('comb-zurdo'+tk,onPitch.filter(function(p){return p.lat==='zurdo';}).length);
+    ss('comb-ambi'+tk,onPitch.filter(function(p){return p.lat==='ambidiestro';}).length);
+    ss('comb-res'+tk,onPitch.filter(function(p){return p.res==='R';}).length);
+    ss('comb-mp'+tk,onPitch.filter(function(p){return p.res==='MP';}).length);
+    ss('comb-mad'+tk,onPitch.filter(function(p){return(p.selecciones||[]).indexOf('madrilena')>=0;}).length);
+    ss('comb-esp'+tk,onPitch.filter(function(p){return(p.selecciones||[]).indexOf('espanola')>=0;}).length);
+    ss('comb-int'+tk,onPitch.filter(function(p){return(p.selecciones||[]).indexOf('internacional')>=0;}).length);
+    ss('comb-prom'+tk,onPitch.filter(function(p){return p.birthYear;}).length);
 
     /* Campo fichas */
     var campoEl=document.getElementById('comb-players'+tk);
@@ -1707,10 +1748,11 @@ function renderCombinedView(){
         var row=document.createElement('div');row.className='plist-item';row.style.marginBottom='2px';
         var badge=document.createElement('div');badge.className='plist-badge'+(p.isPor?' por':'');
         badge.setAttribute('style',chipSt(p.status,p.isPor));
+        badge.style.fontSize='9px';badge.style.padding='1px 4px';
         badge.textContent=p.isPor?'PO':(p.detectedZoneShort||'---');
-        var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:9px;font-weight:700;"> \u2713</span>':'';
+        var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:8px;font-weight:700;"> \u2713</span>':'';
         var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
-        info.innerHTML='<div class="plist-name">'+esc(p.name||'')+'</div>';
+        info.innerHTML='<div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(p.name||'')+'</div>';
         row.appendChild(badge);row.appendChild(info);
         plistEl.appendChild(row);
       });
@@ -1721,8 +1763,6 @@ function renderCombinedView(){
     var obsEl=document.getElementById('comb-obs'+tk);
     if(necEl)necEl.value=cached&&cached.necesidades?cached.necesidades:'';
     if(obsEl)obsEl.value=cached&&cached.observaciones?cached.observaciones:'';
-
-    /* Guardar al editar */
     if(necEl)necEl.onchange=function(){
       var s=null;try{var r2=localStorage.getItem('plt_cache_'+docId(tk));if(r2)s=JSON.parse(r2);}catch(e){}
       if(!s)s={players:[]};s.necesidades=this.value;
@@ -1743,36 +1783,34 @@ function renderCombinedView(){
   var ORDER=['renovado','fichaje','futurible','destacados','duda','baja'];
   var LABELS={renovado:'Renovados',fichaje:'Fichados',futurible:'Futuribles',destacados:'Destacados',duda:'Dudas',baja:'Bajas'};
   var COLORS_R={renovado:{bg:'#f1f5f9',text:'#1e293b',border:'#cbd5e1'},fichaje:{bg:'#77ED85',text:'#003300',border:'#4ade80'},futurible:{bg:'#3b82f6',text:'#fff',border:'#2563eb'},destacados:{bg:'#7c3aed',text:'#fff',border:'#5b21b6'},duda:{bg:'#f59e0b',text:'#1a1d23',border:'#d97706'},baja:{bg:'#e53e3e',text:'#fff',border:'#c53030'}};
-
   var allPlayers=[];
   ['AB','AC'].forEach(function(tk){
     var cached=null;try{var r=localStorage.getItem('plt_cache_'+docId(tk));if(r)cached=JSON.parse(r);}catch(e){}
     var players=(cached&&cached.players)||[];
     players.forEach(function(p){allPlayers.push({p:p,team:tk});});
   });
-
   ORDER.forEach(function(st){
     var grp=allPlayers.filter(function(x){return x.p.status===st;});
     var col=COLORS_R[st];
     var bloque=document.createElement('div');bloque.style.cssText='margin-bottom:8px;border-radius:var(--rs);overflow:hidden;border:1px solid '+col.border+';';
     var hdr=document.createElement('div');
-    hdr.style.cssText='background:'+col.bg+';color:'+col.text+';padding:6px 10px;display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;cursor:pointer;';
-    var cnt=document.createElement('span');cnt.style.cssText='background:rgba(0,0,0,.12);border-radius:8px;padding:1px 7px;font-size:10px;';cnt.textContent=grp.length;
+    hdr.style.cssText='background:'+col.bg+';color:'+col.text+';padding:5px 8px;display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:700;cursor:pointer;';
+    var cnt=document.createElement('span');cnt.style.cssText='background:rgba(0,0,0,.12);border-radius:8px;padding:1px 6px;font-size:9px;';cnt.textContent=grp.length;
     hdr.innerHTML='<span>'+LABELS[st].toUpperCase()+'</span>';hdr.appendChild(cnt);
     var lista=document.createElement('div');lista.style.cssText='background:var(--surface);';
     if(!grp.length){
-      lista.innerHTML='<div style="font-size:10px;color:var(--text-mut);font-style:italic;padding:8px 10px;">Ninguno</div>';
+      lista.innerHTML='<div style="font-size:9px;color:var(--text-mut);font-style:italic;padding:6px 8px;">Ninguno</div>';
     } else {
       grp.forEach(function(x){
         var p=x.p,tk=x.team;
         var item=document.createElement('div');
-        item.style.cssText='display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--border-light);';
+        item.style.cssText='display:flex;align-items:center;gap:5px;padding:4px 7px;border-bottom:1px solid var(--border-light);';
         var posB=document.createElement('span');
-        posB.setAttribute('style','flex-shrink:0;font-size:9px;font-weight:800;padding:1px 5px;border-radius:4px;border:2px solid transparent;'+chipSt(p.status,p.isPor));
+        posB.setAttribute('style','flex-shrink:0;font-size:8px;font-weight:800;padding:1px 4px;border-radius:3px;border:2px solid transparent;'+chipSt(p.status,p.isPor));
         posB.textContent=p.isPor?'PO':(p.detectedZoneShort||'---');
-        var teamTag=document.createElement('span');teamTag.style.cssText='font-size:8px;font-weight:700;background:var(--rm-blue-bg);color:var(--rm-blue);border-radius:3px;padding:1px 4px;flex-shrink:0;';teamTag.textContent=tk;
-        var name=document.createElement('span');name.style.cssText='font-size:11px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';name.textContent=p.name||'(sin nombre)';
-        var ck=document.createElement('span');ck.style.cssText='font-size:10px;color:#16a34a;font-weight:700;flex-shrink:0;';ck.textContent=p.onPitch?'\u2713':'';
+        var teamTag=document.createElement('span');teamTag.style.cssText='font-size:8px;font-weight:700;background:var(--rm-blue-bg);color:var(--rm-blue);border-radius:3px;padding:1px 3px;flex-shrink:0;';teamTag.textContent=tk;
+        var name=document.createElement('span');name.style.cssText='font-size:10px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';name.textContent=p.name||'(sin nombre)';
+        var ck=document.createElement('span');ck.style.cssText='font-size:9px;color:#16a34a;font-weight:700;flex-shrink:0;';ck.textContent=p.onPitch?'\u2713':'';
         item.appendChild(posB);item.appendChild(teamTag);item.appendChild(name);item.appendChild(ck);
         lista.appendChild(item);
       });
@@ -1782,6 +1820,7 @@ function renderCombinedView(){
     rosterEl.appendChild(bloque);
   });
 }
+
 
 /* GUARDADO DE ZONAS EN LOCALSTORAGE */
 /* DETECCIÓN DE POSICIÓN POR MAYOR SOLAPE */
