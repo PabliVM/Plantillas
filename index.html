@@ -352,6 +352,44 @@ button,input,select,textarea{font-family:inherit}
 #comb-campoAB .pchip-proc, #comb-campoAC .pchip-proc {font-size:7px !important;}
 #comb-campoAB .player-chip, #comb-campoAC .player-chip {min-height:26px; padding:3px;}
 #comb-campoAB .pchip-foot img, #comb-campoAC .pchip-foot img {width:9px !important; height:13px !important;}
+
+/* ── IMPRESIÓN PDF HORIZONTAL ── */
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  body { background: #fff !important; color: #000 !important; font-size: 9pt; padding-bottom: 0; }
+  .header, .team-bar, .app-footer, .hbtn, .hbtn-icon, .season-group,
+  .campo-filter, .campo-hint, .btnFoto, .btn, .plist-addbtn, .ritem-edit,
+  #btnPrint, #btnHome, #btnCfg, #btnFoto, .chip-remove-btn,
+  #viewCombined, #tabZonas, .cfg-overlay { display: none !important; }
+  .main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+  /* Layout horizontal en print */
+  .print-layout { display: grid !important; grid-template-columns: 220px 1fr 1fr !important; gap: 6mm !important; }
+  /* Campos con tamaño fijo */
+  .campo-card { break-inside: avoid; }
+  .campo-wrap { max-height: 180mm !important; }
+  /* Cards sin sombra */
+  .card, .campo-card, .summary-bar { box-shadow: none !important; border: 1px solid #ccc !important; }
+  /* Listas sin scroll — mostrar todo */
+  .rlist, [style*="max-height"], [style*="overflow-y"] {
+    max-height: none !important; overflow: visible !important;
+  }
+  /* Texto negro */
+  * { color: #000 !important; }
+  .card-h, .campo-hdr { background: #eee !important; color: #000 !important; }
+  .campo-hdr-title { color: #000 !important; }
+  .campo-hdr-count { color: #555 !important; }
+  /* Fichas en campo */
+  .player-chip { border: 1px solid #999 !important; background: #f9f9f9 !important; color: #000 !important; }
+  /* Colores de estado en print */
+  .player-chip.por { border: 2px solid #b8860b !important; }
+  /* Stat bar */
+  .summary-bar { display: flex !important; flex-wrap: wrap !important; gap: 4px !important; margin-bottom: 4mm !important; }
+  .stat-pill strong { color: #1e3a5f !important; }
+  /* Necesidades */
+  textarea { border: 1px solid #ccc !important; background: #fff !important; resize: none !important; }
+  /* Ocultar scrollbars */
+  ::-webkit-scrollbar { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -368,6 +406,7 @@ button,input,select,textarea{font-family:inherit}
     <button class="season-add" id="btnSeasonAdd" title="Nueva temporada">+</button>
     <button class="season-del" id="btnSeasonDel" title="Eliminar temporada">&minus;</button>
   </div>
+  <button class="hbtn" id="btnPrint" onclick="printTeamPDF()" title="Imprimir PDF">&#128438; PDF</button>
   <button class="hbtn-icon" id="darkBtn" onclick="toggleDark()">&#9790;</button>
 </header>
 
@@ -1254,9 +1293,116 @@ document.getElementById('seasonSel').addEventListener('change',function(){
 });
 document.getElementById('btnSeasonAdd').addEventListener('click',function(){
   var last=seasons[seasons.length-1];var y=parseInt(last.split('/')[1]||last)+1;var next=y+'/'+(y+1);
-  if(seasons.indexOf(next)!==-1){alert('Ya existe: '+next);return}
-  seasons.push(next);activeSzn=next;saveSeasons();localStorage.setItem(ASZN_KEY,activeSzn);
-  state={players:[]};renderSeasonSel();renderAll();loadTeam();
+  if(seasons.indexOf(next)!==-1){alert('Ya existe: '+next);return;}
+  if(!confirm('\xbfCrear temporada '+next+'?\n\nSe promover\xe1n autom\xe1ticamente los jugadores al equipo superior y se sumar\xe1 1 a\xf1o de generaci\xf3n.'))return;
+
+  setSync('saving');
+
+  /* 1. Sumar 1 año a todas las generaciones */
+  var genData={ts:firebase.firestore.FieldValue.serverTimestamp()};
+  TEAMS.forEach(function(t){
+    var yr=_genYearCache[t.key];
+    if(yr){_genYearCache[t.key]=parseInt(yr)+1;genData['gen_year_'+t.key]=_genYearCache[t.key];}
+  });
+  /* JA también aunque no esté en TEAMS si se borró */
+  ['JA','JB','JC','CA','CB','IA','IB','AA','AB','AC','BA','BB','PA','PB','DB'].forEach(function(k){
+    if(_genYearCache[k]){genData['gen_year_'+k]=parseInt(_genYearCache[k])+1;_genYearCache[k]=genData['gen_year_'+k];}
+  });
+  db.collection('config').doc('zonas').set(genData,{merge:true}).catch(function(){});
+
+  /* 2. Jerarquía de promoción: origen → destino */
+  var PROMO=[
+    {from:'DB', to:'PB'},
+    {from:'PB', to:'PA'},
+    {from:'PA', to:'BB'},
+    {from:'BB', to:'BA'},
+    {from:'BA', to:['AB','AC']}, /* BA sube a AB y AC (se reparte) */
+    {from:'AB', to:'AA'},
+    {from:'AC', to:'AA'},
+    {from:'AA', to:'IB'},
+    {from:'IB', to:'IA'},
+    {from:'IA', to:'CB'},
+    {from:'CB', to:'CA'},
+    {from:'CA', to:'JC'},
+    {from:'JC', to:'JB'},
+    {from:'JB', to:'JA'},
+    {from:'JA', to:['RMC','CAS']} /* JA puede ir a RMC o CAS, se añaden a ambos */
+  ];
+
+  /* Leer todos los equipos de la temporada ANTERIOR */
+  var oldSzn=last;
+  var prevDocId=function(tk){return oldSzn.replace('/','_')+'_'+tk;};
+  var newDocId=function(tk){return next.replace('/','_')+'_'+tk;};
+
+  /* Cargar todos los equipos origen */
+  var loadPromises=TEAMS.concat([{key:'AB'},{key:'AC'}]).map(function(t){
+    return db.collection('campogramas').doc(prevDocId(t.key)).get()
+      .then(function(snap){return{key:t.key,data:snap.exists?snap.data():{players:[]}};})
+      .catch(function(){return{key:t.key,data:{players:[]}};});
+  });
+
+  Promise.all(loadPromises).then(function(results){
+    var byTeam={};
+    results.forEach(function(r){byTeam[r.key]=r.data;});
+
+    /* Acumular jugadores promovidos por equipo destino */
+    var newTeams={};
+    TEAMS.concat([{key:'AB'},{key:'AC'}]).forEach(function(t){newTeams[t.key]={players:[]};});
+
+    PROMO.forEach(function(rule){
+      var src=byTeam[rule.from];if(!src||!src.players||!src.players.length)return;
+      var dests=Array.isArray(rule.to)?rule.to:[rule.to];
+      /* Filtrar: solo renovados, fichados, dudas (no bajas, no futuribles sin más) */
+      var toPromote=src.players.filter(function(p){
+        return p.status!=='baja';
+      });
+      toPromote.forEach(function(p){
+        /* Reset posición en campo */
+        var np=JSON.parse(JSON.stringify(p));
+        np.onPitch=false;np.detectedZoneId='';np.detectedZoneShort='';np.detectedZoneLabel='Sin zona';
+        /* Sumar 1 año en el club si tiene */
+        if(np.yearsInClub)np.yearsInClub=parseInt(np.yearsInClub)+1;
+        /* Cambiar status de fichaje/futurible a renovado al ascender */
+        if(np.status==='fichaje'||np.status==='futurible'||np.status==='destacados')np.status='renovado';
+        /* Repartir entre destinos (si hay varios, todos reciben copia) */
+        dests.forEach(function(dk){
+          if(newTeams[dk])newTeams[dk].players.push(JSON.parse(JSON.stringify(np)));
+        });
+      });
+    });
+
+    /* Guardar nuevos equipos en Firestore con la nueva temporada */
+    var savePromises=Object.keys(newTeams).map(function(tk){
+      if(!newTeams[tk].players.length)return Promise.resolve();
+      return db.collection('campogramas').doc(newDocId(tk)).set({
+        teamKey:newDocId(tk),
+        version:1,
+        players:newTeams[tk].players,
+        necesidades:'',
+        observaciones:'',
+        ts:firebase.firestore.FieldValue.serverTimestamp()
+      }).then(function(){
+        /* Guardar en localStorage */
+        try{localStorage.setItem('plt_cache_'+newDocId(tk),JSON.stringify({players:newTeams[tk].players,necesidades:'',observaciones:''}));}catch(e){}
+      });
+    });
+
+    return Promise.all(savePromises);
+  }).then(function(){
+    /* 3. Activar nueva temporada */
+    seasons.push(next);activeSzn=next;
+    saveSeasons();localStorage.setItem(ASZN_KEY,activeSzn);
+    state={players:[]};renderSeasonSel();renderAll();loadTeam();
+    setSync('saved');
+    alert('Temporada '+next+' creada. Jugadores promovidos correctamente.');
+  }).catch(function(e){
+    console.error('Error en promoción',e);
+    setSync('error');
+    /* Crear temporada de todas formas aunque falle la promoción */
+    seasons.push(next);activeSzn=next;
+    saveSeasons();localStorage.setItem(ASZN_KEY,activeSzn);
+    state={players:[]};renderSeasonSel();renderAll();loadTeam();
+  });
 });
 document.getElementById('btnSeasonDel').addEventListener('click',function(){
   if(seasons.length<=1){alert('Debe haber al menos una temporada.');return}
@@ -2259,6 +2405,26 @@ function renderAll(){renderTeamBar();renderRoster();renderCampo();renderCounter(
   F11.forEach(function(k){if(!_teamFtCache[k])_teamFtCache[k]='F11';});
   F7.forEach(function(k){if(!_teamFtCache[k])_teamFtCache[k]='F7';});
 })();
+
+function printTeamPDF(){
+  /* Antes de imprimir, quitar max-height de todas las listas para que se vean completas */
+  var scrollEls=document.querySelectorAll('[style*="max-height"],[style*="overflow-y"]');
+  var origStyles=[];
+  scrollEls.forEach(function(el){
+    origStyles.push({el:el,mh:el.style.maxHeight,ov:el.style.overflowY});
+    el.style.maxHeight='none';
+    el.style.overflowY='visible';
+  });
+  window.print();
+  /* Restaurar */
+  setTimeout(function(){
+    origStyles.forEach(function(o){
+      o.el.style.maxHeight=o.mh;
+      o.el.style.overflowY=o.ov;
+    });
+  },500);
+}
+
 /* ══ BOOT ══ */
 try{restoreDark();}catch(e){}
 try{buildStatusBtns();}catch(e){}
