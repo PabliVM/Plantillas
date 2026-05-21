@@ -483,7 +483,7 @@ button,input,select,textarea{font-family:inherit}
     <button class="season-add" id="btnSeasonAdd" title="Nueva temporada">+</button>
     <button class="season-del" id="btnSeasonDel" title="Eliminar temporada">&minus;</button>
   </div>
-  <button class="hbtn" id="btnPrint" onclick="printTeamPDF()" title="Imprimir PDF">&#128438; PDF</button>
+  <button class="hbtn" id="btnPrint" onclick="activeCombined==='AB+AC'?printCombinedPDF():printTeamPDF()" title="Imprimir PDF">&#128438; PDF</button>
   <button class="hbtn-icon" id="darkBtn" onclick="toggleDark()">&#9790;</button>
 </header>
 
@@ -2695,6 +2695,195 @@ function printTeamPDF(){
 
 
 
+
+/* ══ PDF COMBINADO AB+AC ══ */
+function printCombinedPDF(){
+  var szn=activeSzn;
+  var B='#2563eb';var D='#1e3a5f';
+  var POS_ORDER=['PO','LD','CD','CI','CT','LI','MC','ID','II','IN','ED','EI','DC'];
+
+  var TEAMS_INFO={
+    AB:{name:'Alev\xedn B',gen:getGenYear('AB')},
+    AC:{name:'Alev\xedn C',gen:getGenYear('AC')}
+  };
+
+  var STATS_DEF=[
+    {k:'renovado', l:'Renovados',  bg:'#f1f5f9',tx:'#1e293b',bd:'#94a3b8'},
+    {k:'fichaje',  l:'Fichados',   bg:'#22c55e', tx:'#fff',   bd:'#16a34a'},
+    {k:'futurible',l:'Futuribles', bg:'#3b82f6', tx:'#fff',   bd:'#2563eb'},
+    {k:'destacados',l:'Destacados',bg:'#7c3aed', tx:'#fff',   bd:'#5b21b6'},
+    {k:'duda',     l:'Dudas',      bg:'#f59e0b', tx:'#1a1d23',bd:'#d97706'},
+    {k:'baja',     l:'Bajas',      bg:'#ef4444', tx:'#fff',   bd:'#dc2626'}
+  ];
+
+  function hdr(nm,gen){
+    return '<div style="background:'+B+';display:flex;align-items:center;gap:10px;padding:4mm 6mm;margin-bottom:4mm;">'
+      +'<img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" style="width:32px;height:32px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;">'
+      +'<span style="font-size:13pt;font-weight:800;color:#fff;">'+nm+'</span>'
+      +(gen?'<span style="font-size:8pt;color:rgba(255,255,255,.75);margin-left:4px;">&middot; Generaci\xf3n '+gen+'</span>':'')
+      +'<span style="margin-left:auto;text-align:right;font-size:7pt;color:rgba(255,255,255,.7);">Confecci\xf3n de Plantillas &middot; Cantera Real Madrid CF<br>Temporada '+szn+'</span>'
+      +'</div>';
+  }
+
+  function statsHtml(players){
+    var allowed={renovado:1,fichaje:1,duda:1};
+    var plant=players.filter(function(p){return allowed[p.status];});
+    var totalC=plant.filter(function(p){return!p.isPor;}).length;
+    var totalP=plant.filter(function(p){return p.isPor;}).length;
+    var die=plant.filter(function(p){return p.lat==='diestro';}).length;
+    var zur=plant.filter(function(p){return p.lat==='zurdo';}).length;
+    var amb=plant.filter(function(p){return p.lat==='ambidiestro';}).length;
+    var res=plant.filter(function(p){return p.res==='R';}).length;
+    var mp=plant.filter(function(p){return p.res==='MP';}).length;
+    var prom=plant.filter(function(p){return p.birthYear;}).length;
+    var mad=plant.filter(function(p){return(p.selecciones||[]).indexOf('madrilena')>=0;}).length;
+    var esp=plant.filter(function(p){return(p.selecciones||[]).indexOf('espanola')>=0;}).length;
+    var inter=plant.filter(function(p){return(p.selecciones||[]).indexOf('internacional')>=0;}).length;
+    return '<div style="display:flex;flex-wrap:wrap;gap:2px 10px;align-items:center;'
+      +'background:#f0f4ff;border:1.5px solid '+B+';border-radius:4px;padding:2mm 3mm;margin-bottom:3mm;font-size:8pt;">'
+      +'<b>Plantilla</b> <span style="color:'+B+';font-weight:700;">'+totalC+'+'+totalP+'</span>&nbsp;&nbsp;'
+      +'<b>Diestros</b> <span style="color:'+B+';font-weight:700;">'+die+'</span>&nbsp;&nbsp;'
+      +'<b>Zurdos</b> <span style="color:'+B+';font-weight:700;">'+zur+'</span>&nbsp;&nbsp;'
+      +'<b>Ambi</b> <span style="color:'+B+';font-weight:700;">'+amb+'</span>&nbsp;&nbsp;'
+      +'|&nbsp;&nbsp;<b>Residencia</b> <span style="color:'+B+';font-weight:700;">'+res+'</span>&nbsp;&nbsp;'
+      +'<b>Media pens.</b> <span style="color:'+B+';font-weight:700;">'+mp+'</span>&nbsp;&nbsp;'
+      +'|&nbsp;&nbsp;<b>Promocionados</b> <span style="color:'+B+';font-weight:700;">'+prom+'</span>&nbsp;&nbsp;'
+      +'|&nbsp;&nbsp;<b>Madrile\xf1a</b> <span style="color:'+B+';font-weight:700;">'+mad+'</span>&nbsp;&nbsp;'
+      +'<b>Espa\xf1ola</b> <span style="color:'+B+';font-weight:700;">'+esp+'</span>&nbsp;&nbsp;'
+      +'<b>Internacional</b> <span style="color:'+B+';font-weight:700;">'+inter+'</span>'
+      +'</div>';
+  }
+
+  function plantillaHtml(players){
+    var allowed={renovado:1,fichaje:1,duda:1};
+    var activos=players.filter(function(p){return allowed[p.status];});
+    activos.sort(function(a,b){
+      var pa=a.isPor?'PO':(a.detectedZoneShort||'');var pb=b.isPor?'PO':(b.detectedZoneShort||'');
+      return (POS_ORDER.indexOf(pa)<0?999:POS_ORDER.indexOf(pa))-(POS_ORDER.indexOf(pb)<0?999:POS_ORDER.indexOf(pb));
+    });
+    var statusColors={renovado:{bg:'#f1f5f9',tx:'#1e293b',bd:'#94a3b8'},fichaje:{bg:'#22c55e',tx:'#fff',bd:'#16a34a'},duda:{bg:'#f59e0b',tx:'#1a1d23',bd:'#d97706'}};
+    var totalC=activos.filter(function(p){return!p.isPor;}).length;
+    var totalP=activos.filter(function(p){return p.isPor;}).length;
+    var rows='';
+    activos.forEach(function(p){
+      var sc=statusColors[p.status]||statusColors.renovado;
+      var pos=p.isPor?'PO':(p.detectedZoneShort||'---');
+      rows+='<div style="display:flex;align-items:center;gap:4px;padding:2px 4px;border-bottom:1px solid #f0f0f0;">'
+        +'<span style="flex-shrink:0;font-size:6pt;font-weight:800;padding:1px 4px;border-radius:3px;background:'+sc.bg+';color:'+sc.tx+';border:1.5px solid '+(p.isPor?'#ffd400':sc.bd)+';">'+pos+'</span>'
+        +'<span style="font-size:7pt;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(p.name||'')+'</span>'
+        +(p.onPitch?'<span style="color:#16a34a;font-size:8pt;">&#10003;</span>':'')
+        +'</div>';
+    });
+    return '<div style="border:1px solid #ddd;border-radius:4px;overflow:hidden;">'
+      +'<div style="background:'+D+';color:#fff;padding:3px 8px;font-size:8pt;font-weight:700;display:flex;justify-content:space-between;align-items:center;">'
+      +'PLANTILLA<span style="background:rgba(255,255,255,.2);border-radius:10px;padding:1px 8px;font-size:7.5pt;">'+totalC+'+'+totalP+'</span></div>'
+      +rows+'</div>';
+  }
+
+  function listsHtml(players){
+    var cols='';
+    STATS_DEF.forEach(function(s){
+      var grp=players.filter(function(p){return p.status===s.k;});
+      var rows=!grp.length?'<div style="font-size:6pt;color:#999;font-style:italic;padding:3mm;">Ninguno</div>':'';
+      grp.forEach(function(p){
+        var pos=p.isPor?'PO':(p.detectedZoneShort||'---');
+        rows+='<div style="display:flex;align-items:center;gap:3px;padding:2px 4px;border-bottom:1px solid #f0f0f0;">'
+          +'<span style="flex-shrink:0;font-size:6pt;font-weight:800;padding:1px 3px;border-radius:2px;background:'+s.bg+';color:'+s.tx+';border:1.5px solid '+s.bd+';">'+pos+'</span>'
+          +'<span style="flex:1;font-size:7pt;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(p.name||'')+'</span>'
+          +(p.onPitch?'<span style="color:#16a34a;font-size:8pt;">&#10003;</span>':'')
+          +'</div>';
+      });
+      cols+='<div style="border:1px solid '+s.bd+';border-radius:4px;overflow:hidden;">'
+        +'<div style="background:'+s.bg+';color:'+s.tx+';padding:3px 6px;font-size:7.5pt;font-weight:700;display:flex;justify-content:space-between;">'
+        +'<span>'+s.l.toUpperCase()+'</span><span style="background:rgba(0,0,0,.15);border-radius:8px;padding:0 6px;font-size:7pt;">'+grp.length+'</span></div>'
+        +rows+'</div>';
+    });
+    return '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4mm;">'+cols+'</div>';
+  }
+
+  /* Capturar ambos campos con html2canvas */
+  var HIDE=['#e53e3e','#c53030','#3b82f6','#60a5fa','#7c3aed','#5b21b6'];
+  var campoABel=document.getElementById('comb-campoAB');
+  var campoACel=document.getElementById('comb-campoAC');
+
+  function hideChips(campoEl){
+    var hidden=[];
+    if(!campoEl)return hidden;
+    campoEl.querySelectorAll('.player-pos').forEach(function(pos){
+      var chip=pos.querySelector('[style]');if(!chip)return;
+      var st=chip.getAttribute('style')||'';
+      if(HIDE.some(function(c){return st.indexOf(c)>=0;})){pos.style.visibility='hidden';hidden.push(pos);}
+    });
+    return hidden;
+  }
+  function showChips(hidden){hidden.forEach(function(p){p.style.visibility='';});}
+
+  function captureEl(el,cb){
+    if(!el){cb('');return;}
+    var hidden=hideChips(el);
+    html2canvas(el,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#1a1d23',logging:false})
+      .then(function(c){showChips(hidden);cb(c.toDataURL('image/png'));})
+      .catch(function(){showChips(hidden);cb('');});
+  }
+
+  function getPlayers(tk){
+    var s=null;try{var r=localStorage.getItem('plt_cache_'+docId(tk));if(r)s=JSON.parse(r);}catch(e){}
+    return (s&&s.players)||[];
+  }
+
+  function doRender(imgAB,imgAC){
+    var pages='';
+    ['AB','AC'].forEach(function(tk,idx){
+      var img=idx===0?imgAB:imgAC;
+      var info=TEAMS_INFO[tk];
+      var players=getPlayers(tk);
+      var campoImg=img?'<img src="'+img+'" style="width:100%;max-height:150mm;object-fit:contain;border-radius:6px;display:block;">':'';
+      /* Página 1/3: stats + campo + plantilla */
+      pages+='<div class="pg">'
+        +hdr(info.name,info.gen)
+        +statsHtml(players)
+        +'<div style="display:grid;grid-template-columns:1fr 195px;gap:6mm;align-items:start;">'
+        +campoImg+plantillaHtml(players)+'</div>'
+        +'</div>';
+      /* Página 2/4: listas */
+      pages+='<div class="pg">'
+        +hdr(info.name,info.gen)
+        +listsHtml(players)
+        +'</div>';
+    });
+
+    var old=document.getElementById('_pif');if(old)old.remove();
+    var f=document.createElement('iframe');f.id='_pif';
+    f.style.cssText='position:fixed;top:0;left:0;width:0;height:0;border:none;';
+    document.body.appendChild(f);
+    var d=f.contentDocument||f.contentWindow.document;
+    d.open();
+    d.write('<!DOCTYPE html><html><head><meta charset="utf-8"><style>'
+      +'@page{size:A4 landscape;margin:0;}'
+      +'body{margin:0;padding:0;background:#fff;font-family:Segoe UI,Arial,sans-serif;}'
+      +'.pg{padding:6mm 8mm;page-break-after:always;break-after:page;}'
+      +'.pg:last-child{page-break-after:avoid;break-after:avoid;}'
+      +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;}'
+      +'</style></head><body>'+pages+'</body></html>');
+    d.close();
+    setTimeout(function(){f.contentWindow.focus();f.contentWindow.print();setTimeout(function(){f.remove();},3000);},600);
+  }
+
+  function loadH2C(cb){
+    if(window.html2canvas){cb();return;}
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload=cb;s.onerror=function(){cb();};document.head.appendChild(s);
+  }
+
+  loadH2C(function(){
+    captureEl(campoABel,function(imgAB){
+      captureEl(campoACel,function(imgAC){
+        doRender(imgAB,imgAC);
+      });
+    });
+  });
+}
 
 /* ══ BOOT ══ */
 try{restoreDark();}catch(e){}
