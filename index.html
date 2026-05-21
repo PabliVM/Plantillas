@@ -345,6 +345,13 @@ button,input,select,textarea{font-family:inherit}
 .selection-icon img{width:100%;height:100%;object-fit:cover;}
 .chip-mini .selection-icons{top:-7px;left:-5px;}
 .chip-mini .selection-icon{width:15px;height:15px;}
+
+/* Fichas más pequeñas en vista combinada AB+AC */
+#comb-campoAB .player-chip, #comb-campoAC .player-chip {font-size:0;}
+#comb-campoAB .pchip-text, #comb-campoAC .pchip-text {font-size:8.5px !important;}
+#comb-campoAB .pchip-proc, #comb-campoAC .pchip-proc {font-size:7px !important;}
+#comb-campoAB .player-chip, #comb-campoAC .player-chip {min-height:26px; padding:3px;}
+#comb-campoAB .pchip-foot img, #comb-campoAC .pchip-foot img {width:9px !important; height:13px !important;}
 </style>
 </head>
 <body>
@@ -616,7 +623,7 @@ button,input,select,textarea{font-family:inherit}
 <div id="viewCombined" style="display:none;">
   <div class="main">
     <!-- Layout: Faltan | AB | AC | Todos -->
-    <div style="display:grid;grid-template-columns:180px minmax(0,1fr) minmax(0,1fr) 240px;gap:10px;align-items:start;">
+    <div style="display:grid;grid-template-columns:160px minmax(0,1fr) minmax(0,1fr) 200px;gap:8px;align-items:start;">
 
       <!-- COL FALTAN: jugadores sin campo de AB y AC -->
       <div style="display:flex;flex-direction:column;gap:8px;position:sticky;top:104px;">
@@ -647,7 +654,7 @@ button,input,select,textarea{font-family:inherit}
           <span class="stat-pill">Prom <strong id="comb-promAB">0</strong></span>
         </div>
         <!-- Campo + Plantilla -->
-        <div style="display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:8px;align-items:start;">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 175px;gap:8px;align-items:start;">
           <div class="campo-card">
             <div class="campo-hdr">
               <div style="display:flex;align-items:center;gap:6px;">
@@ -700,7 +707,7 @@ button,input,select,textarea{font-family:inherit}
           <span class="stat-pill">Prom <strong id="comb-promAC">0</strong></span>
         </div>
         <!-- Campo + Plantilla -->
-        <div style="display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:8px;align-items:start;">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 175px;gap:8px;align-items:start;">
           <div class="campo-card">
             <div class="campo-hdr">
               <div style="display:flex;align-items:center;gap:6px;">
