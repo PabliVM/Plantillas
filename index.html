@@ -1726,18 +1726,62 @@ function renderCombinedView(){
 
     /* Campo fichas */
     var campoEl=document.getElementById('comb-players'+tk);
-    if(campoEl){
+    var wrapEl=document.getElementById('comb-campo'+tk);
+    if(campoEl&&wrapEl){
       campoEl.innerHTML='';
       players.forEach(function(p){
         if(!p.onPitch)return;
         var pos=document.createElement('div');pos.className='player-pos';
         pos.style.left=p.x+'%';pos.style.top=p.y*(100/118)+'%';
+        pos.dataset.id=p.id;
         var chip=document.createElement('div');
         chip.className='player-chip'+(p.isPor?' por':'')+(p.res?' residencia':'');
         if(p.res)chip.setAttribute('data-res-label',p.res);
         chip.setAttribute('style',chipSt(p.status,p.isPor));
         chip.innerHTML=renderSelectionIcons(p)+'<span class="pchip-text">'+esc(p.name||'')+'</span>';
-        pos.appendChild(chip);campoEl.appendChild(pos);
+        /* Botón sacar */
+        var xBtn=document.createElement('button');xBtn.className='chip-remove-btn';xBtn.textContent='\xd7';
+        xBtn.addEventListener('pointerdown',function(e){e.stopPropagation();});
+        xBtn.addEventListener('click',function(e){
+          e.stopPropagation();p.onPitch=false;
+          /* Guardar en cache y Firebase */
+          var s=null;try{var r=localStorage.getItem('plt_cache_'+docId(tk));if(r)s=JSON.parse(r);}catch(e2){}
+          if(s){var pi=s.players.findIndex(function(x){return x.id===p.id;});if(pi>=0)s.players[pi]=p;try{localStorage.setItem('plt_cache_'+docId(tk),JSON.stringify(s));}catch(e2){}}
+          teamDoc(tk).set({players:players,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
+          if(tk===activeTeam)state=s||state;
+          renderCombinedView();
+        });
+        pos.appendChild(chip);pos.appendChild(xBtn);
+        /* Drag en campo combinado */
+        chip.addEventListener('pointerdown',function(ev){
+          ev.preventDefault();
+          var sx=ev.clientX,sy=ev.clientY,moved=false,ptr=ev.pointerId;
+          try{chip.setPointerCapture(ptr);}catch(e2){}
+          function mv(e){
+            if(!moved&&(Math.abs(e.clientX-sx)>5||Math.abs(e.clientY-sy)>5)){moved=true;chip.classList.add('dragging');}
+            if(moved){
+              var r=wrapEl.getBoundingClientRect();
+              var x=Math.max(2,Math.min(98,((e.clientX-r.left)/r.width)*100));
+              var yp=Math.max(2,Math.min(98,((e.clientY-r.top)/r.height)*100));
+              p.x=x;p.y=yp*(118/100);
+              pos.style.left=x+'%';pos.style.top=yp+'%';
+            }
+          }
+          function up(){
+            chip.classList.remove('dragging');
+            try{chip.releasePointerCapture(ptr);}catch(e2){}
+            chip.removeEventListener('pointermove',mv);chip.removeEventListener('pointerup',up);
+            if(!moved)return;
+            detectAndUpdateZone(p);
+            var s=null;try{var r=localStorage.getItem('plt_cache_'+docId(tk));if(r)s=JSON.parse(r);}catch(e2){}
+            if(s){var pi=s.players.findIndex(function(x){return x.id===p.id;});if(pi>=0)s.players[pi]=p;try{localStorage.setItem('plt_cache_'+docId(tk),JSON.stringify(s));}catch(e2){}}
+            teamDoc(tk).set({players:players,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
+            if(tk===activeTeam)state=s||state;
+            renderCombinedView();
+          }
+          chip.addEventListener('pointermove',mv);chip.addEventListener('pointerup',up);
+        });
+        campoEl.appendChild(pos);
       });
     }
 
