@@ -355,40 +355,109 @@ button,input,select,textarea{font-family:inherit}
 
 /* ── IMPRESIÓN PDF HORIZONTAL ── */
 @media print {
-  @page { size: A4 landscape; margin: 10mm; }
-  body { background: #fff !important; color: #000 !important; font-size: 9pt; padding-bottom: 0; }
-  .header, .team-bar, .app-footer, .hbtn, .hbtn-icon, .season-group,
-  .campo-filter, .campo-hint, .btnFoto, .btn, .plist-addbtn, .ritem-edit,
+  @page { size: A4 landscape; margin: 8mm 10mm; }
+
+  /* Ocultar todo lo que no es contenido */
+  .header, .team-bar, .app-footer, .inner-tabs,
+  .campo-filter, .campo-hint, .btn, .plist-addbtn, .ritem-edit,
   #btnPrint, #btnHome, #btnCfg, #btnFoto, .chip-remove-btn,
-  #viewCombined, #tabZonas, .cfg-overlay { display: none !important; }
-  .main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
-  /* Layout horizontal en print */
-  .print-layout { display: grid !important; grid-template-columns: 220px 1fr 1fr !important; gap: 6mm !important; }
-  /* Campos con tamaño fijo */
-  .campo-card { break-inside: avoid; }
-  .campo-wrap { max-height: 180mm !important; }
-  /* Cards sin sombra */
-  .card, .campo-card, .summary-bar { box-shadow: none !important; border: 1px solid #ccc !important; }
-  /* Listas sin scroll — mostrar todo */
-  .rlist, [style*="max-height"], [style*="overflow-y"] {
-    max-height: none !important; overflow: visible !important;
+  #viewCombined, #tabZonas, .cfg-overlay,
+  #rosterFaltan, .card-h:has(+ .card-b #rosterFaltan),
+  .season-group, .hbtn, .hbtn-icon,
+  .campo-foto-btn, button { display: none !important; }
+
+  /* Cabecera corporativa RM en impresión */
+  body::before {
+    content: '';
+    display: block;
+    background: #2563eb;
+    height: 10mm;
+    margin: -8mm -10mm 4mm -10mm;
   }
-  /* Texto negro */
-  * { color: #000 !important; }
-  .card-h, .campo-hdr { background: #eee !important; color: #000 !important; }
-  .campo-hdr-title { color: #000 !important; }
-  .campo-hdr-count { color: #555 !important; }
-  /* Fichas en campo */
-  .player-chip { border: 1px solid #999 !important; background: #f9f9f9 !important; color: #000 !important; }
-  /* Colores de estado en print */
-  .player-chip.por { border: 2px solid #b8860b !important; }
-  /* Stat bar */
-  .summary-bar { display: flex !important; flex-wrap: wrap !important; gap: 4px !important; margin-bottom: 4mm !important; }
-  .stat-pill strong { color: #1e3a5f !important; }
-  /* Necesidades */
-  textarea { border: 1px solid #ccc !important; background: #fff !important; resize: none !important; }
-  /* Ocultar scrollbars */
+
+  body { background: #fff !important; color: #111 !important; font-size: 7.5pt !important; padding-bottom: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Header de impresión */
+  #print-header { display: flex !important; align-items: center; gap: 8px; background: #2563eb !important; color: #fff !important; padding: 3mm 4mm; margin: -8mm -10mm 4mm -10mm; }
+  #print-header img { width: 28px; height: 28px; border-radius: 50%; background: #fff; padding: 2px; }
+  #print-header .ph-title { font-size: 13pt; font-weight: 800; color: #fff !important; letter-spacing: .3px; }
+  #print-header .ph-sub { font-size: 8pt; color: rgba(255,255,255,.8) !important; margin-left: auto; }
+
+  /* Summary bar */
+  .summary-bar { display: flex !important; flex-wrap: wrap; gap: 3px 8px; background: #f0f4ff !important; border: 1px solid #c7d6ff !important; border-radius: 4px; padding: 2mm 3mm; margin-bottom: 3mm; box-shadow: none !important; }
+  .summary-name { font-size: 9pt !important; font-weight: 800 !important; color: #1e3a5f !important; }
+  .summary-name small { font-size: 7pt !important; color: #5a6170 !important; }
+  .stat-pill { font-size: 7pt !important; color: #444 !important; gap: 2px; }
+  .stat-pill strong { color: #2563eb !important; font-size: 8pt !important; }
+  .stat-sep { background: #c7d6ff !important; }
+  #genYearInput, #genYearAge, label[for], .btn.sm.pri { display: none !important; }
+
+  /* Layout principal */
+  .main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+  [style*="grid-template-columns:minmax(0,1fr) 280px 270px"],
+  [style*="grid-template-columns:minmax(0,1fr) 280px"] {
+    display: grid !important;
+    grid-template-columns: 155mm 52mm 52mm !important;
+    gap: 3mm !important;
+  }
+
+  /* Campo */
+  .campo-outer { gap: 0 !important; padding: 0 !important; background: none !important; border: none !important; box-shadow: none !important; }
+  .campo-card { break-inside: avoid; box-shadow: none !important; border: 1px solid #333 !important; border-radius: 4px !important; overflow: hidden; }
+  .campo-hdr { background: #1a1d23 !important; padding: 2mm 3mm !important; }
+  .campo-hdr-title { color: #fff !important; font-size: 8pt !important; }
+  .campo-hdr-count { color: rgba(255,255,255,.7) !important; font-size: 7.5pt !important; }
+  #campoGen { font-size: 7pt !important; color: rgba(255,255,255,.6) !important; }
+  .campo-wrap { max-height: 115mm !important; overflow: hidden !important; }
+
+  /* Fichas campo: más pequeñas */
+  .player-pos { width: 18% !important; }
+  .player-chip { min-height: 20px !important; padding: 2px 3px !important; border-radius: 3px !important; font-size: 0 !important; box-shadow: 0 1px 2px rgba(0,0,0,.3) !important; }
+  .pchip-text { font-size: 6.5pt !important; line-height: 1.1 !important; }
+  .pchip-proc { font-size: 5.5pt !important; }
+  .pchip-foot img { width: 7px !important; height: 10px !important; }
+  .selection-icons { top: -5px !important; left: -4px !important; }
+  .selection-icon { width: 12px !important; height: 12px !important; }
+  .player-chip.residencia::after { width: 12px !important; height: 12px !important; font-size: 5.5px !important; }
+
+  /* Cards */
+  .card { box-shadow: none !important; border: 1px solid #ddd !important; border-radius: 3px !important; break-inside: avoid; }
+  .card-h { padding: 2mm 3mm !important; font-size: 7pt !important; background: #1e3a5f !important; color: #fff !important; }
+  .card-h .cnt { background: rgba(255,255,255,.2) !important; color: #fff !important; border-color: rgba(255,255,255,.3) !important; font-size: 6.5pt !important; }
+  .card-b { padding: 1mm 2mm !important; }
+
+  /* Plantilla */
+  .plist-item { padding: 1.5px 3px !important; margin-bottom: 1px !important; border-bottom: 1px solid #f0f0f0 !important; }
+  .plist-badge { font-size: 6.5pt !important; padding: 0 3px !important; border-width: 1.5px !important; }
+  .plist-name { font-size: 7pt !important; }
+  .warn-tag { display: none !important; }
+  #plistBody > div { max-height: none !important; overflow: visible !important; }
+
+  /* Todos los jugadores — bloques colapsables */
+  #rosterTodos { max-height: none !important; overflow: visible !important; }
+  #rosterTodos > div { margin-bottom: 2px !important; }
+  #rosterTodos [style*="background:#f1f5f9"],
+  #rosterTodos [style*="background:#77ED85"],
+  #rosterTodos [style*="background:#3b82f6"],
+  #rosterTodos [style*="background:#7c3aed"],
+  #rosterTodos [style*="background:#f59e0b"],
+  #rosterTodos [style*="background:#e53e3e"] { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  #rosterTodos > div > div:nth-child(2) { display: block !important; }
+  #rosterTodos span[style*="font-size:10px"] { font-size: 6.5pt !important; }
+  #rosterTodos span[style*="font-size:11px"] { font-size: 7pt !important; }
+  #rosterTodos div[style*="padding:5px 8px"] { padding: 1.5px 4px !important; }
+  #rosterTodos div[style*="padding:7px 10px"] { padding: 1.5px 4px !important; }
+
+  /* Necesidades y Observaciones */
+  textarea { border: 1px solid #ccc !important; background: #fafafa !important; resize: none !important; font-size: 7pt !important; min-height: 14mm !important; padding: 2mm !important; }
+  [style*="grid-template-columns:1fr 1fr"] { gap: 3mm !important; }
+
+  /* Faltan por poner — ocultar */
+  #cntFaltan, #rosterFaltan { display: none !important; }
+  .card-h[style*="Faltan"] { display: none !important; }
+
   ::-webkit-scrollbar { display: none !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
 </style>
 </head>
@@ -2407,22 +2476,37 @@ function renderAll(){renderTeamBar();renderRoster();renderCampo();renderCounter(
 })();
 
 function printTeamPDF(){
-  /* Antes de imprimir, quitar max-height de todas las listas para que se vean completas */
-  var scrollEls=document.querySelectorAll('[style*="max-height"],[style*="overflow-y"]');
+  /* Crear header corporativo temporal para el PDF */
+  var ph=document.createElement('div');ph.id='print-header';
+  var t=window.TEAMS&&TEAMS.find(function(x){return x.key===activeTeam;});
+  var nm=t?t.name:activeTeam;
+  var gen=getGenYear(activeTeam);
+  ph.innerHTML='<img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" onerror="this.style.display=\'none\'">'
+    +'<span class="ph-title">'+nm+'</span>'
+    +(gen?'<span style="color:rgba(255,255,255,.7);font-size:8pt;margin-left:6px;">Generación '+gen+'</span>':'')
+    +'<span class="ph-sub">Confección de Plantillas · Cantera Real Madrid CF · '+activeSzn+'</span>';
+  document.body.prepend(ph);
+
+  /* Expandir todos los elementos con scroll */
+  var scrollEls=document.querySelectorAll('[style*="max-height"],[style*="overflow-y:auto"],[style*="overflow-y: auto"]');
   var origStyles=[];
   scrollEls.forEach(function(el){
     origStyles.push({el:el,mh:el.style.maxHeight,ov:el.style.overflowY});
-    el.style.maxHeight='none';
-    el.style.overflowY='visible';
+    el.style.maxHeight='none';el.style.overflowY='visible';
   });
+  /* Expandir listas colapsadas por JS */
+  document.querySelectorAll('#rosterTodos > div > div:last-child').forEach(function(el){
+    if(el.style.display==='none'){el.style.display='';el.dataset.wasCollapsed='1';}
+  });
+
   window.print();
+
   /* Restaurar */
   setTimeout(function(){
-    origStyles.forEach(function(o){
-      o.el.style.maxHeight=o.mh;
-      o.el.style.overflowY=o.ov;
-    });
-  },500);
+    document.body.removeChild(ph);
+    origStyles.forEach(function(o){o.el.style.maxHeight=o.mh;o.el.style.overflowY=o.ov;});
+    document.querySelectorAll('[data-was-collapsed]').forEach(function(el){el.style.display='none';el.removeAttribute('data-was-collapsed');});
+  },800);
 }
 
 /* ══ BOOT ══ */
