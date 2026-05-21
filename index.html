@@ -854,7 +854,7 @@ var TEAMS=[
   {key:'JA',name:'Juvenil A'},{key:'JB',name:'Juvenil B'},{key:'JC',name:'Juvenil C'},
   {key:'CA',name:'Cadete A'},{key:'CB',name:'Cadete B'},
   {key:'IA',name:'Infantil A'},{key:'IB',name:'Infantil B'},
-  {key:'AA',name:'Alev\xedn A'},{key:'AB',name:'Alev\xedn B'},{key:'AC',name:'Alev\xedn C'},
+  {key:'AA',name:'Alev\xedn A'},
   {key:'BA',name:'Benjam\xedn A'},{key:'BB',name:'Benjam\xedn B'},
   {key:'PA',name:'Prebenjam\xedn A'},{key:'PB',name:'Prebenjam\xedn B'},
   {key:'DB',name:'Debutante'}
@@ -1178,7 +1178,7 @@ function renderTeamBar(){
     var bComb=document.createElement('button');
     bComb.className='team-btn'+(activeCombined==='AB+AC'?' active':'');
     bComb.textContent='AB+AC';bComb.title='Alev\xedn B + Alev\xedn C';
-    bComb.style.fontWeight='800';bComb.style.background=activeCombined==='AB+AC'?'var(--rm-blue)':'';
+    bComb.style.background=activeCombined==='AB+AC'?'var(--rm-blue)':'';
     bComb.style.color=activeCombined==='AB+AC'?'#fff':'';
     bComb.addEventListener('click',function(){
       activeCombined='AB+AC';
@@ -1870,6 +1870,40 @@ function renderCombinedView(){
         btnAB.addEventListener('click',function(){putPlayerOnCombinedField(p.id,tk,'AB');});
         btnAC.addEventListener('click',function(){putPlayerOnCombinedField(p.id,tk,'AC');});
         row.appendChild(badge);row.appendChild(teamTag);row.appendChild(name);row.appendChild(btnAB);row.appendChild(btnAC);
+        /* Drag desde Faltan al campo AB o AC */
+        badge.addEventListener('pointerdown',function(ev){
+          ev.preventDefault();ev.stopPropagation();
+          var sx=ev.clientX,sy=ev.clientY,moved=false,ptr=ev.pointerId;
+          var ghost=document.createElement('div');ghost.className='player-chip';
+          ghost.setAttribute('style','position:fixed;width:58px;pointer-events:none;opacity:.88;z-index:9999;'+chipSt(p.status,p.isPor));
+          ghost.innerHTML='<span class="pchip-text">'+esc(p.name||'')+'</span>';
+          ghost.style.left=ev.clientX+'px';ghost.style.top=ev.clientY+'px';
+          try{badge.setPointerCapture(ptr);}catch(e2){}
+          function mv(e){
+            if(!moved&&(Math.abs(e.clientX-sx)>5||Math.abs(e.clientY-sy)>5)){moved=true;document.body.appendChild(ghost);}
+            if(moved){ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';}
+          }
+          function up(e){
+            try{badge.releasePointerCapture(ptr);}catch(e2){}
+            badge.removeEventListener('pointermove',mv);badge.removeEventListener('pointerup',up);
+            if(ghost.parentNode)ghost.parentNode.removeChild(ghost);
+            if(!moved)return;
+            /* Detectar en qué campo cayó */
+            var dropTeam=null;
+            ['AB','AC'].forEach(function(t){
+              var wrap=document.getElementById('comb-campo'+t);
+              if(!wrap)return;
+              var r=wrap.getBoundingClientRect();
+              if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
+                dropTeam=t;
+                p.x=Math.max(2,Math.min(98,((e.clientX-r.left)/r.width)*100));
+                p.y=Math.max(2,Math.min(98,((e.clientY-r.top)/r.height)*100))*(118/100);
+              }
+            });
+            if(dropTeam)putPlayerOnCombinedField(p.id,tk,dropTeam,p.x,p.y);
+          }
+          badge.addEventListener('pointermove',mv);badge.addEventListener('pointerup',up);
+        });
         faltanEl.appendChild(row);
       });
     }
@@ -1946,14 +1980,17 @@ function renderOneOverlay(overlayId,ft){
   });
 }
 
-function putPlayerOnCombinedField(pid,fromTeam,toTeam){
+function putPlayerOnCombinedField(pid,fromTeam,toTeam,dropX,dropY){
   var cached=null;
   try{var r=localStorage.getItem('plt_cache_'+docId(fromTeam));if(r)cached=JSON.parse(r);}catch(e){}
   if(!cached)return;
   var p=cached.players.find(function(x){return x.id===pid;});
   if(!p)return;
+  p.onPitch=true;
+  p.x=dropX||p.x||50;
+  p.y=dropY||p.y||59;
+  detectAndUpdateZone(p);
   if(fromTeam===toTeam){
-    p.onPitch=true;p.x=50;p.y=59;detectAndUpdateZone(p);
     try{localStorage.setItem('plt_cache_'+docId(fromTeam),JSON.stringify(cached));}catch(e){}
     teamDoc(fromTeam).set({players:cached.players,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
   } else {
@@ -1962,7 +1999,6 @@ function putPlayerOnCombinedField(pid,fromTeam,toTeam){
     teamDoc(fromTeam).set({players:cached.players,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
     var dest=null;try{var r2=localStorage.getItem('plt_cache_'+docId(toTeam));if(r2)dest=JSON.parse(r2);}catch(e){}
     if(!dest)dest={players:[]};
-    p.onPitch=true;p.x=50;p.y=59;detectAndUpdateZone(p);
     dest.players.push(p);
     try{localStorage.setItem('plt_cache_'+docId(toTeam),JSON.stringify(dest));}catch(e){}
     teamDoc(toTeam).set({players:dest.players,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
