@@ -381,6 +381,7 @@ button,input,select,textarea{font-family:inherit}
 
 <div id="appScreen" style="display:none">
 <div class="team-bar" id="teamBar"></div>
+<div id="viewNormal"><!-- vista normal -->
 
 <div class="main">
   <!-- ESTADÍSTICAS -->
@@ -604,6 +605,64 @@ button,input,select,textarea{font-family:inherit}
   </div>
 
 </div><!-- /main -->
+</div><!-- /viewNormal -->
+
+<!-- VISTA COMBINADA AB+AC -->
+<div id="viewCombined" style="display:none;">
+  <div class="main">
+    <div class="summary-bar" style="margin-bottom:12px;">
+      <div class="summary-name">Alev&iacute;n B + Alev&iacute;n C<small>AB + AC</small></div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div class="stat-pill">Plantilla AB <strong id="comb-statAB">0+0</strong></div>
+        <div class="stat-pill">Plantilla AC <strong id="comb-statAC">0+0</strong></div>
+      </div>
+    </div>
+    <!-- Dos campos lado a lado -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <!-- AB -->
+      <div>
+        <div class="campo-card">
+          <div class="campo-hdr"><div class="campo-hdr-title">ALEV&Iacute;N B</div><div class="campo-hdr-count" id="comb-countAB">0+0P</div></div>
+          <div class="campo-wrap" id="comb-campoAB">
+            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none"><rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/><line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/><rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/><rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/></svg>
+            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet"><circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/></svg>
+            <img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
+            <div class="campo-players" id="comb-playersAB"></div>
+          </div>
+        </div>
+      </div>
+      <!-- AC -->
+      <div>
+        <div class="campo-card">
+          <div class="campo-hdr"><div class="campo-hdr-title">ALEV&Iacute;N C</div><div class="campo-hdr-count" id="comb-countAC">0+0P</div></div>
+          <div class="campo-wrap" id="comb-campoAC">
+            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none"><rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/><line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.45)" stroke-width=".6"/><rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/><rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/></svg>
+            <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="xMidYMid meet"><circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/></svg>
+            <img class="campo-shield" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="" onerror="this.style.display='none'">
+            <div class="campo-players" id="comb-playersAC"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Lista compartida -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="card">
+        <div class="card-h" style="background:var(--rm-blue);color:#fff;">PLANTILLA AB <span class="cnt" id="comb-plistAB" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);">0+0</span></div>
+        <div class="card-b" style="padding:6px 8px;"><div id="comb-plistBodyAB"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-h" style="background:var(--rm-blue);color:#fff;">PLANTILLA AC <span class="cnt" id="comb-plistAC" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);">0+0</span></div>
+        <div class="card-b" style="padding:6px 8px;"><div id="comb-plistBodyAC"></div></div>
+      </div>
+    </div>
+    <!-- Lista compartida todos los jugadores -->
+    <div class="card" style="margin-top:14px;">
+      <div class="card-h">Todos los jugadores (AB + AC)</div>
+      <div class="card-b" style="padding:6px 8px;"><div id="comb-roster" style="max-height:80vh;overflow-y:auto;"></div></div>
+    </div>
+  </div>
+</div><!-- /viewCombined -->
+
 </div><!-- /appScreen -->
 
 <!-- MODAL EDITOR -->
@@ -954,6 +1013,7 @@ var DRAG_T=5;
 var unsubscribeSnapshot=null;
 var activeInnerTab='campograma';
 var activeFilters=['all']; /* multi-selección */
+var activeCombined=null; /* 'AB+AC' o null */
 var activeZonaFt='F11';
 var selectedZonaId=null;
 
@@ -1029,32 +1089,56 @@ function renderHomeGrid(){
 function renderTeamBar(){
   var bar=document.getElementById('teamBar');bar.innerHTML='';
   TEAMS.forEach(function(t){
-    var b=document.createElement('button');b.className='team-btn'+(t.key===activeTeam?' active':'');
+    var b=document.createElement('button');
+    var isActive=(t.key===activeTeam&&activeCombined!=='AB+AC');
+    b.className='team-btn'+(isActive?' active':'');
     b.textContent=t.key;b.title=t.name;
     b.addEventListener('click',function(){
-      if(t.key===activeTeam)return;
+      if(t.key===activeTeam&&activeCombined!=='AB+AC')return;
+      activeCombined=null;
       activeTeam=t.key;localStorage.setItem(ATM_KEY,activeTeam);
-      state={players:[]};selectedId=null;activeFilters=['all'];syncFilterBtns();renderAll();loadTeam();
+      state={players:[]};selectedId=null;activeFilters=['all'];syncFilterBtns();
+      document.getElementById('viewCombined').style.display='none';
+      document.getElementById('viewNormal').style.display='block';
+      renderAll();loadTeam();
     });
     bar.appendChild(b);
   });
+  /* Botón especial AB+AC */
+  var bComb=document.createElement('button');
+  bComb.className='team-btn'+(activeCombined==='AB+AC'?' active':'');
+  bComb.textContent='AB+AC';bComb.title='Alevín B + Alevín C combinado';
+  bComb.style.fontWeight='800';
+  bComb.addEventListener('click',function(){
+    activeCombined='AB+AC';
+    document.getElementById('viewNormal').style.display='none';
+    document.getElementById('viewCombined').style.display='block';
+    renderCombinedView();
+    /* Quitar active de otros botones */
+    bar.querySelectorAll('.team-btn').forEach(function(b){b.classList.remove('active');});
+    bComb.classList.add('active');
+  });
+  bar.appendChild(bComb);
+
   var t=TEAMS.find(function(x){return x.key===activeTeam;});
   var nm=t?t.name:'\u2014';
-  document.getElementById('teamName').firstChild.textContent=nm;
-  document.getElementById('teamKey').textContent=activeTeam;
-  var gyEl=document.getElementById('genYearInput');
-  if(gyEl){
-    gyEl.value=getGenYear(activeTeam)||'';
-    var isJA=activeTeam==='JA';
-    gyEl.readOnly=!isJA;
-    gyEl.style.background=isJA?'':'var(--surface-alt)';
-    gyEl.style.color=isJA?'var(--text)':'var(--text-mut)';
-    gyEl.style.cursor=isJA?'text':'default';
-    var saveBtn=document.getElementById('btnSaveGenYear');
-    if(saveBtn)saveBtn.style.display=isJA?'inline-flex':'none';
+  if(activeCombined!=='AB+AC'){
+    document.getElementById('teamName').firstChild.textContent=nm;
+    document.getElementById('teamKey').textContent=activeTeam;
+    var gyEl=document.getElementById('genYearInput');
+    if(gyEl){
+      gyEl.value=getGenYear(activeTeam)||'';
+      var isJA=activeTeam==='JA';
+      gyEl.readOnly=!isJA;
+      gyEl.style.background=isJA?'':'var(--surface-alt)';
+      gyEl.style.color=isJA?'var(--text)':'var(--text-mut)';
+      gyEl.style.cursor=isJA?'text':'default';
+      var saveBtn=document.getElementById('btnSaveGenYear');
+      if(saveBtn)saveBtn.style.display=isJA?'inline-flex':'none';
+    }
+    updateGenYearAge();
+    document.getElementById('campoTitle').textContent=nm;
   }
-  updateGenYearAge();
-  document.getElementById('campoTitle').textContent=nm;
 }
 
 /* ══ TEMPORADAS UI ══ */
@@ -1526,7 +1610,125 @@ function dragFromRoster(ev,pid){
   src.addEventListener('pointermove',mv);src.addEventListener('pointerup',up);src.addEventListener('pointercancel',up);
 }
 
-/* ══ PESTAÑA CONFIGURAR ZONAS ══ */
+/* ══ VISTA COMBINADA AB+AC ══ */
+function renderCombinedView(){
+  ['AB','AC'].forEach(function(tk){
+    var cached=null;
+    try{var r=localStorage.getItem('plt_cache_'+docId(tk));if(r)cached=JSON.parse(r);}catch(e){}
+    var players=(cached&&cached.players)||[];
+    players.forEach(function(p){if(p.onPitch)detectAndUpdateZone(p);});
+
+    /* Counter */
+    var onPitch=players.filter(function(p){return p.onPitch;});
+    var c=onPitch.filter(function(p){return!p.isPor;}).length;
+    var po=onPitch.filter(function(p){return p.isPor;}).length;
+    var countEl=document.getElementById('comb-count'+tk);
+    if(countEl)countEl.textContent=c+'+'+po+'P';
+    var statEl=document.getElementById('comb-stat'+tk);
+    if(statEl)statEl.textContent=c+'+'+po;
+
+    /* Campo fichas (solo lectura, sin drag) */
+    var campoEl=document.getElementById('comb-players'+tk);
+    if(campoEl){
+      campoEl.innerHTML='';
+      players.forEach(function(p){
+        if(!p.onPitch)return;
+        var pos=document.createElement('div');pos.className='player-pos';
+        pos.style.left=p.x+'%';pos.style.top=p.y*(100/118)+'%';
+        var chip=document.createElement('div');
+        chip.className='player-chip'+(p.isPor?' por':'')+(p.res?' residencia':'');
+        if(p.res)chip.setAttribute('data-res-label',p.res);
+        chip.setAttribute('style',chipSt(p.status,p.isPor));
+        chip.innerHTML=renderSelectionIcons(p)+'<span class="pchip-text">'+esc(p.name||'')+'</span>';
+        pos.appendChild(chip);
+        campoEl.appendChild(pos);
+      });
+    }
+
+    /* Plantilla */
+    var POS_ORDER=['PO','LD','CD','CI','CT','LI','MC','ID','II','IN','ED','EI','DC'];
+    var activos=players.filter(function(p){return p.status==='renovado'||p.status==='fichaje'||p.status==='duda';});
+    var totalC=activos.filter(function(p){return!p.isPor;}).length;
+    var totalP=activos.filter(function(p){return p.isPor;}).length;
+    var plistCntEl=document.getElementById('comb-plist'+tk);
+    if(plistCntEl)plistCntEl.textContent=totalC+'+'+totalP;
+    var plistEl=document.getElementById('comb-plistBody'+tk);
+    if(plistEl){
+      plistEl.innerHTML='';
+      var sorted=activos.slice().sort(function(a,b){
+        var pa=a.isPor?'PO':(a.detectedZoneShort||'');
+        var pb=b.isPor?'PO':(b.detectedZoneShort||'');
+        var ia=POS_ORDER.indexOf(pa);var ib=POS_ORDER.indexOf(pb);
+        if(ia<0)ia=999;if(ib<0)ib=999;return ia-ib;
+      });
+      if(!sorted.length)plistEl.innerHTML='<div class="plist-empty">Sin jugadores</div>';
+      sorted.forEach(function(p){
+        var row=document.createElement('div');row.className='plist-item';row.style.marginBottom='2px';
+        var badge=document.createElement('div');badge.className='plist-badge'+(p.isPor?' por':'');
+        badge.setAttribute('style',chipSt(p.status,p.isPor));
+        badge.textContent=p.isPor?'PO':(p.detectedZoneShort||'---');
+        var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:9px;font-weight:700;"> \u2713</span>':'';
+        var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
+        info.innerHTML='<div class="plist-name">'+esc(p.name||'')+'</div>';
+        row.appendChild(badge);row.appendChild(info);
+        plistEl.appendChild(row);
+      });
+    }
+  });
+
+  /* Lista compartida todos */
+  var rosterEl=document.getElementById('comb-roster');
+  if(!rosterEl)return;
+  rosterEl.innerHTML='';
+  var ORDER=['renovado','fichaje','futurible','destacados','duda','baja'];
+  var LABELS={renovado:'Renovados',fichaje:'Fichados',futurible:'Futuribles',destacados:'Destacados',duda:'Dudas',baja:'Bajas'};
+  var COLORS={renovado:{bg:'#f1f5f9',text:'#1e293b',border:'#cbd5e1'},fichaje:{bg:'#77ED85',text:'#003300',border:'#4ade80'},futurible:{bg:'#3b82f6',text:'#fff',border:'#2563eb'},destacados:{bg:'#7c3aed',text:'#fff',border:'#5b21b6'},duda:{bg:'#f59e0b',text:'#1a1d23',border:'#d97706'},baja:{bg:'#e53e3e',text:'#fff',border:'#c53030'}};
+
+  /* Juntar jugadores de AB y AC con etiqueta de equipo */
+  var allPlayers=[];
+  ['AB','AC'].forEach(function(tk){
+    var cached=null;
+    try{var r=localStorage.getItem('plt_cache_'+docId(tk));if(r)cached=JSON.parse(r);}catch(e){}
+    var players=(cached&&cached.players)||[];
+    players.forEach(function(p){allPlayers.push({p:p,team:tk});});
+  });
+
+  ORDER.forEach(function(st){
+    var grp=allPlayers.filter(function(x){return x.p.status===st;});
+    var col=COLORS[st];
+    var bloque=document.createElement('div');bloque.style.cssText='margin-bottom:8px;border-radius:var(--rs);overflow:hidden;border:1px solid '+col.border+';';
+    var hdr=document.createElement('div');
+    hdr.style.cssText='background:'+col.bg+';color:'+col.text+';padding:6px 10px;display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;cursor:pointer;';
+    hdr.innerHTML='<span>'+LABELS[st].toUpperCase()+'</span><span style="background:rgba(0,0,0,.12);border-radius:8px;padding:1px 7px;font-size:10px;">'+grp.length+'</span>';
+    var lista=document.createElement('div');lista.style.cssText='background:var(--surface);';
+    if(!grp.length){
+      lista.innerHTML='<div style="font-size:10px;color:var(--text-mut);font-style:italic;padding:8px 10px;">Ninguno</div>';
+    } else {
+      grp.forEach(function(x){
+        var p=x.p,tk=x.team;
+        var item=document.createElement('div');
+        item.style.cssText='display:flex;align-items:center;gap:7px;padding:5px 8px;border-bottom:1px solid var(--border-light);';
+        var posLabel=p.isPor?'PO':(p.detectedZoneShort||'---');
+        var posBadge=document.createElement('span');
+        posBadge.setAttribute('style','flex-shrink:0;font-size:9px;font-weight:800;padding:1px 5px;border-radius:4px;border:2px solid transparent;'+chipSt(p.status,p.isPor));
+        posBadge.textContent=posLabel;
+        var teamTag=document.createElement('span');
+        teamTag.style.cssText='font-size:8px;font-weight:700;background:var(--rm-blue-bg);color:var(--rm-blue);border-radius:3px;padding:1px 4px;flex-shrink:0;';
+        teamTag.textContent=tk;
+        var name=document.createElement('span');name.style.cssText='font-size:11px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+        name.textContent=p.name||'(sin nombre)';
+        var enCampo=p.onPitch?'✓':'';
+        var ck=document.createElement('span');ck.style.cssText='font-size:10px;color:#16a34a;font-weight:700;flex-shrink:0;';ck.textContent=enCampo;
+        item.appendChild(posBadge);item.appendChild(teamTag);item.appendChild(name);item.appendChild(ck);
+        lista.appendChild(item);
+      });
+    }
+    hdr.addEventListener('click',function(){lista.style.display=lista.style.display==='none'?'':'none';});
+    bloque.appendChild(hdr);bloque.appendChild(lista);
+    rosterEl.appendChild(bloque);
+  });
+}
+
 /* GUARDADO DE ZONAS EN LOCALSTORAGE */
 /* DETECCIÓN DE POSICIÓN POR MAYOR SOLAPE */
 /* POSICIÓN VISIBLE = SHORT DE LA ZONA */
