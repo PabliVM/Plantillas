@@ -2805,7 +2805,6 @@ function printCombinedPDF(){
   var HIDE=['#e53e3e','#c53030','#3b82f6','#60a5fa','#7c3aed','#5b21b6'];
   var campoABel=document.getElementById('comb-campoAB');
   var campoACel=document.getElementById('comb-campoAC');
-
   function hideChips(campoEl){
     var hidden=[];
     if(!campoEl)return hidden;
@@ -2837,7 +2836,18 @@ function printCombinedPDF(){
       var img=idx===0?imgAB:imgAC;
       var info=TEAMS_INFO[tk];
       var players=getPlayers(tk);
-      var campoImg=img?'<img src="'+img+'" style="width:100%;max-height:150mm;object-fit:contain;border-radius:6px;display:block;">':'';
+      var campoHdr='<div style="background:#0f1720;display:flex;align-items:center;justify-content:space-between;padding:2mm 3mm;border-radius:5px 5px 0 0;">'
+        +'<div style="display:flex;align-items:center;gap:6px;">'
+        +'<img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" style="width:22px;height:22px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;">'
+        +'<span style="color:#fff;font-size:8.5pt;font-weight:800;">'+info.name.toUpperCase()+'</span>'
+        +(info.gen?'<span style="color:rgba(255,255,255,.55);font-size:6.5pt;">Generaci\xf3n '+info.gen+'</span>':'')
+        +'</div></div>';
+      var campoImg=img
+        ?'<div style="border-radius:5px;overflow:hidden;border:1.5px solid #333;">'
+          +campoHdr
+          +'<img src="'+img+'" style="width:100%;max-height:120mm;object-fit:contain;display:block;border-radius:0 0 4px 4px;">'
+          +'</div>'
+        :'';
       /* Página 1/3: stats + campo + plantilla */
       pages+='<div class="pg">'
         +hdr(info.name,info.gen)
