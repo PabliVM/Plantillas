@@ -615,8 +615,16 @@ button,input,select,textarea{font-family:inherit}
 <!-- VISTA COMBINADA AB+AC -->
 <div id="viewCombined" style="display:none;">
   <div class="main">
-    <!-- Layout: AB | AC | Todos (3 cols) -->
-    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 260px;gap:14px;align-items:start;">
+    <!-- Layout: Faltan | AB | AC | Todos -->
+    <div style="display:grid;grid-template-columns:180px minmax(0,1fr) minmax(0,1fr) 240px;gap:10px;align-items:start;">
+
+      <!-- COL FALTAN: jugadores sin campo de AB y AC -->
+      <div style="display:flex;flex-direction:column;gap:8px;position:sticky;top:104px;">
+        <div class="card">
+          <div class="card-h" style="background:#6d28d9;color:#fff;font-size:11px;">Faltan por poner <span class="cnt" id="comb-cntFaltan" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3);">0</span></div>
+          <div class="card-b" style="padding:4px 6px;"><div id="comb-faltan" style="max-height:70vh;overflow-y:auto;"></div></div>
+        </div>
+      </div>
 
       <!-- COL AB: campo + plantilla lado a lado -->
       <div style="display:flex;flex-direction:column;gap:8px;">
@@ -639,7 +647,7 @@ button,input,select,textarea{font-family:inherit}
           <span class="stat-pill">Prom <strong id="comb-promAB">0</strong></span>
         </div>
         <!-- Campo + Plantilla -->
-        <div style="display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:8px;align-items:start;">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:8px;align-items:start;">
           <div class="campo-card">
             <div class="campo-hdr">
               <div style="display:flex;align-items:center;gap:6px;">
@@ -692,7 +700,7 @@ button,input,select,textarea{font-family:inherit}
           <span class="stat-pill">Prom <strong id="comb-promAC">0</strong></span>
         </div>
         <!-- Campo + Plantilla -->
-        <div style="display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:8px;align-items:start;">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:8px;align-items:start;">
           <div class="campo-card">
             <div class="campo-hdr">
               <div style="display:flex;align-items:center;gap:6px;">
@@ -1777,6 +1785,42 @@ function renderCombinedView(){
     };
   });
 
+  /* Lista faltan por poner (AB + AC sin campo) */
+  var faltanEl=document.getElementById('comb-faltan');
+  var cntFaltanEl=document.getElementById('comb-cntFaltan');
+  if(faltanEl){
+    faltanEl.innerHTML='';
+    var sinCampo=[];
+    ['AB','AC'].forEach(function(tk){
+      var cached=null;try{var r=localStorage.getItem('plt_cache_'+docId(tk));if(r)cached=JSON.parse(r);}catch(e){}
+      var players=(cached&&cached.players)||[];
+      players.forEach(function(p){if(!p.onPitch)sinCampo.push({p:p,team:tk});});
+    });
+    if(cntFaltanEl)cntFaltanEl.textContent=sinCampo.length;
+    if(!sinCampo.length){
+      faltanEl.innerHTML='<div class="plist-empty" style="font-size:10px;">\u2713 Todos en campo</div>';
+    } else {
+      sinCampo.forEach(function(x){
+        var p=x.p,tk=x.team;
+        var row=document.createElement('div');
+        row.style.cssText='display:flex;align-items:center;gap:5px;padding:5px 6px;border-bottom:1px solid var(--border-light);cursor:grab;';
+        var badge=document.createElement('div');badge.className='chip-mini'+(p.isPor?' por':'')+(p.res?' residencia':'');
+        if(p.res)badge.setAttribute('data-res-label',p.res);
+        badge.setAttribute('style',chipSt(p.status,p.isPor));
+        badge.innerHTML='<span class="chip-mini-text">'+esc(p.name||'')+'</span>';
+        var teamTag=document.createElement('span');teamTag.style.cssText='font-size:8px;font-weight:700;background:var(--rm-blue-bg);color:var(--rm-blue);border-radius:3px;padding:1px 3px;flex-shrink:0;';teamTag.textContent=tk;
+        var name=document.createElement('span');name.style.cssText='font-size:10px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';name.textContent=p.name||'';
+        /* Botones poner en AB o AC */
+        var btnAB=document.createElement('button');btnAB.className='btn sm';btnAB.style.cssText='font-size:8px;padding:2px 5px;';btnAB.textContent='AB';
+        var btnAC=document.createElement('button');btnAC.className='btn sm';btnAC.style.cssText='font-size:8px;padding:2px 5px;';btnAC.textContent='AC';
+        btnAB.addEventListener('click',function(){putPlayerOnCombinedField(p.id,tk,'AB');});
+        btnAC.addEventListener('click',function(){putPlayerOnCombinedField(p.id,tk,'AC');});
+        row.appendChild(badge);row.appendChild(teamTag);row.appendChild(name);row.appendChild(btnAB);row.appendChild(btnAC);
+        faltanEl.appendChild(row);
+      });
+    }
+  }
+
   /* Lista compartida todos */
   var rosterEl=document.getElementById('comb-roster');if(!rosterEl)return;
   rosterEl.innerHTML='';
@@ -1847,6 +1891,35 @@ function renderOneOverlay(overlayId,ft){
     overlay.appendChild(el);
   });
 }
+
+function putPlayerOnCombinedField(pid,fromTeam,toTeam){
+  var cached=null;
+  try{var r=localStorage.getItem('plt_cache_'+docId(fromTeam));if(r)cached=JSON.parse(r);}catch(e){}
+  if(!cached)return;
+  var p=cached.players.find(function(x){return x.id===pid;});
+  if(!p)return;
+  if(fromTeam===toTeam){
+    p.onPitch=true;p.x=50;p.y=59;detectAndUpdateZone(p);
+    try{localStorage.setItem('plt_cache_'+docId(fromTeam),JSON.stringify(cached));}catch(e){}
+    teamDoc(fromTeam).set({players:cached.players,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
+  } else {
+    cached.players=cached.players.filter(function(x){return x.id!==pid;});
+    try{localStorage.setItem('plt_cache_'+docId(fromTeam),JSON.stringify(cached));}catch(e){}
+    teamDoc(fromTeam).set({players:cached.players,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
+    var dest=null;try{var r2=localStorage.getItem('plt_cache_'+docId(toTeam));if(r2)dest=JSON.parse(r2);}catch(e){}
+    if(!dest)dest={players:[]};
+    p.onPitch=true;p.x=50;p.y=59;detectAndUpdateZone(p);
+    dest.players.push(p);
+    try{localStorage.setItem('plt_cache_'+docId(toTeam),JSON.stringify(dest));}catch(e){}
+    teamDoc(toTeam).set({players:dest.players,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
+  }
+  if(fromTeam===activeTeam||toTeam===activeTeam){
+    var s=null;try{var r3=localStorage.getItem('plt_cache_'+docId(activeTeam));if(r3)s=JSON.parse(r3);}catch(e){}
+    if(s)state=s;
+  }
+  renderCombinedView();
+}
+
 function renderZonaOverlay(){
   renderOneOverlay('zonaOverlay','F11');
   renderOneOverlay('zonaOverlayF7','F7');
