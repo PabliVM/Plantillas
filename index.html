@@ -2552,7 +2552,10 @@ function printTeamPDF(){
   var STATS=[
     {k:'renovado', l:'Renovados',  bg:'#f1f5f9',tx:'#1e293b',bd:'#94a3b8'},
     {k:'fichaje',  l:'Fichados',   bg:'#22c55e', tx:'#fff',   bd:'#16a34a'},
-    {k:'duda',     l:'Dudas',      bg:'#f59e0b', tx:'#1a1d23',bd:'#d97706'}
+    {k:'futurible',l:'Futuribles', bg:'#3b82f6', tx:'#fff',   bd:'#2563eb'},
+    {k:'destacados',l:'Destacados',bg:'#7c3aed', tx:'#fff',   bd:'#5b21b6'},
+    {k:'duda',     l:'Dudas',      bg:'#f59e0b', tx:'#1a1d23',bd:'#d97706'},
+    {k:'baja',     l:'Bajas',      bg:'#ef4444', tx:'#fff',   bd:'#dc2626'}
   ];
   function L(){
     var cols='';
@@ -2608,12 +2611,27 @@ function printTeamPDF(){
     setTimeout(function(){f.contentWindow.focus();f.contentWindow.print();setTimeout(function(){f.remove();},3000);},600);
   }
 
-  /* Capturar el campo con html2canvas */
+  /* Capturar el campo con html2canvas — ocultar bajas/futuribles/destacados antes */
   var campoCard=document.querySelector('.campo-card');
+  var HIDE_COLORS=['#e53e3e','#c53030','#3b82f6','#60a5fa','#7c3aed','#5b21b6'];
   function capture(){
+    /* Ocultar fichas no deseadas */
+    var hidden=[];
+    document.querySelectorAll('.campo-players .player-pos').forEach(function(pos){
+      var chip=pos.querySelector('[style]');if(!chip)return;
+      var st=chip.getAttribute('style')||'';
+      var bad=HIDE_COLORS.some(function(col){return st.indexOf(col)>=0;});
+      if(bad){pos.style.visibility='hidden';hidden.push(pos);}
+    });
     html2canvas(campoCard,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#111827',logging:false})
-      .then(function(canvas){doPrint(canvas.toDataURL('image/png'));})
-      .catch(function(){doPrint('');});
+      .then(function(canvas){
+        hidden.forEach(function(pos){pos.style.visibility='';});
+        doPrint(canvas.toDataURL('image/png'));
+      })
+      .catch(function(){
+        hidden.forEach(function(pos){pos.style.visibility='';});
+        doPrint('');
+      });
   }
   if(window.html2canvas){capture();}
   else{
