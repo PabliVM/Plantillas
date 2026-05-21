@@ -355,109 +355,117 @@ button,input,select,textarea{font-family:inherit}
 
 /* ── IMPRESIÓN PDF HORIZONTAL ── */
 @media print {
-  @page { size: A4 landscape; margin: 8mm 10mm; }
+  @page { size: A4 landscape; margin: 0; }
 
-  /* Ocultar todo lo que no es contenido */
+  /* ===== OCULTAR TODO LO QUE NO ES PRINT ===== */
   .header, .team-bar, .app-footer, .inner-tabs,
   .campo-filter, .campo-hint, .btn, .plist-addbtn, .ritem-edit,
   #btnPrint, #btnHome, #btnCfg, #btnFoto, .chip-remove-btn,
   #viewCombined, #tabZonas, .cfg-overlay,
-  #rosterFaltan, .card-h:has(+ .card-b #rosterFaltan),
-  .season-group, .hbtn, .hbtn-icon,
-  .campo-foto-btn, button { display: none !important; }
+  .season-group, .hbtn, .hbtn-icon, .campo-foto-btn,
+  #rosterFaltan, #cntFaltan,
+  #genYearInput, #genYearAge, #btnSaveGenYear,
+  .summary-name small,
+  [for="genYearInput"] { display: none !important; }
 
-  /* Cabecera corporativa RM en impresión */
-  body::before {
-    content: '';
-    display: block;
-    background: #2563eb;
-    height: 10mm;
-    margin: -8mm -10mm 4mm -10mm;
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }
+  ::-webkit-scrollbar { display: none !important; }
+
+  body { background: #fff !important; color: #111 !important;
+         font-family: 'Segoe UI', Arial, sans-serif;
+         font-size: 7.5pt !important; margin: 0; padding: 0; }
+
+  /* ===== HEADER REPETIDO EN CADA PÁGINA ===== */
+  #print-header {
+    display: flex !important; align-items: center; gap: 10px;
+    background: #2563eb !important; color: #fff !important;
+    padding: 5mm 8mm 4mm 8mm;
+    position: running(pageHeader);
   }
+  #print-header img { width: 32px; height: 32px; border-radius: 50%; background: #fff; padding: 2px; object-fit: contain; }
+  #print-header .ph-name { font-size: 13pt; font-weight: 800; color: #fff !important; letter-spacing: .3px; }
+  #print-header .ph-gen { font-size: 8pt; color: rgba(255,255,255,.8) !important; margin-left: 4px; }
+  #print-header .ph-right { margin-left: auto; font-size: 7.5pt; color: rgba(255,255,255,.75) !important; text-align: right; }
 
-  body { background: #fff !important; color: #111 !important; font-size: 7.5pt !important; padding-bottom: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @page { @top-center { content: element(pageHeader); } }
 
-  /* Header de impresión */
-  #print-header { display: flex !important; align-items: center; gap: 8px; background: #2563eb !important; color: #fff !important; padding: 3mm 4mm; margin: -8mm -10mm 4mm -10mm; }
-  #print-header img { width: 28px; height: 28px; border-radius: 50%; background: #fff; padding: 2px; }
-  #print-header .ph-title { font-size: 13pt; font-weight: 800; color: #fff !important; letter-spacing: .3px; }
-  #print-header .ph-sub { font-size: 8pt; color: rgba(255,255,255,.8) !important; margin-left: auto; }
+  /* ===== FOOTER EN CADA PÁGINA ===== */
+  #print-footer { display: block !important; position: running(pageFooter); background: #2563eb !important;
+    padding: 2mm 8mm; font-size: 6.5pt; color: rgba(255,255,255,.8) !important;
+    display: flex; justify-content: space-between; }
+  @page { @bottom-center { content: element(pageFooter); } }
 
-  /* Summary bar */
-  .summary-bar { display: flex !important; flex-wrap: wrap; gap: 3px 8px; background: #f0f4ff !important; border: 1px solid #c7d6ff !important; border-radius: 4px; padding: 2mm 3mm; margin-bottom: 3mm; box-shadow: none !important; }
+  /* Fallback: usar margin-top en las páginas para el header */
+  .main { margin: 0 !important; padding: 8mm !important; max-width: 100% !important; }
+
+  /* ===== STAT BAR ===== */
+  .summary-bar {
+    display: flex !important; flex-wrap: wrap; gap: 2px 8px;
+    background: #f0f4ff !important; border: 1.5px solid #2563eb !important;
+    border-radius: 4px; padding: 2mm 3mm; margin-bottom: 3mm;
+    box-shadow: none !important;
+  }
   .summary-name { font-size: 9pt !important; font-weight: 800 !important; color: #1e3a5f !important; }
-  .summary-name small { font-size: 7pt !important; color: #5a6170 !important; }
-  .stat-pill { font-size: 7pt !important; color: #444 !important; gap: 2px; }
-  .stat-pill strong { color: #2563eb !important; font-size: 8pt !important; }
+  .stat-pill { font-size: 6.5pt !important; color: #444 !important; gap: 2px; }
+  .stat-pill strong { color: #2563eb !important; font-size: 7.5pt !important; }
   .stat-sep { background: #c7d6ff !important; }
-  #genYearInput, #genYearAge, label[for], .btn.sm.pri { display: none !important; }
 
-  /* Layout principal */
-  .main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
-  [style*="grid-template-columns:minmax(0,1fr) 280px 270px"],
-  [style*="grid-template-columns:minmax(0,1fr) 280px"] {
+  /* ===== PÁGINA 1: CAMPO + PLANTILLA + (campo filtrado) ===== */
+  #print-page1 { display: block !important; page-break-after: always; break-after: page; }
+  #print-page1 .p1-grid {
     display: grid !important;
-    grid-template-columns: 155mm 52mm 52mm !important;
-    gap: 3mm !important;
+    grid-template-columns: 148mm 55mm 55mm !important;
+    gap: 4mm !important; align-items: start;
   }
 
   /* Campo */
   .campo-outer { gap: 0 !important; padding: 0 !important; background: none !important; border: none !important; box-shadow: none !important; }
-  .campo-card { break-inside: avoid; box-shadow: none !important; border: 1px solid #333 !important; border-radius: 4px !important; overflow: hidden; }
-  .campo-hdr { background: #1a1d23 !important; padding: 2mm 3mm !important; }
-  .campo-hdr-title { color: #fff !important; font-size: 8pt !important; }
+  .campo-card { box-shadow: none !important; border: 1.5px solid #333 !important; border-radius: 5px !important; overflow: hidden; }
+  .campo-hdr { background: #0f1720 !important; padding: 2mm 3mm !important; display: flex !important; align-items: center !important; justify-content: space-between !important; }
+  .campo-hdr > div:first-child { display: flex !important; align-items: center !important; gap: 6px !important; }
+  .campo-hdr img { display: block !important; width: 24px !important; height: 24px !important; }
+  .campo-hdr-title { color: #fff !important; font-size: 8.5pt !important; font-weight: 800 !important; }
   .campo-hdr-count { color: rgba(255,255,255,.7) !important; font-size: 7.5pt !important; }
-  #campoGen { font-size: 7pt !important; color: rgba(255,255,255,.6) !important; }
-  .campo-wrap { max-height: 115mm !important; overflow: hidden !important; }
+  #campoGen { font-size: 6.5pt !important; color: rgba(255,255,255,.55) !important; margin-top: 1px !important; }
+  .campo-wrap { height: 112mm !important; max-height: 112mm !important; overflow: hidden !important; position: relative !important; }
 
-  /* Fichas campo: más pequeñas */
-  .player-pos { width: 18% !important; }
-  .player-chip { min-height: 20px !important; padding: 2px 3px !important; border-radius: 3px !important; font-size: 0 !important; box-shadow: 0 1px 2px rgba(0,0,0,.3) !important; }
-  .pchip-text { font-size: 6.5pt !important; line-height: 1.1 !important; }
-  .pchip-proc { font-size: 5.5pt !important; }
+  /* Fichas */
+  .player-pos { width: 19% !important; }
+  .player-chip { min-height: 18px !important; padding: 2px 3px !important; border-radius: 3px !important; font-size: 0 !important; box-shadow: 0 1px 3px rgba(0,0,0,.4) !important; }
+  .pchip-text { font-size: 6pt !important; line-height: 1.1 !important; font-weight: 600 !important; }
+  .pchip-proc { font-size: 5pt !important; opacity: .85; }
   .pchip-foot img { width: 7px !important; height: 10px !important; }
   .selection-icons { top: -5px !important; left: -4px !important; }
-  .selection-icon { width: 12px !important; height: 12px !important; }
-  .player-chip.residencia::after { width: 12px !important; height: 12px !important; font-size: 5.5px !important; }
+  .selection-icon { width: 11px !important; height: 11px !important; }
+  .player-chip.residencia::after { width: 12px !important; height: 12px !important; font-size: 5px !important; top: -5px !important; right: -5px !important; }
 
-  /* Cards */
-  .card { box-shadow: none !important; border: 1px solid #ddd !important; border-radius: 3px !important; break-inside: avoid; }
-  .card-h { padding: 2mm 3mm !important; font-size: 7pt !important; background: #1e3a5f !important; color: #fff !important; }
-  .card-h .cnt { background: rgba(255,255,255,.2) !important; color: #fff !important; border-color: rgba(255,255,255,.3) !important; font-size: 6.5pt !important; }
+  /* PLANTILLA col */
+  .card { box-shadow: none !important; border: 1px solid #ddd !important; border-radius: 3px !important; }
+  .card-h { padding: 2mm 3mm !important; font-size: 7pt !important; background: #1e3a5f !important; color: #fff !important; letter-spacing: .3px !important; }
+  .card-h .cnt { background: rgba(255,255,255,.2) !important; color: #fff !important; border-color: rgba(255,255,255,.25) !important; font-size: 6.5pt !important; }
   .card-b { padding: 1mm 2mm !important; }
+  .plist-item { padding: 1px 3px !important; margin-bottom: 1px !important; border-bottom: 1px solid #f2f2f2 !important; min-height: 0 !important; }
+  .plist-badge { font-size: 6pt !important; padding: 0 3px !important; border-width: 1.5px !important; min-height: 14px !important; }
+  .plist-name { font-size: 6.5pt !important; }
+  #plistBody, #plistBody > div { max-height: none !important; overflow: visible !important; }
 
-  /* Plantilla */
-  .plist-item { padding: 1.5px 3px !important; margin-bottom: 1px !important; border-bottom: 1px solid #f0f0f0 !important; }
-  .plist-badge { font-size: 6.5pt !important; padding: 0 3px !important; border-width: 1.5px !important; }
-  .plist-name { font-size: 7pt !important; }
-  .warn-tag { display: none !important; }
-  #plistBody > div { max-height: none !important; overflow: visible !important; }
-
-  /* Todos los jugadores — bloques colapsables */
-  #rosterTodos { max-height: none !important; overflow: visible !important; }
-  #rosterTodos > div { margin-bottom: 2px !important; }
-  #rosterTodos [style*="background:#f1f5f9"],
-  #rosterTodos [style*="background:#77ED85"],
-  #rosterTodos [style*="background:#3b82f6"],
-  #rosterTodos [style*="background:#7c3aed"],
-  #rosterTodos [style*="background:#f59e0b"],
-  #rosterTodos [style*="background:#e53e3e"] { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  #rosterTodos > div > div:nth-child(2) { display: block !important; }
-  #rosterTodos span[style*="font-size:10px"] { font-size: 6.5pt !important; }
-  #rosterTodos span[style*="font-size:11px"] { font-size: 7pt !important; }
-  #rosterTodos div[style*="padding:5px 8px"] { padding: 1.5px 4px !important; }
-  #rosterTodos div[style*="padding:7px 10px"] { padding: 1.5px 4px !important; }
-
-  /* Necesidades y Observaciones */
-  textarea { border: 1px solid #ccc !important; background: #fafafa !important; resize: none !important; font-size: 7pt !important; min-height: 14mm !important; padding: 2mm !important; }
-  [style*="grid-template-columns:1fr 1fr"] { gap: 3mm !important; }
-
-  /* Faltan por poner — ocultar */
-  #cntFaltan, #rosterFaltan { display: none !important; }
-  .card-h[style*="Faltan"] { display: none !important; }
-
-  ::-webkit-scrollbar { display: none !important; }
-  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  /* ===== PÁGINA 2: LISTAS + NECESIDADES ===== */
+  #print-page2 { display: block !important; }
+  #print-page2 .p2-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 4mm !important; align-items: start; margin-bottom: 4mm;
+  }
+  /* Bloques de estado */
+  #print-page2 .p2-block { border-radius: 4px !important; overflow: hidden; border: 1px solid #ddd !important; }
+  #print-page2 .p2-block-hdr { padding: 2mm 3mm !important; font-size: 7pt !important; font-weight: 700 !important; display: flex !important; justify-content: space-between !important; }
+  #print-page2 .p2-block-list { background: #fff !important; }
+  #print-page2 .p2-player { display: flex !important; align-items: center !important; gap: 4px !important; padding: 1.5px 4px !important; border-bottom: 1px solid #f5f5f5 !important; font-size: 6.5pt !important; }
+  #print-page2 .p2-badge { font-size: 5.5pt !important; font-weight: 800 !important; padding: 0 3px !important; border-radius: 3px !important; border: 1.5px solid transparent !important; min-height: 12px !important; display: flex !important; align-items: center !important; }
+  /* Necesidades */
+  #print-page2 .p2-nec { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 4mm !important; margin-top: 3mm !important; }
+  #print-page2 .p2-nec .card-h { background: #1e3a5f !important; color: #fff !important; }
+  textarea { border: 1px solid #ccc !important; background: #fafafa !important; resize: none !important; font-size: 7pt !important; min-height: 18mm !important; padding: 2mm !important; width: 100% !important; }
 }
 </style>
 </head>
@@ -2476,36 +2484,129 @@ function renderAll(){renderTeamBar();renderRoster();renderCampo();renderCounter(
 })();
 
 function printTeamPDF(){
-  /* Crear header corporativo temporal para el PDF */
-  var ph=document.createElement('div');ph.id='print-header';
-  var t=window.TEAMS&&TEAMS.find(function(x){return x.key===activeTeam;});
+  var t=TEAMS.find(function(x){return x.key===activeTeam;});
   var nm=t?t.name:activeTeam;
   var gen=getGenYear(activeTeam);
+  var szn=activeSzn;
+
+  /* ── HEADER (se repite en ambas páginas vía CSS) ── */
+  var ph=document.createElement('div');ph.id='print-header';
   ph.innerHTML='<img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" onerror="this.style.display=\'none\'">'
-    +'<span class="ph-title">'+nm+'</span>'
-    +(gen?'<span style="color:rgba(255,255,255,.7);font-size:8pt;margin-left:6px;">Generación '+gen+'</span>':'')
-    +'<span class="ph-sub">Confección de Plantillas · Cantera Real Madrid CF · '+activeSzn+'</span>';
+    +'<span class="ph-name">'+nm+'</span>'
+    +(gen?'<span class="ph-gen">· Generación '+gen+'</span>':'')
+    +'<span class="ph-right">Confección de Plantillas · Cantera Real Madrid CF<br>Temporada '+szn+'</span>';
   document.body.prepend(ph);
 
-  /* Expandir todos los elementos con scroll */
-  var scrollEls=document.querySelectorAll('[style*="max-height"],[style*="overflow-y:auto"],[style*="overflow-y: auto"]');
-  var origStyles=[];
-  scrollEls.forEach(function(el){
-    origStyles.push({el:el,mh:el.style.maxHeight,ov:el.style.overflowY});
-    el.style.maxHeight='none';el.style.overflowY='visible';
+  /* ── FOOTER ── */
+  var pf=document.createElement('div');pf.id='print-footer';
+  pf.innerHTML='<span>Real Madrid CF · Cantera · '+nm+'</span><span>Temporada '+szn+'</span>';
+  document.body.appendChild(pf);
+
+  /* ── PÁGINA 1: stats + campo filtrado (renovados+fichados+dudas) + plantilla ── */
+  var p1=document.createElement('div');p1.id='print-page1';
+
+  /* Clonar summary-bar */
+  var sb=document.querySelector('.summary-bar');
+  if(sb)p1.appendChild(sb.cloneNode(true));
+
+  /* Grid: campo | plantilla | col3 placeholder */
+  var g1=document.createElement('div');g1.className='p1-grid';
+
+  /* Campo — clonar pero filtrar fichas a solo renovados+fichados+dudas */
+  var campoOuter=document.querySelector('.campo-outer');
+  if(campoOuter){
+    var campoClone=campoOuter.cloneNode(true);
+    /* Ocultar fichas que no sean renovados, fichados o dudas */
+    campoClone.querySelectorAll('.player-pos').forEach(function(pos){
+      var chip=pos.querySelector('.player-chip');
+      if(!chip)return;
+      var style=chip.getAttribute('style')||'';
+      /* Identificar por color de fondo — bajas=rojo, futurible=azul, destacados=violeta */
+      var isBaja=style.indexOf('#e53e3e')>=0||style.indexOf('#c53030')>=0;
+      var isFuturible=style.indexOf('#3b82f6')>=0||style.indexOf('#2563eb')>=0;
+      var isDestacado=style.indexOf('#7c3aed')>=0||style.indexOf('#5b21b6')>=0;
+      if(isBaja||isFuturible||isDestacado)pos.style.display='none';
+    });
+    g1.appendChild(campoClone);
+  }
+
+  /* Plantilla */
+  var plistCard=document.querySelector('#plistBody');
+  if(plistCard){
+    var pcard=plistCard.closest('.card');
+    if(pcard)g1.appendChild(pcard.cloneNode(true));
+  }
+
+  /* Columna vacía (todos los jugadores — no en p1) */
+  var spacer=document.createElement('div');g1.appendChild(spacer);
+  p1.appendChild(g1);
+  document.body.appendChild(p1);
+
+  /* ── PÁGINA 2: listas + necesidades ── */
+  var p2=document.createElement('div');p2.id='print-page2';
+
+  /* Clonar summary-bar */
+  if(sb)p2.appendChild(sb.cloneNode(true));
+
+  /* Grid de 5 columnas con los grupos */
+  var g2=document.createElement('div');g2.className='p2-grid';
+  var STATUS_DEF2={
+    renovado:{label:'Renovados',bg:'#f1f5f9',text:'#1e293b',border:'#cbd5e1'},
+    fichaje: {label:'Fichados', bg:'#77ED85',text:'#003300',border:'#4ade80'},
+    destacados:{label:'Destacados',bg:'#7c3aed',text:'#fff',border:'#5b21b6'},
+    duda:    {label:'Dudas',    bg:'#f59e0b',text:'#1a1d23',border:'#d97706'},
+    baja:    {label:'Bajas',    bg:'#e53e3e',text:'#fff',  border:'#c53030'}
+  };
+  var ORDER2=['renovado','fichaje','destacados','duda','baja'];
+  ORDER2.forEach(function(st){
+    var def=STATUS_DEF2[st];
+    var grp=state.players.filter(function(p){return p.status===st;});
+    var blk=document.createElement('div');blk.className='p2-block';
+    blk.style.border='1px solid '+def.border;
+    var hdr=document.createElement('div');hdr.className='p2-block-hdr';
+    hdr.style.cssText='background:'+def.bg+';color:'+def.text+';';
+    hdr.innerHTML='<span>'+def.label.toUpperCase()+'</span><span>'+grp.length+'</span>';
+    blk.appendChild(hdr);
+    var lst=document.createElement('div');lst.className='p2-block-list';
+    if(!grp.length){
+      lst.innerHTML='<div style="font-size:6.5pt;color:#999;font-style:italic;padding:2mm 3mm;">Ninguno</div>';
+    } else {
+      grp.forEach(function(p){
+        var row=document.createElement('div');row.className='p2-player';
+        var badge=document.createElement('span');badge.className='p2-badge';
+        badge.setAttribute('style','background:'+def.bg+';color:'+def.text+';border-color:'+def.border+(p.isPor?';border-color:#ffd400':''));
+        badge.textContent=p.isPor?'PO':(p.detectedZoneShort||'---');
+        var name=document.createElement('span');name.style.cssText='flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:6.5pt;';
+        name.textContent=p.name||'(sin nombre)';
+        var onf=document.createElement('span');onf.style.cssText='font-size:7pt;color:#16a34a;flex-shrink:0;';
+        onf.textContent=p.onPitch?'✓':'';
+        row.appendChild(badge);row.appendChild(name);row.appendChild(onf);
+        lst.appendChild(row);
+      });
+    }
+    blk.appendChild(lst);
+    g2.appendChild(blk);
   });
-  /* Expandir listas colapsadas por JS */
-  document.querySelectorAll('#rosterTodos > div > div:last-child').forEach(function(el){
-    if(el.style.display==='none'){el.style.display='';el.dataset.wasCollapsed='1';}
-  });
+  p2.appendChild(g2);
+
+  /* Necesidades y observaciones */
+  var necDiv=document.createElement('div');necDiv.className='p2-nec';
+  var necTxt=document.getElementById('txtNecesidades');
+  var obsTxt=document.getElementById('txtObservaciones');
+  var necCard='<div class="card"><div class="card-h">NECESIDADES DEL EQUIPO</div><div class="card-b"><textarea style="min-height:25mm;" readonly>'+(necTxt?necTxt.value:'')+'</textarea></div></div>';
+  var obsCard='<div class="card"><div class="card-h">OBSERVACIONES</div><div class="card-b"><textarea style="min-height:25mm;" readonly>'+(obsTxt?obsTxt.value:'')+'</textarea></div></div>';
+  necDiv.innerHTML=necCard+obsCard;
+  p2.appendChild(necDiv);
+  document.body.appendChild(p2);
 
   window.print();
 
-  /* Restaurar */
+  /* Limpiar */
   setTimeout(function(){
-    document.body.removeChild(ph);
-    origStyles.forEach(function(o){o.el.style.maxHeight=o.mh;o.el.style.overflowY=o.ov;});
-    document.querySelectorAll('[data-was-collapsed]').forEach(function(el){el.style.display='none';el.removeAttribute('data-was-collapsed');});
+    [ph,pf,p1,p2].forEach(function(el){if(el.parentNode)el.parentNode.removeChild(el);});
+    /* Restaurar main visible */
+    var main=document.querySelector('.main');if(main)main.style.display='';
+    renderAll();
   },800);
 }
 
