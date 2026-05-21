@@ -1887,13 +1887,10 @@ function bindModal(){
   /* Botón añadir en vista combinada — pregunta equipo y añade sin poner en campo */
   document.addEventListener('click',function(e){
     if(e.target&&e.target.id==='btnNewComb'){
-      var tk=prompt('¿A qué equipo añadir?\nEscribe AB o AC','AB');
-      if(!tk)return;
-      tk=tk.trim().toUpperCase();
-      if(tk!=='AB'&&tk!=='AC'){alert('Solo AB o AC');return;}
+      /* Añadir a AB por defecto — aparece en Faltan sin campo, desde ahí se elige AB o AC */
       var prev=activeTeam;
-      activeTeam=tk;
-      var s=null;try{var r=localStorage.getItem('plt_cache_'+docId(tk));if(r)s=JSON.parse(r);}catch(ex){}
+      activeTeam='AB';
+      var s=null;try{var r=localStorage.getItem('plt_cache_'+docId('AB'));if(r)s=JSON.parse(r);}catch(ex){}
       if(s)state=s;else state={players:[]};
       openModal(null);
       function restore(){
