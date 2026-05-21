@@ -810,7 +810,7 @@ button,input,select,textarea{font-family:inherit}
           <button class="lat-btn" data-sel="internacional">Internacional</button>
         </div>
       </div>
-      <div class="frow">
+      <div class="frow" id="fYearsRow">
         <label>A&ntilde;os en el club</label>
         <div style="display:flex;gap:6px;align-items:center;">
           <input type="number" id="fYearsInClub" min="1" max="20" placeholder="Ej: 3"
@@ -1563,7 +1563,17 @@ function buildStatusBtns(){
 
 /* ══ MODAL EDITOR ══ */
 function showProcRow(status){
-  document.getElementById('fProcRow').style.display=(status==='fichaje'||status==='futurible')?'flex':'none';
+  var procRow=document.getElementById('fProcRow');
+  var procLabel=procRow?procRow.querySelector('label'):null;
+  var show=status==='fichaje'||status==='futurible'||status==='destacados';
+  if(procRow)procRow.style.display=show?'flex':'none';
+  if(procLabel){
+    if(status==='destacados')procLabel.textContent='Equipo donde juega';
+    else procLabel.textContent='Procedencia';
+  }
+  /* Años en el club: ocultar si fichaje, futurible o destacados */
+  var yrsRow=document.getElementById('fYearsRow');
+  if(yrsRow)yrsRow.style.display=(status==='fichaje'||status==='futurible'||status==='destacados')?'none':'flex';
 }
 function openModal(pid){
   var isNew=!pid;
@@ -1785,7 +1795,27 @@ function renderCombinedView(){
             chip.classList.remove('dragging');
             try{chip.releasePointerCapture(ptr);}catch(e2){}
             chip.removeEventListener('pointermove',mv);chip.removeEventListener('pointerup',up);
-            if(!moved)return;
+            if(!moved){
+              /* Click sin arrastrar: abrir modal */
+              /* Temporalmente cambiar equipo activo para que el modal funcione */
+              var prevTeam=activeTeam;
+              if(tk!==activeTeam){
+                activeTeam=tk;
+                var s2=null;try{var r2=localStorage.getItem('plt_cache_'+docId(tk));if(r2)s2=JSON.parse(r2);}catch(e3){}
+                if(s2)state=s2;
+              }
+              openModal(p.id);
+              /* Restaurar equipo al cerrar */
+              var origClose=document.getElementById('btnSave').onclick;
+              var restoreTeam=function(){
+                if(tk!==prevTeam){activeTeam=prevTeam;var s3=null;try{var r3=localStorage.getItem('plt_cache_'+docId(prevTeam));if(r3)s3=JSON.parse(r3);}catch(e3){}if(s3)state=s3;}
+                renderCombinedView();
+              };
+              document.getElementById('btnSave').addEventListener('click',restoreTeam,{once:true});
+              document.getElementById('edClose').addEventListener('click',restoreTeam,{once:true});
+              document.getElementById('edCancel').addEventListener('click',restoreTeam,{once:true});
+              return;
+            }
             detectAndUpdateZone(p);
             var s=null;try{var r=localStorage.getItem('plt_cache_'+docId(tk));if(r)s=JSON.parse(r);}catch(e2){}
             if(s){var pi=s.players.findIndex(function(x){return x.id===p.id;});if(pi>=0)s.players[pi]=p;try{localStorage.setItem('plt_cache_'+docId(tk),JSON.stringify(s));}catch(e2){}}
