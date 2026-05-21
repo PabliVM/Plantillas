@@ -2488,77 +2488,119 @@ function printTeamPDF(){
   var nm=t?t.name:activeTeam;
   var gen=getGenYear(activeTeam);
   var szn=activeSzn;
-  var nec=(document.getElementById('txtNecesidades')||{}).value||'';
-  var obs=(document.getElementById('txtObservaciones')||{}).value||'';
-  var B='#2563eb';var D='#1e3a5f';
+  var B='#2563eb'; var D='#1e3a5f';
 
-  /* HEADER HTML */
-  function hdrHtml(){
+  /* ── HEADER ── */
+  function H(){
     return '<div style="background:'+B+';display:flex;align-items:center;gap:10px;padding:4mm 6mm;margin-bottom:4mm;">'
-      +'<img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" style="width:32px;height:32px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;">'
+      +'<img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" '
+      +'style="width:32px;height:32px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;">'
       +'<span style="font-size:13pt;font-weight:800;color:#fff;">'+nm+'</span>'
       +(gen?'<span style="font-size:8pt;color:rgba(255,255,255,.75);margin-left:4px;">&middot; Generaci&oacute;n '+gen+'</span>':'')
-      +'<span style="margin-left:auto;text-align:right;font-size:7pt;color:rgba(255,255,255,.7);">Confecci&oacute;n de Plantillas &middot; Cantera Real Madrid CF<br>Temporada '+szn+'</span>'
+      +'<span style="margin-left:auto;text-align:right;font-size:7pt;color:rgba(255,255,255,.7);">'
+      +'Confecci&oacute;n de Plantillas &middot; Cantera Real Madrid CF<br>Temporada '+szn+'</span>'
       +'</div>';
   }
 
-  /* STATS BAR */
-  function statsHtml(){
-    var pills=[
-      ['Plantilla',document.getElementById('statPlant')],
-      ['Diestros',document.getElementById('statDie')],
-      ['Zurdos',document.getElementById('statZur')],
-      ['Ambi',document.getElementById('statAmb')],
-      ['Resi',document.getElementById('statRes')],
-      ['MP',document.getElementById('statMP')],
-      ['Prom',document.getElementById('statProm')]
-    ];
-    var s='<div style="display:flex;flex-wrap:wrap;gap:2px 10px;background:#f0f4ff;border:1.5px solid '+B+';border-radius:4px;padding:2mm 3mm;margin-bottom:3mm;font-size:7.5pt;align-items:center;">';
-    pills.forEach(function(p){
-      if(p[1])s+=p[0]+' <strong style="color:'+B+';">'+p[1].textContent+'</strong>&nbsp;&nbsp;';
-    });
-    /* Selecciones */
-    ['statMad','statEsp','statInt'].forEach(function(id){
-      var el=document.getElementById(id);
-      if(el&&el.previousElementSibling){
-        var img=el.closest('.stat-pill');
-        if(img)s+=img.outerHTML+'&nbsp;';
-      }
-    });
-    s+='</div>';
-    return s;
+  /* ── STATS (leer valores del DOM ya calculados) ── */
+  function gv(id){var e=document.getElementById(id);return e?e.textContent:'0';}
+  function S(){
+    return '<div style="display:flex;flex-wrap:wrap;gap:2px 10px;align-items:center;'
+      +'background:#f0f4ff;border:1.5px solid '+B+';border-radius:4px;padding:2mm 3mm;margin-bottom:3mm;font-size:8pt;">'
+      +'<b>Plantilla</b> <span style="color:'+B+';font-weight:700;">'+gv('statPlant')+'</span>&nbsp;'
+      +'<b>Diestros</b> <span style="color:'+B+';font-weight:700;">'+gv('statDie')+'</span>&nbsp;'
+      +'<b>Zurdos</b> <span style="color:'+B+';font-weight:700;">'+gv('statZur')+'</span>&nbsp;'
+      +'<b>Ambi</b> <span style="color:'+B+';font-weight:700;">'+gv('statAmb')+'</span>&nbsp;'
+      +'<span style="width:1px;background:#c7d6ff;height:14px;display:inline-block;margin:0 4px;"></span>'
+      +'<b>Residencia</b> <span style="color:'+B+';font-weight:700;">'+gv('statRes')+'</span>&nbsp;'
+      +'<b>Media pens.</b> <span style="color:'+B+';font-weight:700;">'+gv('statMP')+'</span>&nbsp;'
+      +'<span style="width:1px;background:#c7d6ff;height:14px;display:inline-block;margin:0 4px;"></span>'
+      +'<b>Promocionados</b> <span style="color:'+B+';font-weight:700;">'+gv('statProm')+'</span>&nbsp;'
+      +'<span style="width:1px;background:#c7d6ff;height:14px;display:inline-block;margin:0 4px;"></span>'
+      +'<b>Madrile&ntilde;a</b> <span style="color:'+B+';font-weight:700;">'+gv('statMad')+'</span>&nbsp;'
+      +'<b>Espa&ntilde;ola</b> <span style="color:'+B+';font-weight:700;">'+gv('statEsp')+'</span>&nbsp;'
+      +'<b>Internacional</b> <span style="color:'+B+';font-weight:700;">'+gv('statInt')+'</span>'
+      +'</div>';
   }
 
-  /* PLANTILLA HTML */
-  function plistHtml(){
-    var pb=document.getElementById('plistBody');if(!pb)return'';
-    var card=pb.closest('.card');if(!card)return'';
-    var c=card.cloneNode(true);
-    c.querySelectorAll('button,.plist-addbtn,.warn-tag').forEach(function(e){e.remove();});
-    c.style.cssText='border:1px solid #ddd;border-radius:4px;box-shadow:none;';
-    c.querySelectorAll('.plist-item').forEach(function(row){row.style.padding='1px 3px';row.style.borderBottom='1px solid #f0f0f0';});
-    c.querySelectorAll('.plist-name').forEach(function(n){n.style.fontSize='6.5pt';});
-    c.querySelectorAll('.plist-badge').forEach(function(b){b.style.fontSize='6pt';b.style.padding='0 3px';});
-    return c.outerHTML;
-  }
-
-  /* CAMPO CLON */
-  function campoHtml(){
-    var co=document.querySelector('.campo-outer');if(!co)return'';
-    var c=co.cloneNode(true);
-    c.querySelectorAll('.campo-filter,.campo-hint,.campo-foto-btn,.chip-remove-btn,button').forEach(function(e){e.remove();});
-    /* Ocultar bajas, futuribles, destacados */
-    c.querySelectorAll('.player-pos').forEach(function(pos){
-      var chip=pos.querySelector('[style]');if(!chip)return;
-      var st=chip.getAttribute('style')||'';
-      var bad=['#e53e3e','#c53030','#3b82f6','#60a5fa','#7c3aed','#5b21b6'].some(function(col){return st.indexOf(col)>=0;});
-      if(bad)pos.remove();
+  /* ── CAMPO SVG puro + fichas ── */
+  function C(){
+    /* Solo renovados, fichados, dudas */
+    var allowed={'renovado':1,'fichaje':1,'duda':1};
+    var players=state.players.filter(function(p){return p.onPitch&&allowed[p.status];});
+    var statusColors={
+      renovado:{bg:'#f1f5f9',text:'#1e293b',border:'#94a3b8'},
+      fichaje: {bg:'#22c55e',text:'#fff',   border:'#16a34a'},
+      duda:    {bg:'#f59e0b',text:'#1a1d23',border:'#d97706'}
+    };
+    var chips='';
+    players.forEach(function(p){
+      var sc=statusColors[p.status]||statusColors.renovado;
+      var isPor=p.isPor;
+      var bdr=isPor?'#ffd400':sc.border;
+      chips+='<div style="position:absolute;left:'+p.x+'%;top:'+(p.y*(100/118))+'%;'
+        +'transform:translate(-50%,-50%);'
+        +'background:'+sc.bg+';color:'+sc.text+';border:2px solid '+bdr+';'
+        +'border-radius:4px;padding:2px 5px;font-size:6.5pt;font-weight:700;'
+        +'white-space:nowrap;max-width:22%;text-align:center;line-height:1.2;box-shadow:0 1px 3px rgba(0,0,0,.3);">'
+        +esc(p.name||'')
+        +'</div>';
     });
-    c.style.cssText='flex:1;min-width:0;';
-    return c.outerHTML;
+    return '<div style="position:relative;background:#2d7a2d;border-radius:6px;overflow:hidden;border:2px solid #1a5c1a;aspect-ratio:100/118;">'
+      +'<svg style="position:absolute;top:0;left:0;width:100%;height:100%;" viewBox="0 0 100 118" preserveAspectRatio="none">'
+      +'<rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.6)" stroke-width=".8"/>'
+      +'<line x1="2" y1="59" x2="98" y2="59" stroke="rgba(255,255,255,.5)" stroke-width=".6"/>'
+      +'<rect x="26" y="2" width="48" height="16" fill="none" stroke="rgba(255,255,255,.4)" stroke-width=".6"/>'
+      +'<rect x="38" y="2" width="24" height="7" fill="none" stroke="rgba(255,255,255,.3)" stroke-width=".5"/>'
+      +'<rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.4)" stroke-width=".6"/>'
+      +'<rect x="38" y="109" width="24" height="7" fill="none" stroke="rgba(255,255,255,.3)" stroke-width=".5"/>'
+      +'<circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>'
+      +'<circle cx="50" cy="59" r="1" fill="rgba(255,255,255,.4)"/>'
+      +'</svg>'
+      +chips
+      +'</div>';
   }
 
-  /* LISTAS JUGADORES P2 */
+  /* ── PLANTILLA lista ── */
+  var POS_ORDER=['PO','LD','CD','CI','CT','LI','MC','ID','II','IN','ED','EI','DC'];
+  function P(){
+    var allowed={'renovado':1,'fichaje':1,'duda':1};
+    var activos=state.players.filter(function(p){return allowed[p.status];});
+    activos.sort(function(a,b){
+      var pa=a.isPor?'PO':(a.detectedZoneShort||'');
+      var pb=b.isPor?'PO':(b.detectedZoneShort||'');
+      var ia=POS_ORDER.indexOf(pa);var ib=POS_ORDER.indexOf(pb);
+      return (ia<0?999:ia)-(ib<0?999:ib);
+    });
+    var statusColors={
+      renovado:{bg:'#f1f5f9',text:'#1e293b',border:'#94a3b8'},
+      fichaje: {bg:'#22c55e',text:'#fff',   border:'#16a34a'},
+      duda:    {bg:'#f59e0b',text:'#1a1d23',border:'#d97706'}
+    };
+    var totalC=activos.filter(function(p){return!p.isPor;}).length;
+    var totalP=activos.filter(function(p){return p.isPor;}).length;
+    var rows='';
+    activos.forEach(function(p){
+      var sc=statusColors[p.status]||statusColors.renovado;
+      var pos=p.isPor?'PO':(p.detectedZoneShort||'---');
+      var bdr=p.isPor?'#ffd400':sc.border;
+      rows+='<div style="display:flex;align-items:center;gap:4px;padding:2px 4px;border-bottom:1px solid #f0f0f0;">'
+        +'<span style="flex-shrink:0;font-size:6pt;font-weight:800;padding:1px 4px;border-radius:3px;'
+        +'background:'+sc.bg+';color:'+sc.text+';border:1.5px solid '+bdr+';">'+pos+'</span>'
+        +'<span style="font-size:7pt;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(p.name||'')+'</span>'
+        +(p.onPitch?'<span style="color:#16a34a;font-size:8pt;">&#10003;</span>':'')
+        +'</div>';
+    });
+    return '<div style="border:1px solid #ddd;border-radius:4px;overflow:hidden;box-shadow:none;">'
+      +'<div style="background:'+D+';color:#fff;padding:3px 8px;font-size:8pt;font-weight:700;display:flex;justify-content:space-between;align-items:center;">'
+      +'PLANTILLA'
+      +'<span style="background:rgba(255,255,255,.2);border-radius:10px;padding:1px 8px;font-size:7.5pt;">'+totalC+'+'+totalP+'</span>'
+      +'</div>'
+      +rows
+      +'</div>';
+  }
+
+  /* ── LISTAS PÁGINA 2 ── */
   var STATS=[
     {k:'renovado', l:'Renovados',  bg:'#f1f5f9',tx:'#1e293b',bd:'#94a3b8'},
     {k:'fichaje',  l:'Fichados',   bg:'#22c55e', tx:'#fff',   bd:'#16a34a'},
@@ -2567,41 +2609,38 @@ function printTeamPDF(){
     {k:'duda',     l:'Dudas',      bg:'#f59e0b', tx:'#1a1d23',bd:'#d97706'},
     {k:'baja',     l:'Bajas',      bg:'#ef4444', tx:'#fff',   bd:'#dc2626'}
   ];
-  function listsHtml(){
+  function L(){
     var cols='';
     STATS.forEach(function(s){
       var grp=state.players.filter(function(p){return p.status===s.k;});
-      var rows=!grp.length?'<div style="font-size:6pt;color:#999;font-style:italic;padding:2mm;">Ninguno</div>':'';
+      var rows=!grp.length?'<div style="font-size:6pt;color:#999;font-style:italic;padding:3mm;">Ninguno</div>':'';
       grp.forEach(function(p){
         var pos=p.isPor?'PO':(p.detectedZoneShort||'---');
-        rows+='<div style="display:flex;align-items:center;gap:3px;padding:1px 4px;border-bottom:1px solid #f0f0f0;">'
-          +'<span style="flex-shrink:0;font-size:6pt;font-weight:800;padding:0 3px;border-radius:2px;'
-          +'background:'+s.bg+';color:'+s.tx+';border:1.5px solid '+s.bd+';">'+pos+'</span>'
-          +'<span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:6.5pt;">'+esc(p.name||'')+'</span>'
-          +(p.onPitch?'<span style="color:#16a34a;font-size:7pt;">✓</span>':'')
+        var bdr=p.isPor?'#ffd400':s.bd;
+        rows+='<div style="display:flex;align-items:center;gap:3px;padding:2px 4px;border-bottom:1px solid #f0f0f0;">'
+          +'<span style="flex-shrink:0;font-size:6pt;font-weight:800;padding:1px 3px;border-radius:2px;'
+          +'background:'+s.bg+';color:'+s.tx+';border:1.5px solid '+bdr+';">'+pos+'</span>'
+          +'<span style="flex:1;font-size:7pt;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(p.name||'')+'</span>'
+          +(p.onPitch?'<span style="color:#16a34a;font-size:8pt;">&#10003;</span>':'')
           +'</div>';
       });
       cols+='<div style="border:1px solid '+s.bd+';border-radius:4px;overflow:hidden;">'
-        +'<div style="background:'+s.bg+';color:'+s.tx+';padding:2mm 3mm;font-size:7pt;font-weight:700;'
+        +'<div style="background:'+s.bg+';color:'+s.tx+';padding:3px 6px;font-size:7.5pt;font-weight:700;'
         +'display:flex;justify-content:space-between;">'
         +'<span>'+s.l.toUpperCase()+'</span>'
-        +'<span style="background:rgba(0,0,0,.15);border-radius:8px;padding:0 6px;font-size:6.5pt;">'+grp.length+'</span></div>'
+        +'<span style="background:rgba(0,0,0,.15);border-radius:8px;padding:0 6px;font-size:7pt;">'+grp.length+'</span></div>'
         +rows+'</div>';
     });
     return '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4mm;">'+cols+'</div>';
   }
 
-  /* BUILD PAGES */
-  var p1=hdrHtml()
-    +statsHtml()
-    +'<div style="display:grid;grid-template-columns:1fr 195px;gap:5mm;align-items:start;">'
-    +campoHtml()
-    +plistHtml()
-    +'</div>';
+  /* ── BUILD & PRINT ── */
+  var p1=H()+S()
+    +'<div style="display:grid;grid-template-columns:1fr 195px;gap:6mm;align-items:start;">'
+    +C()+P()+'</div>';
 
-  var p2=hdrHtml()+listsHtml();
+  var p2=H()+L();
 
-  /* PRINT VIA IFRAME */
   var old=document.getElementById('_pif');if(old)old.remove();
   var f=document.createElement('iframe');f.id='_pif';
   f.style.cssText='position:fixed;top:0;left:0;width:0;height:0;border:none;';
@@ -2621,6 +2660,7 @@ function printTeamPDF(){
   d.close();
   setTimeout(function(){f.contentWindow.focus();f.contentWindow.print();setTimeout(function(){f.remove();},3000);},600);
 }
+
 
 
 
