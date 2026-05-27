@@ -85,7 +85,20 @@ button,input,select,textarea{font-family:inherit}
 /* CAMPO — componente reutilizable */
 .campo-outer{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;align-items:center;gap:8px;}
 .campo-hint{width:100%;font-size:10px;color:var(--text-mut);font-style:italic;}
-.campo-filter{display:flex;flex-wrap:wrap;gap:5px;width:100%;margin-bottom:4px;}
+.campo-filter{
+  display:flex;
+  flex-wrap:nowrap;
+  gap:5px;
+  width:100%;
+  margin-bottom:4px;
+  overflow-x:auto;
+  padding-bottom:3px;
+}
+
+.campo-filter .cfilter-btn{
+  flex:0 0 auto;
+}
+
 .cfilter-btn{padding:3px 10px;font-size:10px;font-weight:600;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-mut);cursor:pointer;transition:all var(--tr);}
 .cfilter-btn:hover{border-color:var(--rm-blue);color:var(--rm-blue);}
 .cfilter-btn.active{background:var(--rm-blue);color:#fff;border-color:var(--rm-blue);}
