@@ -95,8 +95,32 @@ button,input,select,textarea{font-family:inherit}
   padding-bottom:3px;
 }
 
-.campo-filter .cfilter-btn{
-  flex:0 0 auto;
+#campoFilter .cfilter-btn[data-filter="all"]{
+  order:1!important;
+}
+
+#campoFilter .cfilter-btn[data-filter="baja"]{
+  order:2!important;
+}
+
+#campoFilter .cfilter-btn[data-filter="duda"]{
+  order:3!important;
+}
+
+#campoFilter .cfilter-btn[data-filter="fichaje"]{
+  order:4!important;
+}
+
+#campoFilter .cfilter-btn[data-filter="futurible"]{
+  order:5!important;
+}
+
+#campoFilter .cfilter-btn[data-filter="destacados"]{
+  order:6!important;
+}
+
+#campoFilter .cfilter-btn[data-filter="renovado"]{
+  order:7!important;
 }
 
 .cfilter-btn{padding:3px 10px;font-size:10px;font-weight:600;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-mut);cursor:pointer;transition:all var(--tr);}
