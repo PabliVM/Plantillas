@@ -1037,8 +1037,8 @@ var STATUS_DEF={
   duda:     {label:'Duda',      bg:'#f59e0b', text:'#1a1d23',border:'#d97706'},
   baja:     {label:'Baja',      bg:'#e53e3e', text:'#ffffff',border:'#c53030'}
 };
-var STATUS_ORDER=['renovado','fichaje','futurible','duda','baja','destacados'];
-var ALL_COLOR_KEYS=['renovado','fichaje','futurible','duda','baja','destacados'];
+var var ORDER=['renovado','fichaje','futurible','destacados','duda','baja'];
+var ALL_COLOR_KEYS=['renovado','fichaje','futurible','destacados','duda','baja'];
 
 /* ══ FIREBASE ══ */
 firebase.initializeApp({
@@ -1628,7 +1628,7 @@ function renderCampo(){
 /* ══ RENDER ROSTER — COL DER: 5 bloques con scroll individual ══ */
 function renderRoster(){
   var body=document.getElementById('rosterTodos');body.innerHTML='';
-  var ORDER=['renovado','fichaje','futurible','destacados','duda','baja'];
+  var ORDER=['baja','duda','fichaje','futurible','destacados','renovado'];
   var LABELS={renovado:'Renovados',fichaje:'Fichados',futurible:'Futuribles',destacados:'Destacados',duda:'Dudas',baja:'Bajas'};
   var COLORS={
     renovado:{bg:'#f1f5f9',text:'#1e293b',border:'#cbd5e1'},
