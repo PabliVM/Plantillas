@@ -946,6 +946,12 @@ button,input,select,textarea{font-family:inherit}
         <label>Comentarios</label>
         <textarea id="fComment" maxlength="200" placeholder="Observaciones sobre el jugador..." rows="2" style="width:100%;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);resize:vertical;font-family:var(--font);line-height:1.4;"></textarea>
       </div>
+      <div class="frow" id="fMoveRow">
+        <label>Mover a otro equipo</label>
+        <select id="fMoveTeam" style="width:100%;padding:7px 9px;font-size:13px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);">
+          <option value="">— Mantener en este equipo —</option>
+        </select>
+      </div>
     </div>
     <div class="ed-modal-f">
       <button class="btn dan sm" id="btnDelete" style="display:none">Eliminar</button>
@@ -1867,13 +1873,52 @@ function openModal(pid){
   document.getElementById('fBirthYear').value=p.birthYear||'';
   document.getElementById('fComment').value=p.comment||'';
   var fyEl=document.getElementById('fYearsInClub');if(fyEl)fyEl.value=p.yearsInClub||'';
+  /* Selector de equipos — poblar con todos menos el activo */
+  var moveSel=document.getElementById('fMoveTeam');
+  if(moveSel){
+    moveSel.innerHTML='<option value="">— Mantener en este equipo —</option>';
+    var allTeams=TEAMS.concat([{key:'AB',name:'Alevín B'},{key:'AC',name:'Alevín C'}]);
+    allTeams.forEach(function(t){
+      if(t.key===activeTeam)return;
+      var o=document.createElement('option');o.value=t.key;o.textContent=t.key+' — '+t.name;
+      moveSel.appendChild(o);
+    });
+  }
   document.querySelectorAll('.status-btn').forEach(function(b){b.classList.toggle('active',b.dataset.status===p.status);});
   document.getElementById('edModal').style.display='flex';
   setTimeout(function(){document.getElementById('fName').focus();},80);
 }
 function closeModal(){
+  /* Comprobar si hay equipo destino seleccionado */
+  var moveSel=document.getElementById('fMoveTeam');
+  var destTeam=moveSel?moveSel.value:'';
   document.getElementById('edModal').style.display='none';
-  selectedId=null;renderRoster();renderCampo();renderPlist();
+
+  if(destTeam&&selectedId){
+    /* Mover jugador: copiar al destino y eliminar del origen */
+    var p=getPlayer(selectedId);
+    if(p){
+      var pCopy=JSON.parse(JSON.stringify(p));
+      pCopy.onPitch=false;pCopy.detectedZoneId='';pCopy.detectedZoneShort='';pCopy.detectedZoneLabel='Sin zona';
+      /* Añadir al destino */
+      var dest=null;
+      try{var rd=localStorage.getItem('plt_cache_'+docId(destTeam));if(rd)dest=JSON.parse(rd);}catch(e){}
+      if(!dest)dest={players:[],necesidades:'',observaciones:''};
+      dest.players.push(pCopy);
+      try{localStorage.setItem('plt_cache_'+docId(destTeam),JSON.stringify(dest));}catch(e){}
+      teamDoc(destTeam).set({players:dest.players,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
+        .catch(function(e){console.error('movePlayer dest',e);});
+      /* Eliminar del origen */
+      state.players=state.players.filter(function(x){return x.id!==selectedId;});
+      persist();
+      setSync('saving');
+    }
+  }
+
+  selectedId=null;
+  if(moveSel)moveSel.value='';
+  if(activeCombined==='AB+AC'){renderCombinedView();}
+  else{renderRoster();renderCampo();renderPlist();}
 }
 function bindModal(){
   document.querySelectorAll('.res-btn').forEach(function(btn){
