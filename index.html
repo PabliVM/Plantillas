@@ -1296,6 +1296,31 @@ function renderHomeGrid(){
       +(cnt?'<div class="home-team-cnt">'+cnt+' jugadores</div>':'<div class="home-team-cnt" style="color:var(--text-mut)">Sin jugadores</div>');
     card.addEventListener('click',function(){showApp(t.key);});
     grid.appendChild(card);
+    /* Insertar tarjeta AB+AC después de AA */
+    if(t.key==='AA'){
+      var cachedAB=null,cachedAC=null;
+      try{var rAB=localStorage.getItem('plt_cache_'+activeSzn.replace('/','_')+'_AB');if(rAB)cachedAB=JSON.parse(rAB);}catch(e){}
+      try{var rAC=localStorage.getItem('plt_cache_'+activeSzn.replace('/','_')+'_AC');if(rAC)cachedAC=JSON.parse(rAC);}catch(e){}
+      var cntAB=(cachedAB&&cachedAB.players?cachedAB.players.length:0);
+      var cntAC=(cachedAC&&cachedAC.players?cachedAC.players.length:0);
+      var comb=document.createElement('div');comb.className='home-team-card';
+      comb.style.borderColor='var(--rm-blue)';
+      comb.innerHTML='<div class="home-team-key" style="color:var(--rm-blue);">AB+AC</div>'
+        +'<div class="home-team-name">Alevín B + C</div>'
+        +'<div class="home-team-cnt">AB: '+cntAB+' · AC: '+cntAC+'</div>';
+      comb.addEventListener('click',function(){
+        document.getElementById('homeScreen').style.display='none';
+        document.getElementById('appScreen').style.display='block';
+        document.getElementById('btnHome').style.display='inline-flex';
+        activeCombined='AB+AC';
+        localStorage.setItem('plt_last_view','combined');
+        document.getElementById('viewNormal').style.display='none';
+        document.getElementById('viewCombined').style.display='block';
+        renderTeamBar();
+        renderCombinedView();
+      });
+      grid.appendChild(comb);
+    }
   });
 }
 
@@ -1334,8 +1359,26 @@ function renderTeamBar(){
       renderAll();loadTeam();
     });
     bar.appendChild(b);
-    /* Insertar AB+AC entre AA y BA */
-    if(t.key==='AA')bar.appendChild(makeCombBtn());
+    /* Insertar AB, AC y AB+AC entre AA y BA */
+    if(t.key==='AA'){
+      ['AB','AC'].forEach(function(tk){
+        var tInfo={AB:{name:'Alev\xedn B'},AC:{name:'Alev\xedn C'}}[tk];
+        var bAlt=document.createElement('button');
+        bAlt.className='team-btn'+(activeTeam===tk&&activeCombined!=='AB+AC'?' active':'');
+        bAlt.textContent=tk;bAlt.title=tInfo.name;
+        bAlt.addEventListener('click',function(){
+          if(activeTeam===tk&&activeCombined!=='AB+AC')return;
+          activeCombined=null;
+          activeTeam=tk;localStorage.setItem(ATM_KEY,activeTeam);
+          state={players:[]};selectedId=null;activeFilters=['all'];syncFilterBtns();
+          document.getElementById('viewCombined').style.display='none';
+          document.getElementById('viewNormal').style.display='block';
+          renderAll();loadTeam();
+        });
+        bar.appendChild(bAlt);
+      });
+      bar.appendChild(makeCombBtn());
+    }
   });
 
   var t=TEAMS.find(function(x){return x.key===activeTeam;});
