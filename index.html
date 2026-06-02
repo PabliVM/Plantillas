@@ -1985,6 +1985,37 @@ function dragFromRoster(ev,pid){
 function renderCombinedView(){
   var POS_ORDER=['PO','LD','CD','CI','CT','LI','MC','ID','II','IN','ED','EI','DC'];
 
+  /* Verificar si hay cache local para AB y AC */
+  var needsAB=!localStorage.getItem('plt_cache_'+docId('AB'));
+  var needsAC=!localStorage.getItem('plt_cache_'+docId('AC'));
+
+  if(needsAB||needsAC){
+    /* Cargar desde Firebase los equipos que falten */
+    var loads=[];
+    if(needsAB)loads.push(
+      teamDoc('AB').get().then(function(snap){
+        var d=snap.exists?snap.data():{};
+        var s={players:d.players||[],necesidades:d.necesidades||'',observaciones:d.observaciones||''};
+        try{localStorage.setItem('plt_cache_'+docId('AB'),JSON.stringify(s));}catch(e){}
+      })
+    );
+    if(needsAC)loads.push(
+      teamDoc('AC').get().then(function(snap){
+        var d=snap.exists?snap.data():{};
+        var s={players:d.players||[],necesidades:d.necesidades||'',observaciones:d.observaciones||''};
+        try{localStorage.setItem('plt_cache_'+docId('AC'),JSON.stringify(s));}catch(e){}
+      })
+    );
+    Promise.all(loads).then(function(){_renderCombinedViewInner(POS_ORDER);}).catch(function(){_renderCombinedViewInner(POS_ORDER);});
+    return;
+  }
+
+  _renderCombinedViewInner(POS_ORDER);
+}
+
+function _renderCombinedViewInner(POS_ORDER){
+  if(!POS_ORDER)POS_ORDER=['PO','LD','CD','CI','CT','LI','MC','ID','II','IN','ED','EI','DC'];
+
   ['AB','AC'].forEach(function(tk){
     var cached=null;
     try{var r=localStorage.getItem('plt_cache_'+docId(tk));if(r)cached=JSON.parse(r);}catch(e){}
