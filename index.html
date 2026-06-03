@@ -1601,11 +1601,26 @@ document.getElementById('btnSeasonDel').addEventListener('click',function(){
 var PZ={top:{x1:26,y1:0,x2:74,y2:16},bot:{x1:26,y1:100,x2:74,y2:118}};
 function inGoal(x,y){return(x>=PZ.top.x1&&x<=PZ.top.x2&&y>=PZ.top.y1&&y<=PZ.top.y2)||(x>=PZ.bot.x1&&x<=PZ.bot.x2&&y>=PZ.bot.y1&&y<=PZ.bot.y2);}
 function countPitch(){var c=0,p=0;state.players.forEach(function(pl){if(!pl.onPitch||pl.status==='baja')return;if(pl.isPor&&inGoal(pl.x,pl.y))p++;else c++;});return{c:c,p:p};}
+
+/* Helper: jugador es promocionado (deportivo o por generación) */
+function isPromocionado(p){
+  if(p.promovido)return false; /* ya promovido desde este equipo, no cuenta */
+  if(p.status==='promocion')return true;
+  var genYear=getGenYear(activeTeam);
+  return !!(p.birthYear&&genYear&&parseInt(p.birthYear)>parseInt(genYear));
+}
+
+/* Comprobar si un jugador pasa el filtro activo */
+function passesFilter(p){
+  if(activeFilters[0]==='all')return true;
+  if(activeFilters.indexOf('promocion')>=0&&isPromocionado(p))return true;
+  return activeFilters.indexOf(p.status)>=0;
+}
+
 function renderCounter(){
   var visibles=state.players.filter(function(p){
     if(!p.onPitch)return false;
-    if(activeFilters[0]==='all')return true;
-    return activeFilters.indexOf(p.status)>=0;
+    return passesFilter(p);
   });
   var c=visibles.filter(function(p){return!p.isPor;}).length;
   var p=visibles.filter(function(p){return p.isPor;}).length;
@@ -1666,7 +1681,7 @@ function renderCampo(){
   var cont=document.getElementById('campoPlayers');cont.innerHTML='';
   state.players.forEach(function(p){
     if(!p.onPitch)return;
-    var visible=activeFilters[0]==='all'||activeFilters.indexOf(p.status)>=0;
+    var visible=passesFilter(p);
     var pos=document.createElement('div');pos.className='player-pos';
     pos.style.left=p.x+'%';pos.style.top=p.y*(100/118)+'%';pos.dataset.id=p.id;
     if(!visible)pos.style.opacity='0.12';
@@ -1875,8 +1890,7 @@ function renderPlist(){
 function renderStats(){
   var enCampo=state.players.filter(function(p){
     if(!p.onPitch)return false;
-    if(activeFilters[0]==='all')return true;
-    return activeFilters.indexOf(p.status)>=0;
+    return passesFilter(p);
   });
   var totalC=enCampo.filter(function(p){return!p.isPor;}).length;
   var totalP=enCampo.filter(function(p){return p.isPor;}).length;
