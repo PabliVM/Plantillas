@@ -952,6 +952,13 @@ button,input,select,textarea{font-family:inherit}
           <option value="">— Mantener en este equipo —</option>
         </select>
       </div>
+      <div class="frow" id="fPromoRow">
+        <label style="color:#0891b2;font-weight:700;">&#11014; Promocionar a equipo superior</label>
+        <select id="fPromoTeam" style="width:100%;padding:7px 9px;font-size:13px;border:1px solid #06b6d4;border-radius:var(--rs);background:var(--surface);color:var(--text);">
+          <option value="">— Sin promocionar —</option>
+        </select>
+        <span style="font-size:10px;color:var(--text-mut);margin-top:3px;">El jugador se copia al equipo destino con estado Promoci&#243;n (cian). En este equipo no cambia nada.</span>
+      </div>
     </div>
     <div class="ed-modal-f">
       <button class="btn dan sm" id="btnDelete" style="display:none">Eliminar</button>
@@ -1003,10 +1010,11 @@ var STATUS_DEF={
   fichaje:  {label:'Fichaje',   bg:'#77ED85', text:'#003300',border:'#4ade80'},
   futurible:{label:'Futurible', bg:'#3b82f6', text:'#ffffff',border:'#2563eb'},
   duda:     {label:'Duda',      bg:'#f59e0b', text:'#1a1d23',border:'#d97706'},
-  baja:     {label:'Baja',      bg:'#e53e3e', text:'#ffffff',border:'#c53030'}
+  baja:     {label:'Baja',      bg:'#e53e3e', text:'#ffffff',border:'#c53030'},
+  promocion:{label:'Promoci\xf3n',bg:'#06b6d4',text:'#ffffff',border:'#0891b2'}
 };
-var STATUS_ORDER=['baja','duda','fichaje','futurible','destacados','renovado'];
-var ALL_COLOR_KEYS=['renovado','fichaje','futurible','duda','baja','destacados'];
+var STATUS_ORDER=['baja','duda','fichaje','futurible','destacados','renovado','promocion'];
+var ALL_COLOR_KEYS=['renovado','fichaje','futurible','duda','baja','destacados','promocion'];
 
 /* ══ FIREBASE ══ */
 firebase.initializeApp({
@@ -1810,8 +1818,8 @@ function renderStats(){
   document.getElementById('statAmbi').textContent=enCampo.filter(function(p){return p.lat==='ambidiestro';}).length;
   document.getElementById('statRes').textContent=enCampo.filter(function(p){return p.res==='R';}).length;
   document.getElementById('statMP').textContent=enCampo.filter(function(p){return p.res==='MP';}).length;
-  /* Promocionado = cualquier jugador con birthYear relleno */
-  document.getElementById('statProm').textContent=enCampo.filter(function(p){return p.birthYear;}).length;
+  /* Promocionado = jugadores con estado 'promocion' */
+  document.getElementById('statProm').textContent=enCampo.filter(function(p){return p.status==='promocion'||p.birthYear;}).length;
   document.getElementById('statMad').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('madrilena')>=0;}).length;
   document.getElementById('statEsp').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('espanola')>=0;}).length;
   document.getElementById('statInt').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('internacional')>=0;}).length;
@@ -1873,7 +1881,7 @@ function openModal(pid){
   document.getElementById('fBirthYear').value=p.birthYear||'';
   document.getElementById('fComment').value=p.comment||'';
   var fyEl=document.getElementById('fYearsInClub');if(fyEl)fyEl.value=p.yearsInClub||'';
-  /* Selector de equipos — poblar con todos menos el activo */
+  /* Selector mover — todos los equipos menos el activo */
   var moveSel=document.getElementById('fMoveTeam');
   if(moveSel){
     moveSel.innerHTML='<option value="">— Mantener en este equipo —</option>';
@@ -1884,39 +1892,67 @@ function openModal(pid){
       moveSel.appendChild(o);
     });
   }
+  /* Selector promoción — todos los equipos menos el activo */
+  var promoSel=document.getElementById('fPromoTeam');
+  if(promoSel){
+    promoSel.innerHTML='<option value="">— Sin promocionar —</option>';
+    var allTeams2=TEAMS.concat([{key:'AB',name:'Alevín B'},{key:'AC',name:'Alevín C'}]);
+    allTeams2.forEach(function(t){
+      if(t.key===activeTeam)return;
+      var o=document.createElement('option');o.value=t.key;o.textContent=t.key+' — '+t.name;
+      promoSel.appendChild(o);
+    });
+  }
   document.querySelectorAll('.status-btn').forEach(function(b){b.classList.toggle('active',b.dataset.status===p.status);});
   document.getElementById('edModal').style.display='flex';
   setTimeout(function(){document.getElementById('fName').focus();},80);
 }
 function closeModal(){
-  /* Comprobar si hay equipo destino seleccionado */
   var moveSel=document.getElementById('fMoveTeam');
+  var promoSel=document.getElementById('fPromoTeam');
   var destTeam=moveSel?moveSel.value:'';
+  var promoTeam=promoSel?promoSel.value:'';
   document.getElementById('edModal').style.display='none';
 
-  if(destTeam&&selectedId){
-    /* Mover jugador: copiar al destino y eliminar del origen */
+  if(promoTeam&&selectedId){
+    /* PROMOCIONAR: copiar al destino con estado 'promocion', origen no cambia */
+    var p=getPlayer(selectedId);
+    if(p){
+      var pCopy=JSON.parse(JSON.stringify(p));
+      pCopy.status='promocion';
+      pCopy.onPitch=false;pCopy.detectedZoneId='';pCopy.detectedZoneShort='';pCopy.detectedZoneLabel='Sin zona';
+      var dest=null;
+      try{var rd=localStorage.getItem('plt_cache_'+docId(promoTeam));if(rd)dest=JSON.parse(rd);}catch(e){}
+      if(!dest)dest={players:[],necesidades:'',observaciones:''};
+      /* Evitar duplicados */
+      if(!dest.players.some(function(x){return x.id===pCopy.id;})){
+        dest.players.push(pCopy);
+      }
+      try{localStorage.setItem('plt_cache_'+docId(promoTeam),JSON.stringify(dest));}catch(e){}
+      teamDoc(promoTeam).set({players:dest.players,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
+        .catch(function(e){console.error('promo dest',e);});
+    }
+  } else if(destTeam&&selectedId){
+    /* MOVER: copiar al destino y eliminar del origen */
     var p=getPlayer(selectedId);
     if(p){
       var pCopy=JSON.parse(JSON.stringify(p));
       pCopy.onPitch=false;pCopy.detectedZoneId='';pCopy.detectedZoneShort='';pCopy.detectedZoneLabel='Sin zona';
-      /* Añadir al destino */
       var dest=null;
       try{var rd=localStorage.getItem('plt_cache_'+docId(destTeam));if(rd)dest=JSON.parse(rd);}catch(e){}
       if(!dest)dest={players:[],necesidades:'',observaciones:''};
       dest.players.push(pCopy);
       try{localStorage.setItem('plt_cache_'+docId(destTeam),JSON.stringify(dest));}catch(e){}
       teamDoc(destTeam).set({players:dest.players,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
-        .catch(function(e){console.error('movePlayer dest',e);});
-      /* Eliminar del origen */
+        .catch(function(e){console.error('move dest',e);});
       state.players=state.players.filter(function(x){return x.id!==selectedId;});
       persist();
-      setSync('saving');
     }
   }
 
   selectedId=null;
   if(moveSel)moveSel.value='';
+  if(promoSel)promoSel.value='';
   if(activeCombined==='AB+AC'){renderCombinedView();}
   else{renderRoster();renderCampo();renderPlist();}
 }
