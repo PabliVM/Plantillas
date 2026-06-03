@@ -1773,7 +1773,15 @@ function renderRoster(){
         lista.appendChild(item);
       });
     }
-    hdr.addEventListener('click',function(){lista.style.display=lista.style.display==='none'?'':'none';});
+    var arrow=document.createElement('span');
+    arrow.textContent='▼';
+    arrow.style.cssText='font-size:9px;transition:transform .2s;margin-left:6px;';
+    hdr.appendChild(arrow);
+    hdr.addEventListener('click',function(){
+      var closed=lista.style.display==='none';
+      lista.style.display=closed?'':'none';
+      arrow.style.transform=closed?'':'rotate(-90deg)';
+    });
     bloque.appendChild(hdr);bloque.appendChild(lista);
     body.appendChild(bloque);
   }
@@ -2487,7 +2495,15 @@ function _renderCombinedViewInner(POS_ORDER){
         lista.appendChild(item);
       });
     }
-    hdr.addEventListener('click',function(){lista.style.display=lista.style.display==='none'?'':'none';});
+    var arrow=document.createElement('span');
+    arrow.textContent='▼';
+    arrow.style.cssText='font-size:9px;transition:transform .2s;margin-left:6px;';
+    hdr.appendChild(arrow);
+    hdr.addEventListener('click',function(){
+      var closed=lista.style.display==='none';
+      lista.style.display=closed?'':'none';
+      arrow.style.transform=closed?'':'rotate(-90deg)';
+    });
     bloque.appendChild(hdr);bloque.appendChild(lista);
     rosterEl.appendChild(bloque);
   });
