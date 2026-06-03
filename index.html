@@ -1665,6 +1665,8 @@ function renderRoster(){
   var promoPlayers=[];
   state.players.forEach(function(p){
     if(promoSet[p.id])return;
+    /* Excluir jugadores ya promovidos desde este equipo (tienen flag promovido=true) */
+    if(p.promovido)return;
     /* Tipo A: promoción deportiva (estado manual) */
     if(p.status==='promocion'){promoSet[p.id]=true;promoPlayers.push(p);return;}
     /* Tipo B: promoción por generación (birthYear más joven que la gen del equipo) */
@@ -1910,12 +1912,30 @@ function openModal(pid){
   var promoSel=document.getElementById('fPromoTeam');
   if(promoSel){
     promoSel.innerHTML='<option value="">— Sin promocionar —</option>';
-    var allTeams2=TEAMS.concat([{key:'AB',name:'Alevín B'},{key:'AC',name:'Alevín C'}]);
+    var allTeams2=TEAMS.concat([{key:'AB',name:'Alev\xedn B'},{key:'AC',name:'Alev\xedn C'}]);
     allTeams2.forEach(function(t){
       if(t.key===activeTeam)return;
-      var o=document.createElement('option');o.value=t.key;o.textContent=t.key+' — '+t.name;
+      var o=document.createElement('option');o.value=t.key;o.textContent=t.key+' \u2014 '+t.name;
       promoSel.appendChild(o);
     });
+  }
+  /* Indicador si ya está promovido */
+  var promoRow=document.getElementById('fPromoRow');
+  if(promoRow){
+    var promoInfo=promoRow.querySelector('.promo-info');
+    if(promoInfo)promoInfo.remove();
+    if(p.promovido){
+      var info=document.createElement('div');
+      info.className='promo-info';
+      info.style.cssText='display:flex;align-items:center;gap:8px;margin-top:4px;padding:5px 8px;background:#e0f7fa;border-radius:4px;border:1px solid #0891b2;';
+      info.innerHTML='<span style="font-size:11px;color:#0891b2;font-weight:700;">\u2B06 Ya promovido a equipo superior</span>'
+        +'<button id="btnDeshacerPromo" style="font-size:10px;padding:2px 8px;border:1px solid #dc2626;border-radius:4px;background:none;color:#dc2626;cursor:pointer;">Deshacer</button>';
+      promoRow.appendChild(info);
+      document.getElementById('btnDeshacerPromo').addEventListener('click',function(){
+        p.promovido=false;persist();
+        info.remove();
+      });
+    }
   }
   document.querySelectorAll('.status-btn').forEach(function(b){b.classList.toggle('active',b.dataset.status===p.status);});
   document.getElementById('edModal').style.display='flex';
@@ -1929,7 +1949,7 @@ function closeModal(){
   document.getElementById('edModal').style.display='none';
 
   if(promoTeam&&selectedId){
-    /* PROMOCIONAR: copiar al destino con estado 'promocion', origen no cambia */
+    /* PROMOCIONAR: copiar al destino con estado 'promocion', origen queda marcado como promovido */
     var p=getPlayer(selectedId);
     if(p){
       var pCopy=JSON.parse(JSON.stringify(p));
@@ -1945,6 +1965,9 @@ function closeModal(){
       try{localStorage.setItem('plt_cache_'+docId(promoTeam),JSON.stringify(dest));}catch(e){}
       teamDoc(promoTeam).set({players:dest.players,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
         .catch(function(e){console.error('promo dest',e);});
+      /* Marcar origen como promovido (no aparece en sección Promocionados, sigue en su estado) */
+      p.promovido=true;
+      persist();
     }
   } else if(destTeam&&selectedId){
     /* MOVER: copiar al destino y eliminar del origen */
