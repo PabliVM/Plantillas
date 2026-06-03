@@ -2865,15 +2865,24 @@ function printTeamPDF(){
   var STATS=[
     {k:'renovado', l:'Renovados',  bg:'#f1f5f9',tx:'#1e293b',bd:'#94a3b8'},
     {k:'fichaje',  l:'Fichados',   bg:'#22c55e', tx:'#fff',   bd:'#16a34a'},
+    {k:'promocion',l:'Promocionados',bg:'#06b6d4',tx:'#fff',  bd:'#0891b2'},
     {k:'futurible',l:'Futuribles', bg:'#3b82f6', tx:'#fff',   bd:'#2563eb'},
     {k:'destacados',l:'Destacados',bg:'#7c3aed', tx:'#fff',   bd:'#5b21b6'},
     {k:'duda',     l:'Dudas',      bg:'#f59e0b', tx:'#1a1d23',bd:'#d97706'},
     {k:'baja',     l:'Bajas',      bg:'#ef4444', tx:'#fff',   bd:'#dc2626'}
   ];
   function L(){
+    var genYear=getGenYear(activeTeam);
+    /* Construir grupo de promocionados (deportiva + generación, sin duplicados, sin promovido=true) */
+    var promoSet={};var promoGrp=[];
+    state.players.forEach(function(p){
+      if(promoSet[p.id]||p.promovido)return;
+      if(p.status==='promocion'){promoSet[p.id]=true;promoGrp.push(p);return;}
+      if(p.birthYear&&genYear&&parseInt(p.birthYear)>parseInt(genYear)){promoSet[p.id]=true;promoGrp.push(p);}
+    });
     var cols='';
     STATS.forEach(function(s){
-      var grp=state.players.filter(function(p){return p.status===s.k;});
+      var grp=s.k==='promocion'?promoGrp:state.players.filter(function(p){return p.status===s.k;});
       var rows=!grp.length?'<div style="font-size:6pt;color:#999;font-style:italic;padding:3mm;">Ninguno</div>':'';
       grp.forEach(function(p){
         var pos=p.isPor?'PO':(p.detectedZoneShort||'---');
@@ -2891,7 +2900,7 @@ function printTeamPDF(){
         +'<span style="background:rgba(0,0,0,.15);border-radius:8px;padding:0 6px;font-size:7pt;">'+grp.length+'</span></div>'
         +rows+'</div>';
     });
-    return '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4mm;">'+cols+'</div>';
+    return '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3mm;">'+cols+'</div>';
   }
 
   function doPrint(campoDataUrl){
@@ -2973,6 +2982,7 @@ function printCombinedPDF(){
   var STATS_DEF=[
     {k:'renovado', l:'Renovados',  bg:'#f1f5f9',tx:'#1e293b',bd:'#94a3b8'},
     {k:'fichaje',  l:'Fichados',   bg:'#22c55e', tx:'#fff',   bd:'#16a34a'},
+    {k:'promocion',l:'Promocionados',bg:'#06b6d4',tx:'#fff',  bd:'#0891b2'},
     {k:'futurible',l:'Futuribles', bg:'#3b82f6', tx:'#fff',   bd:'#2563eb'},
     {k:'destacados',l:'Destacados',bg:'#7c3aed', tx:'#fff',   bd:'#5b21b6'},
     {k:'duda',     l:'Dudas',      bg:'#f59e0b', tx:'#1a1d23',bd:'#d97706'},
@@ -3061,7 +3071,7 @@ function printCombinedPDF(){
         +'<span>'+s.l.toUpperCase()+'</span><span style="background:rgba(0,0,0,.15);border-radius:8px;padding:0 6px;font-size:7pt;">'+grp.length+'</span></div>'
         +rows+'</div>';
     });
-    return '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4mm;">'+cols+'</div>';
+    return '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3mm;">'+cols+'</div>';
   }
 
   /* Capturar ambos campos con html2canvas */
