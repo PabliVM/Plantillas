@@ -1733,7 +1733,7 @@ function renderRoster(){
     cnt.style.cssText='background:rgba(0,0,0,.12);border-radius:8px;padding:1px 7px;font-size:10px;font-weight:800;';
     cnt.textContent=grp.length;
     hdr.innerHTML='<span>'+label.toUpperCase()+'</span>';
-    hdr.appendChild(cnt);
+    var rightWrap2=document.createElement('span');rightWrap2.style.cssText='display:flex;align-items:center;gap:4px;';var arrow2=document.createElement('span');arrow2.className='grp-arrow';arrow2.textContent='▼';arrow2.style.cssText='font-size:9px;transition:transform .2s;';rightWrap2.appendChild(cnt);rightWrap2.appendChild(arrow2);hdr.appendChild(rightWrap2);
     var lista=document.createElement('div');
     lista.style.cssText='background:var(--surface);';
     if(!grp.length){
@@ -1773,14 +1773,11 @@ function renderRoster(){
         lista.appendChild(item);
       });
     }
-    var arrow=document.createElement('span');
-    arrow.textContent='▼';
-    arrow.style.cssText='font-size:9px;transition:transform .2s;margin-left:6px;';
-    hdr.appendChild(arrow);
     hdr.addEventListener('click',function(){
-      var closed=lista.style.display==='none';
-      lista.style.display=closed?'':'none';
-      arrow.style.transform=closed?'':'rotate(-90deg)';
+      var isOpen=lista.style.display!=='none';
+      lista.style.display=isOpen?'none':'';
+      var arEl=hdr.querySelector('.grp-arrow');
+      if(arEl)arEl.style.transform=isOpen?'rotate(-90deg)':'';
     });
     bloque.appendChild(hdr);bloque.appendChild(lista);
     body.appendChild(bloque);
@@ -2476,7 +2473,7 @@ function _renderCombinedViewInner(POS_ORDER){
     var hdr=document.createElement('div');
     hdr.style.cssText='background:'+col.bg+';color:'+col.text+';padding:5px 8px;display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:700;cursor:pointer;';
     var cnt=document.createElement('span');cnt.style.cssText='background:rgba(0,0,0,.12);border-radius:8px;padding:1px 6px;font-size:9px;';cnt.textContent=grp.length;
-    hdr.innerHTML='<span>'+LABELS[st].toUpperCase()+'</span>';hdr.appendChild(cnt);
+    hdr.innerHTML='<span>'+LABELS[st].toUpperCase()+'</span>';var rw3=document.createElement('span');rw3.style.cssText='display:flex;align-items:center;gap:4px;';var ar3=document.createElement('span');ar3.className='grp-arrow';ar3.textContent='▼';ar3.style.cssText='font-size:9px;transition:transform .2s;';rw3.appendChild(cnt);rw3.appendChild(ar3);hdr.appendChild(rw3);
     var lista=document.createElement('div');lista.style.cssText='background:var(--surface);';
     if(!grp.length){
       lista.innerHTML='<div style="font-size:9px;color:var(--text-mut);font-style:italic;padding:6px 8px;">Ninguno</div>';
