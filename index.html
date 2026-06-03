@@ -1097,8 +1097,54 @@ function flushSave(){
     necesidades:snap.necesidades||'',
     observaciones:snap.observaciones||'',
     ts:firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function(){saveInFlight=false;setSync('saved');if(pendingSave){pendingSave=false;persist();}})
+  }).then(function(){
+    saveInFlight=false;setSync('saved');
+    if(pendingSave){pendingSave=false;persist();}
+    /* Sincronizar jugadores espejo en otros equipos */
+    syncMirroredPlayers(snap.players||[]);
+  })
   .catch(function(){saveInFlight=false;setSync(navigator.onLine?'error':'offline');if(pendingSave){pendingSave=false;persist();}});
+}
+
+/* Campos que se sincronizan entre equipos (no status ni onPitch) */
+var SYNC_FIELDS=['name','isPor','res','lat','proc','birthYear','comment','yearsInClub','selecciones'];
+
+function syncMirroredPlayers(players){
+  /* Buscar jugadores que tienen espejo: los promovidos (promovido=true) en este equipo */
+  var toSync=players.filter(function(p){return p.promovido;});
+  if(!toSync.length)return;
+
+  /* Buscar en todos los equipos cuáles tienen versiones espejo (mismo id, status='promocion') */
+  var allTeamKeys=TEAMS.map(function(t){return t.key;}).concat(['AB','AC']);
+  allTeamKeys.forEach(function(tk){
+    if(tk===activeTeam)return;
+    var cached=null;
+    try{var r=localStorage.getItem('plt_cache_'+docId(tk));if(r)cached=JSON.parse(r);}catch(e){}
+    if(!cached||!cached.players||!cached.players.length)return;
+
+    var changed=false;
+    cached.players.forEach(function(cp){
+      if(cp.status!=='promocion')return;
+      /* Buscar el jugador origen por id */
+      var origin=toSync.find(function(p){return p.id===cp.id;});
+      if(!origin)return;
+      /* Actualizar campos sincronizables */
+      SYNC_FIELDS.forEach(function(f){
+        if(JSON.stringify(cp[f])!==JSON.stringify(origin[f])){
+          cp[f]=JSON.parse(JSON.stringify(origin[f]===undefined?null:origin[f]));
+          changed=true;
+        }
+      });
+    });
+
+    if(!changed)return;
+    /* Guardar en localStorage y Firebase */
+    try{localStorage.setItem('plt_cache_'+docId(tk),JSON.stringify(cached));}catch(e){}
+    teamDoc(tk).set({
+      players:cached.players,
+      ts:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true}).catch(function(e){console.error('syncMirror',e);});
+  });
 }
 function loadTeamFB(tk){
   return teamDoc(tk).get().then(function(snap){
