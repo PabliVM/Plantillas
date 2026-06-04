@@ -472,8 +472,14 @@ button,input,select,textarea{font-family:inherit}
 </head>
 <body>
 
+<!-- ══ PANTALLA CARGA ══ -->
+<div id="loadingScreen" style="position:fixed;inset:0;background:var(--rm-blue);z-index:9998;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+  <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" style="width:64px;height:64px;object-fit:contain;border-radius:50%;background:#fff;padding:4px;">
+  <div style="color:#fff;font-size:14px;font-weight:600;">Cargando...</div>
+</div>
+
 <!-- ══ PANTALLA LOGIN ══ -->
-<div id="loginScreen" style="display:none;position:fixed;inset:0;background:var(--rm-blue);z-index:9999;display:flex;align-items:center;justify-content:center;">
+<div id="loginScreen" style="display:none;position:fixed;inset:0;background:var(--rm-blue);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:12px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.25);">
     <div style="text-align:center;margin-bottom:24px;">
       <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" style="width:56px;height:56px;object-fit:contain;margin-bottom:12px;">
@@ -580,15 +586,20 @@ button,input,select,textarea{font-family:inherit}
     <button class="season-del" id="btnSeasonDel" title="Eliminar temporada">&minus;</button>
   </div>
   <button class="hbtn" id="btnPrint" onclick="activeCombined==='AB+AC'?printCombinedPDF():printTeamPDF()" title="Imprimir PDF">&#128438; PDF</button>
-  <button class="hbtn" id="btnAudit" style="display:none" onclick="openAudit()">&#128196; Auditoría</button>
-  <button class="hbtn" id="btnUsers" style="display:none" onclick="openUsers()">&#128101; Usuarios</button>
+  <div id="btnAdminWrap" style="display:none;position:relative;">
+    <button class="hbtn" onclick="toggleAdminMenu()" id="btnAdmin">&#9881; Admin &#9660;</button>
+    <div id="adminMenu" style="display:none;position:absolute;top:36px;right:0;background:#fff;border:1px solid #dfe1e6;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);min-width:160px;z-index:999;overflow:hidden;">
+      <button onclick="openUsers();toggleAdminMenu()" style="width:100%;padding:10px 14px;text-align:left;border:none;background:none;cursor:pointer;font-size:12px;font-weight:600;color:#1a1d23;display:flex;align-items:center;gap:8px;border-bottom:1px solid #eaecf0;">&#128101; Usuarios</button>
+      <button onclick="openAudit();toggleAdminMenu()" style="width:100%;padding:10px 14px;text-align:left;border:none;background:none;cursor:pointer;font-size:12px;font-weight:600;color:#1a1d23;display:flex;align-items:center;gap:8px;">&#128196; Auditoría</button>
+    </div>
+  </div>
   <button class="hbtn" id="btnChangePass" style="display:none" onclick="doChangePass()">&#128274; Mi clave</button>
   <button class="hbtn" id="btnLogout" style="display:none" onclick="doLogout()">&#x2192; Salir</button>
   <button class="hbtn-icon" id="darkBtn" onclick="toggleDark()">&#9790;</button>
 </header>
 
 <!-- PANTALLA INICIO -->
-<div id="homeScreen">
+<div id="homeScreen" style="display:none">
   <div class="home-wrap">
     <div class="home-header">
       <img class="home-logo" src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" onerror="this.style.display='none'">
@@ -3370,7 +3381,8 @@ document.getElementById('btnForgot').addEventListener('click',function(){
 document.getElementById('loginPass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 document.getElementById('loginEmail').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
-var _loginFromButton=false; /* solo loguear cuando el usuario pulsa el botón */
+var _loginFromButton=false;
+var _pendingAdminRestore=false;
 
 function doLogin(){
   var email=(document.getElementById('loginEmail').value||'').trim();
@@ -3400,29 +3412,37 @@ function doLogin(){
 
 function loadUserProfile(uid){
   return db.collection('users').doc(uid).get().then(function(snap){
-    if(!snap.exists){throw new Error('Usuario no encontrado en la base de datos.');}
+    if(!snap.exists){
+      firebase.auth().signOut();
+      throw new Error('Tu cuenta no tiene perfil configurado. Contacta con el administrador.');
+    }
     var data=snap.data();
-    if(!data.activo){firebase.auth().signOut();throw new Error('Usuario desactivado. Contacta con el administrador.');}
+    if(!data.activo){
+      firebase.auth().signOut();
+      throw new Error('Usuario desactivado. Contacta con el administrador.');
+    }
     currentUser={uid:uid,nombre:data.nombre||'',email:data.email||'',rol:data.rol||'lector'};
     db.collection('users').doc(uid).update({ultimoAcceso:firebase.firestore.FieldValue.serverTimestamp()}).catch(function(){});
-    /* Solo registrar login cuando el usuario pulsa el botón, no al restaurar sesión */
     if(_loginFromButton){
       logAudit('login','sesion','','','','',currentUser.nombre+' inició sesión');
       _loginFromButton=false;
     }
     onAuthSuccess();
   }).catch(function(e){
+    /* Mostrar login con mensaje de error */
+    document.getElementById('loadingScreen').style.display='none';
+    document.getElementById('loginScreen').style.display='flex';
     document.getElementById('loginLoading').style.display='none';
     document.getElementById('btnLogin').disabled=false;
     var errEl=document.getElementById('loginError');
+    errEl.style.cssText='display:block;background:#fee2e2;color:#dc2626;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:12px;';
     errEl.textContent=e.message||'Error al cargar el perfil.';
-    errEl.style.display='block';
-    firebase.auth().signOut();
+    throw e; /* propagar para el timeout */
   });
 }
 
 function onAuthSuccess(){
-  /* Ocultar login, mostrar app */
+  document.getElementById('loadingScreen').style.display='none';
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('loginLoading').style.display='none';
   document.getElementById('btnLogin').disabled=false;
@@ -3436,8 +3456,7 @@ function applyRoleUI(){
   if(!currentUser)return;
   var isAdmin=currentUser.rol==='admin';
   var isLector=currentUser.rol==='lector';
-  document.getElementById('btnAudit').style.display=isAdmin?'inline-flex':'none';
-  document.getElementById('btnUsers').style.display=isAdmin?'inline-flex':'none';
+  document.getElementById('btnAdminWrap').style.display=isAdmin?'flex':'none';
   document.getElementById('btnChangePass').style.display='inline-flex';
   document.getElementById('btnLogout').style.display='inline-flex';
   /* Lector: ocultar botones de edición */
@@ -3474,12 +3493,12 @@ function doLogout(){
 }
 
 function showLoginScreen(){
+  document.getElementById('loadingScreen').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('appScreen').style.display='none';
   document.getElementById('homeScreen').style.display='none';
   document.getElementById('auditScreen').style.display='none';
-  document.getElementById('btnAudit').style.display='none';
-  document.getElementById('btnUsers').style.display='none';
+  document.getElementById('btnAdminWrap').style.display='none';
   document.getElementById('btnChangePass').style.display='none';
   document.getElementById('btnLogout').style.display='none';
   document.getElementById('loginEmail').value='';
@@ -3507,6 +3526,18 @@ function logAudit(tipoAccion,modulo,idEntidad,campo,valorAnterior,valorNuevo,des
   }).catch(function(e){console.warn('logAudit error',e);});
 }
 
+function toggleAdminMenu(){
+  var m=document.getElementById('adminMenu');
+  m.style.display=m.style.display==='none'?'block':'none';
+}
+document.addEventListener('click',function(e){
+  var wrap=document.getElementById('btnAdminWrap');
+  if(wrap&&!wrap.contains(e.target)){
+    var m=document.getElementById('adminMenu');
+    if(m)m.style.display='none';
+  }
+});
+
 /* ══ GESTIÓN DE USUARIOS ══ */
 function openUsers(){
   if(!currentUser||currentUser.rol!=='admin'){alert('Solo administradores.');return;}
@@ -3522,46 +3553,54 @@ function inviteUser(){
   var email=(document.getElementById('newUserEmail').value||'').trim();
   var rol=document.getElementById('newUserRol').value;
   var msgEl=document.getElementById('userInviteMsg');
-  msgEl.style.display='none';
 
   if(!nombre||!email){
     msgEl.style.cssText='display:block;background:#fee2e2;color:#dc2626;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:10px;';
     msgEl.textContent='Rellena nombre y email.';return;
   }
 
-  /* Crear usuario en Firebase Auth con contraseña temporal aleatoria */
-  var tempPass='Tmp_'+Math.random().toString(36).slice(2,10)+'!';
-  firebase.auth().createUserWithEmailAndPassword(email,tempPass)
+  msgEl.style.cssText='display:block;background:#f0f4ff;color:#2563eb;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:10px;';
+  msgEl.textContent='Creando usuario...';
+
+  /* Segunda instancia Firebase para no perder sesión del admin */
+  var secondApp;
+  try{secondApp=firebase.app('second');}
+  catch(e){secondApp=firebase.initializeApp(firebase.app().options,'second');}
+  var secondAuth=firebase.auth(secondApp);
+
+  var tempPass='Tmp_'+Math.random().toString(36).slice(2,10)+'_Rm1!';
+
+  secondAuth.createUserWithEmailAndPassword(email,tempPass)
     .then(function(cred){
-      var uid=cred.user.uid;
-      /* Guardar perfil en Firestore */
-      return db.collection('users').doc(uid).set({
-        nombre:nombre,
-        email:email,
-        rol:rol,
-        activo:true,
+      var newUid=cred.user.uid;
+      /* Escribir en Firestore con sesión del ADMIN (no la de secondAuth) */
+      return db.collection('users').doc(newUid).set({
+        nombre:nombre, email:email, rol:rol, activo:true,
         fechaCreacion:firebase.firestore.FieldValue.serverTimestamp(),
         ultimoAcceso:null
-      }).then(function(){
-        /* Mandar email de reset para que cree su propia contraseña */
-        return firebase.auth().sendPasswordResetEmail(email);
-      }).then(function(){
-        /* Cerrar sesión del nuevo usuario y restaurar la del admin */
-        /* El admin NO pierde su sesión porque createUserWithEmailAndPassword
-           no hace signIn automático en Firebase compat SDK si ya hay sesión */
-        logAudit('crear','usuarios',nombre,'rol','',rol,currentUser.nombre+' invitó a '+nombre+' ('+email+') como '+rol);
-        msgEl.style.cssText='display:block;background:#d1fae5;color:#065f46;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:10px;';
-        msgEl.textContent='✓ Invitación enviada a '+email+'. Recibirá un email para crear su contraseña.';
-        document.getElementById('newUserName').value='';
-        document.getElementById('newUserEmail').value='';
-        loadUsersList();
       });
     })
+    .then(function(){
+      /* Mandar email de reset — con auth principal del admin */
+      return firebase.auth().sendPasswordResetEmail(email);
+    })
+    .then(function(){
+      /* Cerrar sesión de la segunda instancia */
+      secondAuth.signOut();
+      logAudit('crear','usuarios',nombre,'rol','',rol,currentUser.nombre+' invitó a '+nombre+' ('+email+') como '+rol);
+      msgEl.style.cssText='display:block;background:#d1fae5;color:#065f46;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:10px;';
+      msgEl.textContent='✓ '+nombre+' creado. Recibirá email para crear su contraseña.';
+      document.getElementById('newUserName').value='';
+      document.getElementById('newUserEmail').value='';
+      loadUsersList();
+    })
     .catch(function(e){
+      secondAuth.signOut().catch(function(){});
       msgEl.style.cssText='display:block;background:#fee2e2;color:#dc2626;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:10px;';
       var msg=e.message;
       if(e.code==='auth/email-already-in-use')msg='Ya existe un usuario con ese email.';
-      if(e.code==='auth/invalid-email')msg='Email no válido.';
+      else if(e.code==='auth/invalid-email')msg='Email no válido.';
+      else if(e.code==='auth/weak-password')msg='Contraseña temporal inválida, inténtalo de nuevo.';
       msgEl.textContent=msg;
     });
 }
@@ -3600,7 +3639,8 @@ function loadUsersList(){
           +'<td style="padding:10px 12px;font-size:11px;color:var(--text-sec);">'+ultimoAcceso+'</td>'
           +'<td style="padding:10px 12px;display:flex;gap:6px;">'
           +(!isMe?'<button onclick="toggleUserActive(\''+uid+'\',\''+esc(u.nombre||'')+'\','+(u.activo?'false':'true')+')" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid '+(u.activo?'#dc2626':'#16a34a')+';background:none;color:'+(u.activo?'#dc2626':'#16a34a')+';cursor:pointer;">'+(u.activo?'Desactivar':'Activar')+'</button>':'')
-          +'<button onclick="resetUserPass(\''+esc(u.email||'')+'\',\''+esc(u.nombre||'')+'\')" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:none;color:var(--text-sec);cursor:pointer;">Reset clave</button>'
+          +'<button onclick="resetUserPass(\''+esc(u.email||'')+'\''+',\''+esc(u.nombre||'')+'\')" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:none;color:var(--text-sec);cursor:pointer;">Reset clave</button>'
+          +(!isMe?'<button onclick="deleteUser(\''+uid+'\',\''+esc(u.nombre||'')+'\',\''+esc(u.email||'')+'\')" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid #dc2626;background:none;color:#dc2626;cursor:pointer;">Eliminar</button>':'')
           +'</td></tr>';
       });
       html+='</tbody></table>';
@@ -3627,12 +3667,24 @@ function toggleUserActive(uid,nombre,activo){
     }).catch(function(e){alert('Error: '+e.message);});
 }
 
+function deleteUser(uid,nombre,email){
+  if(!confirm('¿Eliminar a '+nombre+' ('+email+')?\n\nSe eliminará su perfil de la base de datos. Su cuenta de acceso quedará desactivada.\n\nEsta acción no se puede deshacer.'))return;
+  /* Eliminar documento de Firestore */
+  db.collection('users').doc(uid).delete()
+    .then(function(){
+      logAudit('eliminar','usuarios',nombre,'','',email,currentUser.nombre+' eliminó al usuario '+nombre+' ('+email+')');
+      loadUsersList();
+    })
+    .catch(function(e){
+      alert('Error al eliminar: '+e.message);
+    });
+
 function resetUserPass(email,nombre){
   if(!confirm('Enviar email de restablecimiento a '+email+'?'))return;
   firebase.auth().sendPasswordResetEmail(email)
     .then(function(){
-      logAudit('editar','usuarios',nombre,'contraseña','','',currentUser.nombre+' envió reset de contraseña a '+nombre);
-      alert('✓ Email enviado a '+email);
+      logAudit('editar','usuarios',nombre,'contrase\xf1a','','',currentUser.nombre+' envi\xf3 reset de contrase\xf1a a '+nombre);
+      alert('\u2713 Email enviado a '+email);
     }).catch(function(e){alert('Error: '+e.message);});
 }
 
@@ -3741,7 +3793,18 @@ setSync('connecting');
 
 firebase.auth().onAuthStateChanged(function(fbUser){
   if(fbUser){
-    loadUserProfile(fbUser.uid).catch(function(){showLoginScreen();});
+    /* Intentar cargar perfil con timeout de 8 segundos */
+    var timeout=setTimeout(function(){
+      console.warn('loadUserProfile timeout');
+      showLoginScreen();
+    },8000);
+    loadUserProfile(fbUser.uid)
+      .then(function(){clearTimeout(timeout);})
+      .catch(function(e){
+        clearTimeout(timeout);
+        console.error('loadUserProfile error',e);
+        showLoginScreen();
+      });
   }else{
     showLoginScreen();
   }
@@ -4349,6 +4412,8 @@ function renderZedPanel(panelEl,refs){
   panelEl.appendChild(grid);
 }
 
+
+}
 
 </script>
 </body>
