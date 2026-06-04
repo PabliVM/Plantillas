@@ -3015,7 +3015,7 @@ function printTeamPDF(){
   var campoCard=document.querySelector('.campo-card');
   var HIDE_COLORS=['#e53e3e','#c53030','#3b82f6','#60a5fa','#7c3aed','#5b21b6'];
   function capture(){
-    /* Ocultar fichas no deseadas */
+    /* Ocultar fichas no deseadas (bajas, futuribles, destacados) */
     var hidden=[];
     document.querySelectorAll('.campo-players .player-pos').forEach(function(pos){
       var chip=pos.querySelector('[style]');if(!chip)return;
@@ -3023,13 +3023,23 @@ function printTeamPDF(){
       var bad=HIDE_COLORS.some(function(col){return st.indexOf(col)>=0;});
       if(bad){pos.style.visibility='hidden';hidden.push(pos);}
     });
+    /* Actualizar el contador del campo para que coincida con los visibles */
+    var countEl=document.getElementById('campoCount');
+    var oldCount=countEl?countEl.textContent:'';
+    var allowed={'renovado':1,'fichaje':1,'duda':1};
+    var plant=state.players.filter(function(p){return p.onPitch&&allowed[p.status];});
+    var pc=plant.filter(function(p){return!p.isPor;}).length;
+    var pp=plant.filter(function(p){return p.isPor;}).length;
+    if(countEl)countEl.textContent=pc+'+'+pp+'P';
     html2canvas(campoCard,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#111827',logging:false})
       .then(function(canvas){
         hidden.forEach(function(pos){pos.style.visibility='';});
+        if(countEl)countEl.textContent=oldCount;
         doPrint(canvas.toDataURL('image/png'));
       })
       .catch(function(){
         hidden.forEach(function(pos){pos.style.visibility='';});
+        if(countEl)countEl.textContent=oldCount;
         doPrint('');
       });
   }
