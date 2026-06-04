@@ -3547,15 +3547,20 @@ function inviteUser(){
   msgEl.style.cssText='display:block;background:#f0f4ff;color:#2563eb;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:10px;';
   msgEl.textContent='Creando usuario...';
 
-  /* Guardar el admin actual antes de que cambie */
-  var adminUser=firebase.auth().currentUser;
-
-  /* Crear usuario en Auth con contraseña temporal */
+  /* Usar segunda instancia de Firebase para no perder la sesión del admin */
+  var secondApp;
+  try{
+    secondApp=firebase.app('second');
+  }catch(e){
+    secondApp=firebase.initializeApp(firebase.app().options,'second');
+  }
+  var secondAuth=secondApp.auth();
   var tempPass='Tmp_'+Math.random().toString(36).slice(2,10)+'!1';
-  firebase.auth().createUserWithEmailAndPassword(email,tempPass)
+
+  secondAuth.createUserWithEmailAndPassword(email,tempPass)
     .then(function(cred){
       var newUid=cred.user.uid;
-      /* Guardar perfil en Firestore usando el uid del nuevo usuario */
+      /* Guardar perfil en Firestore con la sesión del admin (no cambia) */
       return db.collection('users').doc(newUid).set({
         nombre:nombre,
         email:email,
@@ -3564,30 +3569,25 @@ function inviteUser(){
         fechaCreacion:firebase.firestore.FieldValue.serverTimestamp(),
         ultimoAcceso:null
       }).then(function(){
-        /* Mandar email de reset para que cree su propia contraseña */
         return firebase.auth().sendPasswordResetEmail(email);
       }).then(function(){
-        /* Volver a iniciar sesión como admin */
-        return firebase.auth().signOut();
+        /* Cerrar sesión de la segunda instancia */
+        return secondAuth.signOut();
       }).then(function(){
-        /* Restaurar sesión del admin */
-        if(adminUser&&adminUser.email){
-          /* No podemos re-autenticar sin contraseña, pero onAuthStateChanged
-             detectará que no hay sesión y mostrará login.
-             Solución: guardar que hay que recargar tras crear usuario */
-          _pendingAdminRestore=true;
-          showLoginScreen();
-          var errEl=document.getElementById('loginError');
-          errEl.style.cssText='display:block;background:#d1fae5;color:#065f46;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:12px;';
-          errEl.textContent='✓ Usuario '+nombre+' creado. Recibirá email para crear su contraseña. Vuelve a iniciar sesión.';
-        }
+        logAudit('crear','usuarios',nombre,'rol','',rol,currentUser.nombre+' invitó a '+nombre+' ('+email+') como '+rol);
+        msgEl.style.cssText='display:block;background:#d1fae5;color:#065f46;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:10px;';
+        msgEl.textContent='✓ '+nombre+' creado correctamente. Recibirá un email para crear su contraseña.';
+        document.getElementById('newUserName').value='';
+        document.getElementById('newUserEmail').value='';
+        loadUsersList();
       });
     })
     .catch(function(e){
       msgEl.style.cssText='display:block;background:#fee2e2;color:#dc2626;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:10px;';
       var msg=e.message;
       if(e.code==='auth/email-already-in-use')msg='Ya existe un usuario con ese email.';
-      if(e.code==='auth/invalid-email')msg='Email no válido.';
+      else if(e.code==='auth/invalid-email')msg='Email no válido.';
+      else if(e.code==='auth/weak-password')msg='La contraseña temporal es demasiado débil, inténtalo de nuevo.';
       msgEl.textContent=msg;
     });
 }
@@ -3626,7 +3626,8 @@ function loadUsersList(){
           +'<td style="padding:10px 12px;font-size:11px;color:var(--text-sec);">'+ultimoAcceso+'</td>'
           +'<td style="padding:10px 12px;display:flex;gap:6px;">'
           +(!isMe?'<button onclick="toggleUserActive(\''+uid+'\',\''+esc(u.nombre||'')+'\','+(u.activo?'false':'true')+')" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid '+(u.activo?'#dc2626':'#16a34a')+';background:none;color:'+(u.activo?'#dc2626':'#16a34a')+';cursor:pointer;">'+(u.activo?'Desactivar':'Activar')+'</button>':'')
-          +'<button onclick="resetUserPass(\''+esc(u.email||'')+'\',\''+esc(u.nombre||'')+'\')" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:none;color:var(--text-sec);cursor:pointer;">Reset clave</button>'
+          +'<button onclick="resetUserPass(\''+esc(u.email||'')+'\''+',\''+esc(u.nombre||'')+'\')" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:none;color:var(--text-sec);cursor:pointer;">Reset clave</button>'
+          +(!isMe?'<button onclick="deleteUser(\''+uid+'\',\''+esc(u.nombre||'')+'\',\''+esc(u.email||'')+'\')" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid #dc2626;background:none;color:#dc2626;cursor:pointer;">Eliminar</button>':'')
           +'</td></tr>';
       });
       html+='</tbody></table>';
@@ -3653,12 +3654,24 @@ function toggleUserActive(uid,nombre,activo){
     }).catch(function(e){alert('Error: '+e.message);});
 }
 
+function deleteUser(uid,nombre,email){
+  if(!confirm('¿Eliminar a '+nombre+' ('+email+')?\n\nSe eliminará su perfil de la base de datos. Su cuenta de acceso quedará desactivada.\n\nEsta acción no se puede deshacer.'))return;
+  /* Eliminar documento de Firestore */
+  db.collection('users').doc(uid).delete()
+    .then(function(){
+      logAudit('eliminar','usuarios',nombre,'','',email,currentUser.nombre+' eliminó al usuario '+nombre+' ('+email+')');
+      loadUsersList();
+    })
+    .catch(function(e){
+      alert('Error al eliminar: '+e.message);
+    });
+
 function resetUserPass(email,nombre){
   if(!confirm('Enviar email de restablecimiento a '+email+'?'))return;
   firebase.auth().sendPasswordResetEmail(email)
     .then(function(){
-      logAudit('editar','usuarios',nombre,'contraseña','','',currentUser.nombre+' envió reset de contraseña a '+nombre);
-      alert('✓ Email enviado a '+email);
+      logAudit('editar','usuarios',nombre,'contrase\xf1a','','',currentUser.nombre+' envi\xf3 reset de contrase\xf1a a '+nombre);
+      alert('\u2713 Email enviado a '+email);
     }).catch(function(e){alert('Error: '+e.message);});
 }
 
@@ -4375,6 +4388,8 @@ function renderZedPanel(panelEl,refs){
   panelEl.appendChild(grid);
 }
 
+
+}
 
 </script>
 </body>
