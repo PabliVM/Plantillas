@@ -2002,7 +2002,7 @@ function openModal(pid){
   if(isNew){
     var p={id:uid(),name:'',status:'renovado',isPor:false,res:'',proc:'',lat:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona',selecciones:[],birthYear:null,comment:'',yearsInClub:null};
     state.players.push(p);selectedId=p.id;persist();
-    logAudit('crear','jugadores',p.id,'','','',currentUser?currentUser.nombre+' creó jugador en '+activeTeam:'Jugador creado');
+    logAudit('crear','jugadores',p.name||'Nuevo jugador','','',activeTeam,currentUser?currentUser.nombre+' añadió jugador "'+esc(p.name||'Nuevo jugador')+'" al '+activeTeam:'');
     document.getElementById('edModalTitle').textContent='Nuevo jugador';
     document.getElementById('btnDelete').style.display='none';
   }else{
@@ -2074,7 +2074,7 @@ function closeModal(){
   document.getElementById('edModal').style.display='none';
   /* Log edición si no es mover ni promocionar */
   if(pEdited&&!promoTeam&&!destTeam){
-    logAudit('editar','jugadores',pEdited.id,'','',(currentUser?currentUser.nombre:'')+' editó '+esc(pEdited.name||'')+' en '+activeTeam,'');
+    logAudit('editar','jugadores',esc(pEdited.name||''),activeTeam,'','',(currentUser?currentUser.nombre:'')+' editó a "'+esc(pEdited.name||'')+'" en '+activeTeam);
   }
 
   if(promoTeam&&selectedId){
@@ -2169,9 +2169,10 @@ function bindModal(){
   document.getElementById('edModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
   document.getElementById('btnDelete').addEventListener('click',function(){
     if(!selectedId||!confirm('\xbfEliminar esta ficha?'))return;
+    var pElim=getPlayer(selectedId);
+    var elimNombre=pElim?pElim.name:'(desconocido)';
     state.players=state.players.filter(function(p){return p.id!==selectedId;});
-    var elimNombre=selectedId;
-    logAudit('eliminar','jugadores',elimNombre,'','','',(currentUser?currentUser.nombre:'')+ ' eliminó jugador en '+activeTeam);
+    logAudit('eliminar','jugadores',elimNombre,'','',activeTeam,(currentUser?currentUser.nombre:'')+' elimin\xf3 a "'+elimNombre+'" del '+activeTeam);
     selectedId=null;
     persist();
     document.getElementById('edModal').style.display='none';
@@ -3280,6 +3281,8 @@ document.getElementById('btnLogin').addEventListener('click',doLogin);
 document.getElementById('loginPass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 document.getElementById('loginEmail').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
+var _loginFromButton=false; /* solo loguear cuando el usuario pulsa el botón */
+
 function doLogin(){
   var email=(document.getElementById('loginEmail').value||'').trim();
   var pass=document.getElementById('loginPass').value||'';
@@ -3289,11 +3292,13 @@ function doLogin(){
   if(!email||!pass){errEl.textContent='Introduce email y contraseña.';errEl.style.display='block';return;}
   loadEl.style.display='block';
   document.getElementById('btnLogin').disabled=true;
+  _loginFromButton=true;
   firebase.auth().signInWithEmailAndPassword(email,pass)
     .then(function(cred){
       return loadUserProfile(cred.user.uid);
     })
     .catch(function(e){
+      _loginFromButton=false;
       loadEl.style.display='none';
       document.getElementById('btnLogin').disabled=false;
       var msg='Email o contraseña incorrectos.';
@@ -3310,9 +3315,12 @@ function loadUserProfile(uid){
     var data=snap.data();
     if(!data.activo){firebase.auth().signOut();throw new Error('Usuario desactivado. Contacta con el administrador.');}
     currentUser={uid:uid,nombre:data.nombre||'',email:data.email||'',rol:data.rol||'lector'};
-    /* Actualizar ultimoAcceso */
     db.collection('users').doc(uid).update({ultimoAcceso:firebase.firestore.FieldValue.serverTimestamp()}).catch(function(){});
-    logAudit('login','sesion',uid,'','','','Inicio de sesión');
+    /* Solo registrar login cuando el usuario pulsa el botón, no al restaurar sesión */
+    if(_loginFromButton){
+      logAudit('login','sesion','','','','',currentUser.nombre+' inició sesión');
+      _loginFromButton=false;
+    }
     onAuthSuccess();
   }).catch(function(e){
     document.getElementById('loginLoading').style.display='none';
@@ -3466,34 +3474,29 @@ function renderAuditTable(){
   });
   var ACTION_COLORS={crear:'#16a34a',editar:'#2563eb',eliminar:'#dc2626',login:'#7c3aed',logout:'#5a6170'};
   var html='<div style="font-size:11px;color:var(--text-mut);margin-bottom:8px;">'+rows.length+' registros</div>'
-    +'<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;background:var(--surface);border-radius:8px;overflow:hidden;">'
+    +'<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;background:var(--surface);border-radius:8px;overflow:hidden;">'
     +'<thead><tr style="background:var(--rm-blue);color:#fff;">'
-    +'<th style="padding:8px 10px;text-align:left;white-space:nowrap;">Fecha/hora</th>'
-    +'<th style="padding:8px 10px;text-align:left;">Usuario</th>'
-    +'<th style="padding:8px 10px;text-align:left;">Rol</th>'
-    +'<th style="padding:8px 10px;text-align:left;">Acción</th>'
-    +'<th style="padding:8px 10px;text-align:left;">Módulo</th>'
-    +'<th style="padding:8px 10px;text-align:left;">Entidad</th>'
-    +'<th style="padding:8px 10px;text-align:left;">Campo</th>'
-    +'<th style="padding:8px 10px;text-align:left;">Anterior</th>'
-    +'<th style="padding:8px 10px;text-align:left;">Nuevo</th>'
-    +'<th style="padding:8px 10px;text-align:left;">Descripción</th>'
+    +'<th style="padding:10px 12px;text-align:left;white-space:nowrap;font-weight:600;">Fecha y hora</th>'
+    +'<th style="padding:10px 12px;text-align:left;font-weight:600;">Usuario</th>'
+    +'<th style="padding:10px 12px;text-align:left;font-weight:600;">Acción</th>'
+    +'<th style="padding:10px 12px;text-align:left;font-weight:600;">Jugador / Entidad</th>'
+    +'<th style="padding:10px 12px;text-align:left;font-weight:600;">Equipo</th>'
+    +'<th style="padding:10px 12px;text-align:left;font-weight:600;">Descripción</th>'
     +'</tr></thead><tbody>';
   rows.forEach(function(r,i){
     var fecha='';
-    if(r.fechaHora){var d=r.fechaHora.toDate?r.fechaHora.toDate():new Date(r.fechaHora);fecha=d.toLocaleString('es-ES');}
+    if(r.fechaHora){var d=r.fechaHora.toDate?r.fechaHora.toDate():new Date(r.fechaHora);fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});}
     var ac=ACTION_COLORS[r.tipoAccion]||'#5a6170';
+    var acLabel={crear:'Crear',editar:'Editar',eliminar:'Eliminar',login:'Login',logout:'Logout'}[r.tipoAccion]||r.tipoAccion;
+    /* Equipo = valorNuevo o campoModificado según contexto */
+    var equipo=r.valorNuevo||r.campoModificado||'';
     html+='<tr style="border-bottom:1px solid var(--border-light);background:'+(i%2?'var(--surface-alt)':'var(--surface)')+';">'
-      +'<td style="padding:6px 10px;white-space:nowrap;">'+fecha+'</td>'
-      +'<td style="padding:6px 10px;font-weight:600;">'+esc(r.nombreUsuario||'')+'</td>'
-      +'<td style="padding:6px 10px;">'+esc(r.rolUsuario||'')+'</td>'
-      +'<td style="padding:6px 10px;"><span style="background:'+ac+';color:#fff;border-radius:4px;padding:1px 7px;font-size:10px;font-weight:700;">'+esc(r.tipoAccion||'')+'</span></td>'
-      +'<td style="padding:6px 10px;">'+esc(r.moduloPantalla||'')+'</td>'
-      +'<td style="padding:6px 10px;">'+esc(r.idEntidad||'')+'</td>'
-      +'<td style="padding:6px 10px;">'+esc(r.campoModificado||'')+'</td>'
-      +'<td style="padding:6px 10px;color:#dc2626;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(r.valorAnterior||'')+'">'+esc(r.valorAnterior||'')+'</td>'
-      +'<td style="padding:6px 10px;color:#16a34a;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(r.valorNuevo||'')+'">'+esc(r.valorNuevo||'')+'</td>'
-      +'<td style="padding:6px 10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(r.descripcionCambio||'')+'">'+esc(r.descripcionCambio||'')+'</td>'
+      +'<td style="padding:8px 12px;white-space:nowrap;color:var(--text-sec);">'+fecha+'</td>'
+      +'<td style="padding:8px 12px;font-weight:700;">'+esc(r.nombreUsuario||'')+'</td>'
+      +'<td style="padding:8px 12px;"><span style="background:'+ac+';color:#fff;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;white-space:nowrap;">'+acLabel+'</span></td>'
+      +'<td style="padding:8px 12px;font-weight:600;">'+esc(r.idEntidad||'')+'</td>'
+      +'<td style="padding:8px 12px;color:var(--text-sec);">'+esc(equipo)+'</td>'
+      +'<td style="padding:8px 12px;max-width:300px;">'+esc(r.descripcionCambio||'')+'</td>'
       +'</tr>';
   });
   html+='</tbody></table></div>';
