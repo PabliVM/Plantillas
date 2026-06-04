@@ -472,6 +472,60 @@ button,input,select,textarea{font-family:inherit}
 </head>
 <body>
 
+<!-- ══ PANTALLA LOGIN ══ -->
+<div id="loginScreen" style="display:none;position:fixed;inset:0;background:var(--rm-blue);z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.25);">
+    <div style="text-align:center;margin-bottom:24px;">
+      <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" style="width:56px;height:56px;object-fit:contain;margin-bottom:12px;">
+      <div style="font-size:18px;font-weight:800;color:#1a1d23;">Confección de Plantillas</div>
+      <div style="font-size:12px;color:#5a6170;margin-top:4px;">Cantera Real Madrid CF</div>
+    </div>
+    <div id="loginError" style="display:none;background:#fee2e2;color:#dc2626;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:12px;"></div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <input id="loginEmail" type="email" placeholder="Email" autocomplete="email"
+        style="padding:10px 12px;font-size:13px;border:1.5px solid #dfe1e6;border-radius:6px;outline:none;font-family:inherit;">
+      <input id="loginPass" type="password" placeholder="Contraseña" autocomplete="current-password"
+        style="padding:10px 12px;font-size:13px;border:1.5px solid #dfe1e6;border-radius:6px;outline:none;font-family:inherit;">
+      <button id="btnLogin" style="padding:11px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;">
+        Iniciar sesión
+      </button>
+    </div>
+    <div id="loginLoading" style="display:none;text-align:center;color:#5a6170;font-size:12px;margin-top:10px;">Verificando...</div>
+  </div>
+</div>
+
+<!-- ══ PANTALLA AUDITORÍA ══ -->
+<div id="auditScreen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:500;overflow-y:auto;">
+  <div style="background:var(--rm-blue);padding:12px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;">
+    <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" style="width:28px;height:28px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;">
+    <span style="font-size:14px;font-weight:700;color:#fff;">Auditoría de cambios</span>
+    <span style="flex:1"></span>
+    <button onclick="closeAudit()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;">← Volver</button>
+    <button onclick="exportAuditCSV()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;">↓ CSV</button>
+  </div>
+  <div style="max-width:1400px;margin:0 auto;padding:16px 20px;">
+    <!-- Filtros -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+      <input id="auditSearch" type="text" placeholder="Buscar..." style="padding:6px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);min-width:180px;">
+      <select id="auditFilterUser" style="padding:6px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);">
+        <option value="">Todos los usuarios</option>
+      </select>
+      <select id="auditFilterAction" style="padding:6px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);">
+        <option value="">Todas las acciones</option>
+        <option value="crear">Crear</option>
+        <option value="editar">Editar</option>
+        <option value="eliminar">Eliminar</option>
+        <option value="login">Login</option>
+        <option value="logout">Logout</option>
+      </select>
+      <input id="auditFilterDate" type="date" style="padding:6px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);">
+      <button onclick="renderAuditTable()" style="padding:6px 14px;background:var(--rm-blue);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">Filtrar</button>
+      <button onclick="clearAuditFilters()" style="padding:6px 14px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;cursor:pointer;font-size:12px;">Limpiar</button>
+    </div>
+    <div id="auditTable"></div>
+  </div>
+</div>
+
 <header class="header">
   <div class="hlogo"><img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" onerror="this.parentNode.textContent='RM'"></div>
   <span class="htitle">Confecci&oacute;n de Plantillas</span>
@@ -485,6 +539,9 @@ button,input,select,textarea{font-family:inherit}
     <button class="season-del" id="btnSeasonDel" title="Eliminar temporada">&minus;</button>
   </div>
   <button class="hbtn" id="btnPrint" onclick="activeCombined==='AB+AC'?printCombinedPDF():printTeamPDF()" title="Imprimir PDF">&#128438; PDF</button>
+  <button class="hbtn" id="btnAudit" style="display:none" onclick="openAudit()">&#128196; Auditoría</button>
+  <button class="hbtn" id="btnChangePass" style="display:none" onclick="doChangePass()">&#128274; Mi clave</button>
+  <button class="hbtn" id="btnLogout" style="display:none" onclick="doLogout()">&#x2192; Salir</button>
   <button class="hbtn-icon" id="darkBtn" onclick="toggleDark()">&#9790;</button>
 </header>
 
@@ -1945,6 +2002,7 @@ function openModal(pid){
   if(isNew){
     var p={id:uid(),name:'',status:'renovado',isPor:false,res:'',proc:'',lat:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona',selecciones:[],birthYear:null,comment:'',yearsInClub:null};
     state.players.push(p);selectedId=p.id;persist();
+    logAudit('crear','jugadores',p.id,'','','',currentUser?currentUser.nombre+' creó jugador en '+activeTeam:'Jugador creado');
     document.getElementById('edModalTitle').textContent='Nuevo jugador';
     document.getElementById('btnDelete').style.display='none';
   }else{
@@ -2012,7 +2070,12 @@ function closeModal(){
   var promoSel=document.getElementById('fPromoTeam');
   var destTeam=moveSel?moveSel.value:'';
   var promoTeam=promoSel?promoSel.value:'';
+  var pEdited=selectedId?getPlayer(selectedId):null;
   document.getElementById('edModal').style.display='none';
+  /* Log edición si no es mover ni promocionar */
+  if(pEdited&&!promoTeam&&!destTeam){
+    logAudit('editar','jugadores',pEdited.id,'','',(currentUser?currentUser.nombre:'')+' editó '+esc(pEdited.name||'')+' en '+activeTeam,'');
+  }
 
   if(promoTeam&&selectedId){
     /* PROMOCIONAR: copiar al destino con estado 'promocion', origen queda marcado como promovido */
@@ -2107,6 +2170,8 @@ function bindModal(){
   document.getElementById('btnDelete').addEventListener('click',function(){
     if(!selectedId||!confirm('\xbfEliminar esta ficha?'))return;
     state.players=state.players.filter(function(p){return p.id!==selectedId;});
+    var elimNombre=selectedId;
+    logAudit('eliminar','jugadores',elimNombre,'','','',(currentUser?currentUser.nombre:'')+ ' eliminó jugador en '+activeTeam);
     selectedId=null;
     persist();
     document.getElementById('edModal').style.display='none';
@@ -3205,46 +3270,299 @@ document.addEventListener('click',function(e){
   }
 });
 
+/* ══════════════════════════════════════
+   SISTEMA DE AUTENTICACIÓN Y AUDITORÍA
+══════════════════════════════════════ */
+var currentUser=null;  /* {uid, nombre, email, rol} */
+
+/* ── LOGIN ── */
+document.getElementById('btnLogin').addEventListener('click',doLogin);
+document.getElementById('loginPass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+document.getElementById('loginEmail').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+
+function doLogin(){
+  var email=(document.getElementById('loginEmail').value||'').trim();
+  var pass=document.getElementById('loginPass').value||'';
+  var errEl=document.getElementById('loginError');
+  var loadEl=document.getElementById('loginLoading');
+  errEl.style.display='none';
+  if(!email||!pass){errEl.textContent='Introduce email y contraseña.';errEl.style.display='block';return;}
+  loadEl.style.display='block';
+  document.getElementById('btnLogin').disabled=true;
+  firebase.auth().signInWithEmailAndPassword(email,pass)
+    .then(function(cred){
+      return loadUserProfile(cred.user.uid);
+    })
+    .catch(function(e){
+      loadEl.style.display='none';
+      document.getElementById('btnLogin').disabled=false;
+      var msg='Email o contraseña incorrectos.';
+      if(e.code==='auth/user-not-found'||e.code==='auth/wrong-password')msg='Email o contraseña incorrectos.';
+      else if(e.code==='auth/invalid-email')msg='Email no válido.';
+      else if(e.code==='auth/too-many-requests')msg='Demasiados intentos. Espera un momento.';
+      errEl.textContent=msg;errEl.style.display='block';
+    });
+}
+
+function loadUserProfile(uid){
+  return db.collection('users').doc(uid).get().then(function(snap){
+    if(!snap.exists){throw new Error('Usuario no encontrado en la base de datos.');}
+    var data=snap.data();
+    if(!data.activo){firebase.auth().signOut();throw new Error('Usuario desactivado. Contacta con el administrador.');}
+    currentUser={uid:uid,nombre:data.nombre||'',email:data.email||'',rol:data.rol||'lector'};
+    /* Actualizar ultimoAcceso */
+    db.collection('users').doc(uid).update({ultimoAcceso:firebase.firestore.FieldValue.serverTimestamp()}).catch(function(){});
+    logAudit('login','sesion',uid,'','','','Inicio de sesión');
+    onAuthSuccess();
+  }).catch(function(e){
+    document.getElementById('loginLoading').style.display='none';
+    document.getElementById('btnLogin').disabled=false;
+    var errEl=document.getElementById('loginError');
+    errEl.textContent=e.message||'Error al cargar el perfil.';
+    errEl.style.display='block';
+    firebase.auth().signOut();
+  });
+}
+
+function onAuthSuccess(){
+  /* Ocultar login, mostrar app */
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('loginLoading').style.display='none';
+  document.getElementById('btnLogin').disabled=false;
+  /* Mostrar/ocultar controles según rol */
+  applyRoleUI();
+  /* Arrancar app */
+  bootApp();
+}
+
+function applyRoleUI(){
+  if(!currentUser)return;
+  var isAdmin=currentUser.rol==='admin';
+  var isLector=currentUser.rol==='lector';
+  /* Auditoría solo para admin */
+  document.getElementById('btnAudit').style.display=isAdmin?'inline-flex':'none';
+  document.getElementById('btnChangePass').style.display='inline-flex';
+
+function doChangePass(){
+  if(!currentUser)return;
+  if(!confirm('Se enviará un email a '+currentUser.email+' para restablecer tu contraseña. ¿Continuar?'))return;
+  firebase.auth().sendPasswordResetEmail(currentUser.email)
+    .then(function(){
+      alert('Email enviado a '+currentUser.email+'. Revisa tu bandeja de entrada (y spam).');
+      logAudit('editar','sesion',currentUser.uid,'contraseña','','',currentUser.nombre+' solicitó cambio de contraseña');
+    })
+    .catch(function(e){
+      alert('Error al enviar el email: '+e.message);
+    });
+}
+  /* Lector: ocultar botones de edición */
+  if(isLector){
+    var style=document.createElement('style');
+    style.textContent='#btnNew,#btnNewComb,.btn.pri,.btn.dan,.plist-addbtn,#btnSave,#btnDelete,#btnSeasonAdd,#btnSeasonDel,.season-add,.season-del,.campo-foto-btn{pointer-events:none!important;opacity:.4!important;}';
+    document.head.appendChild(style);
+  }
+  /* Mostrar nombre de usuario */
+  var syncLbl=document.getElementById('syncLbl');
+  if(syncLbl)syncLbl.textContent=currentUser.nombre+' ('+currentUser.rol+')';
+}
+
+function doLogout(){
+  if(!confirm('¿Cerrar sesión?'))return;
+  logAudit('logout','sesion',currentUser?currentUser.uid:'','','','Cierre de sesión');
+  firebase.auth().signOut().then(function(){
+    currentUser=null;
+    showLoginScreen();
+  });
+}
+
+function showLoginScreen(){
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('homeScreen').style.display='none';
+  document.getElementById('auditScreen').style.display='none';
+  document.getElementById('btnAudit').style.display='none';
+  document.getElementById('btnChangePass').style.display='none';
+  document.getElementById('btnLogout').style.display='none';
+  document.getElementById('loginEmail').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').style.display='none';
+}
+
+/* ── AUDITORÍA ── */
+function logAudit(tipoAccion,modulo,idEntidad,campo,valorAnterior,valorNuevo,descripcion){
+  if(!currentUser&&tipoAccion!=='login')return;
+  var u=currentUser||{uid:'',nombre:'',email:'',rol:''};
+  db.collection('auditLog').add({
+    fechaHora:firebase.firestore.FieldValue.serverTimestamp(),
+    uidUsuario:u.uid,
+    nombreUsuario:u.nombre,
+    emailUsuario:u.email,
+    rolUsuario:u.rol,
+    tipoAccion:tipoAccion,
+    moduloPantalla:modulo,
+    idEntidad:String(idEntidad||''),
+    campoModificado:String(campo||''),
+    valorAnterior:String(valorAnterior||''),
+    valorNuevo:String(valorNuevo||''),
+    descripcionCambio:String(descripcion||'')
+  }).catch(function(e){console.warn('logAudit error',e);});
+}
+
+/* ── PANTALLA AUDITORÍA ── */
+var _auditData=[];
+function openAudit(){
+  if(!currentUser||currentUser.rol!=='admin'){alert('Solo administradores.');return;}
+  document.getElementById('auditScreen').style.display='block';
+  loadAuditData();
+}
+function closeAudit(){document.getElementById('auditScreen').style.display='none';}
+function clearAuditFilters(){
+  document.getElementById('auditSearch').value='';
+  document.getElementById('auditFilterUser').value='';
+  document.getElementById('auditFilterAction').value='';
+  document.getElementById('auditFilterDate').value='';
+  renderAuditTable();
+}
+function loadAuditData(){
+  document.getElementById('auditTable').innerHTML='<div style="padding:20px;color:var(--text-mut);">Cargando...</div>';
+  db.collection('auditLog').orderBy('fechaHora','desc').limit(500).get()
+    .then(function(snap){
+      _auditData=[];
+      var users={};
+      snap.forEach(function(d){
+        var r=d.data();r._id=d.id;
+        _auditData.push(r);
+        if(r.nombreUsuario)users[r.nombreUsuario]=true;
+      });
+      /* Poblar filtro de usuarios */
+      var sel=document.getElementById('auditFilterUser');
+      sel.innerHTML='<option value="">Todos los usuarios</option>';
+      Object.keys(users).forEach(function(n){
+        var o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o);
+      });
+      renderAuditTable();
+    }).catch(function(e){
+      document.getElementById('auditTable').innerHTML='<div style="padding:20px;color:#dc2626;">Error cargando auditoría: '+e.message+'</div>';
+    });
+}
+function renderAuditTable(){
+  var search=(document.getElementById('auditSearch').value||'').toLowerCase();
+  var fUser=document.getElementById('auditFilterUser').value;
+  var fAction=document.getElementById('auditFilterAction').value;
+  var fDate=document.getElementById('auditFilterDate').value;
+  var rows=_auditData.filter(function(r){
+    if(fUser&&r.nombreUsuario!==fUser)return false;
+    if(fAction&&r.tipoAccion!==fAction)return false;
+    if(fDate&&r.fechaHora){
+      var d=r.fechaHora.toDate?r.fechaHora.toDate():new Date(r.fechaHora);
+      var ds=d.toISOString().slice(0,10);
+      if(ds!==fDate)return false;
+    }
+    if(search){
+      var txt=(r.descripcionCambio+r.nombreUsuario+r.tipoAccion+r.moduloPantalla+r.idEntidad+r.valorAnterior+r.valorNuevo).toLowerCase();
+      if(txt.indexOf(search)<0)return false;
+    }
+    return true;
+  });
+  var ACTION_COLORS={crear:'#16a34a',editar:'#2563eb',eliminar:'#dc2626',login:'#7c3aed',logout:'#5a6170'};
+  var html='<div style="font-size:11px;color:var(--text-mut);margin-bottom:8px;">'+rows.length+' registros</div>'
+    +'<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;background:var(--surface);border-radius:8px;overflow:hidden;">'
+    +'<thead><tr style="background:var(--rm-blue);color:#fff;">'
+    +'<th style="padding:8px 10px;text-align:left;white-space:nowrap;">Fecha/hora</th>'
+    +'<th style="padding:8px 10px;text-align:left;">Usuario</th>'
+    +'<th style="padding:8px 10px;text-align:left;">Rol</th>'
+    +'<th style="padding:8px 10px;text-align:left;">Acción</th>'
+    +'<th style="padding:8px 10px;text-align:left;">Módulo</th>'
+    +'<th style="padding:8px 10px;text-align:left;">Entidad</th>'
+    +'<th style="padding:8px 10px;text-align:left;">Campo</th>'
+    +'<th style="padding:8px 10px;text-align:left;">Anterior</th>'
+    +'<th style="padding:8px 10px;text-align:left;">Nuevo</th>'
+    +'<th style="padding:8px 10px;text-align:left;">Descripción</th>'
+    +'</tr></thead><tbody>';
+  rows.forEach(function(r,i){
+    var fecha='';
+    if(r.fechaHora){var d=r.fechaHora.toDate?r.fechaHora.toDate():new Date(r.fechaHora);fecha=d.toLocaleString('es-ES');}
+    var ac=ACTION_COLORS[r.tipoAccion]||'#5a6170';
+    html+='<tr style="border-bottom:1px solid var(--border-light);background:'+(i%2?'var(--surface-alt)':'var(--surface)')+';">'
+      +'<td style="padding:6px 10px;white-space:nowrap;">'+fecha+'</td>'
+      +'<td style="padding:6px 10px;font-weight:600;">'+esc(r.nombreUsuario||'')+'</td>'
+      +'<td style="padding:6px 10px;">'+esc(r.rolUsuario||'')+'</td>'
+      +'<td style="padding:6px 10px;"><span style="background:'+ac+';color:#fff;border-radius:4px;padding:1px 7px;font-size:10px;font-weight:700;">'+esc(r.tipoAccion||'')+'</span></td>'
+      +'<td style="padding:6px 10px;">'+esc(r.moduloPantalla||'')+'</td>'
+      +'<td style="padding:6px 10px;">'+esc(r.idEntidad||'')+'</td>'
+      +'<td style="padding:6px 10px;">'+esc(r.campoModificado||'')+'</td>'
+      +'<td style="padding:6px 10px;color:#dc2626;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(r.valorAnterior||'')+'">'+esc(r.valorAnterior||'')+'</td>'
+      +'<td style="padding:6px 10px;color:#16a34a;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(r.valorNuevo||'')+'">'+esc(r.valorNuevo||'')+'</td>'
+      +'<td style="padding:6px 10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(r.descripcionCambio||'')+'">'+esc(r.descripcionCambio||'')+'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('auditTable').innerHTML=html;
+}
+function exportAuditCSV(){
+  var cols=['fechaHora','nombreUsuario','emailUsuario','rolUsuario','tipoAccion','moduloPantalla','idEntidad','campoModificado','valorAnterior','valorNuevo','descripcionCambio'];
+  var csv=cols.join(',')+'\n';
+  _auditData.forEach(function(r){
+    var fecha='';if(r.fechaHora){var d=r.fechaHora.toDate?r.fechaHora.toDate():new Date(r.fechaHora);fecha=d.toLocaleString('es-ES');}
+    csv+=cols.map(function(c){
+      var v=c==='fechaHora'?fecha:(r[c]||'');
+      return'"'+String(v).replace(/"/g,'""')+'"';
+    }).join(',')+'\n';
+  });
+  var a=document.createElement('a');a.download='auditoria_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.click();
+}
+
+/* ── BOOT CON AUTH ── */
 setSync('connecting');
-firebase.auth().signInAnonymously().then(function(){
+
+firebase.auth().onAuthStateChanged(function(fbUser){
+  if(fbUser){
+    loadUserProfile(fbUser.uid).catch(function(){showLoginScreen();});
+  }else{
+    showLoginScreen();
+  }
+});
+
+function bootApp(){
   return db.collection('config').doc('global').get().then(function(snap){
     if(snap.exists){
       var d=snap.data();
       if(d.colors){ALL_COLOR_KEYS.forEach(function(k){if(d.colors[k])colors[k]=Object.assign({},STATUS_DEF[k],d.colors[k]);});try{localStorage.setItem(COL_KEY,JSON.stringify(d.colors));}catch(e){}}
       if(d.seasons&&d.seasons.length){seasons=d.seasons;try{localStorage.setItem(SZN_KEY,JSON.stringify(seasons));}catch(e){}if(seasons.indexOf(activeSzn)===-1)activeSzn=seasons[seasons.length-1];try{renderSeasonSel();}catch(e){}}
     }
-  });
-}).then(function(){
-  return db.collection('config').doc('zonas').get().then(function(snap){
-    if(!snap.exists)return;
-    var d=snap.data();
-    ['F11','F7'].forEach(function(ft){
-      var zk='campograma_position_zones_'+ft;
-      var sk='campograma_segs_'+ft;
-      if(d[zk]&&Array.isArray(d[zk])&&d[zk].length>0)_zonasCache[ft]=d[zk];
-      if(d[sk]&&Array.isArray(d[sk]))_segsCache[ft]=d[sk];
+  }).then(function(){
+    return db.collection('config').doc('zonas').get().then(function(snap){
+      if(!snap.exists)return;
+      var d=snap.data();
+      ['F11','F7'].forEach(function(ft){
+        var zk='campograma_position_zones_'+ft;
+        var sk='campograma_segs_'+ft;
+        if(d[zk]&&Array.isArray(d[zk])&&d[zk].length>0)_zonasCache[ft]=d[zk];
+        if(d[sk]&&Array.isArray(d[sk]))_segsCache[ft]=d[sk];
+      });
+      TEAMS.forEach(function(t){
+        if(d['team_field_type_'+t.key])_teamFtCache[t.key]=d['team_field_type_'+t.key];
+        if(d['gen_year_'+t.key])_genYearCache[t.key]=d['gen_year_'+t.key];
+      });
     });
-    TEAMS.forEach(function(t){
-      if(d['team_field_type_'+t.key])_teamFtCache[t.key]=d['team_field_type_'+t.key];
-      if(d['gen_year_'+t.key])_genYearCache[t.key]=d['gen_year_'+t.key];
-    });
+  }).then(function(){
+    try{buildStatusBtns();}catch(e){}
+    setSync('saved');
+    try{
+      var lastView=localStorage.getItem('plt_last_view');
+      if(lastView==='app'&&activeTeam)showApp(activeTeam);
+      else showHome();
+    }catch(e){showHome();}
+  }).catch(function(e){
+    console.error('bootApp error',e);
+    try{
+      var lastView=localStorage.getItem('plt_last_view');
+      if(lastView==='app'&&activeTeam)showApp(activeTeam);
+      else showHome();
+    }catch(ex){showHome();}
   });
-}).then(function(){
-  try{buildStatusBtns();}catch(e){}
-  setSync('saved');
-  try{
-    var lastView=localStorage.getItem('plt_last_view');
-    if(lastView==='app'&&activeTeam)showApp(activeTeam);
-    else showHome();
-  }catch(e){showHome();}
-}).catch(function(e){
-  console.error('Firebase error',e);
-  try{
-    var lastView=localStorage.getItem('plt_last_view');
-    if(lastView==='app'&&activeTeam)showApp(activeTeam);
-    else showHome();
-  }catch(ex){showHome();}
-});
+}
 
 
 /* ══════════════════════════════════════════════════════
