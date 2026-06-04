@@ -3357,9 +3357,19 @@ function applyRoleUI(){
   if(!currentUser)return;
   var isAdmin=currentUser.rol==='admin';
   var isLector=currentUser.rol==='lector';
-  /* Auditoría solo para admin */
   document.getElementById('btnAudit').style.display=isAdmin?'inline-flex':'none';
   document.getElementById('btnChangePass').style.display='inline-flex';
+  document.getElementById('btnLogout').style.display='inline-flex';
+  /* Lector: ocultar botones de edición */
+  if(isLector){
+    var style=document.createElement('style');
+    style.textContent='#btnNew,#btnNewComb,.btn.pri,.btn.dan,.plist-addbtn,#btnSave,#btnDelete,#btnSeasonAdd,#btnSeasonDel,.season-add,.season-del,.campo-foto-btn{pointer-events:none!important;opacity:.4!important;}';
+    document.head.appendChild(style);
+  }
+  /* Mostrar nombre de usuario */
+  var syncLbl=document.getElementById('syncLbl');
+  if(syncLbl)syncLbl.textContent=currentUser.nombre+' ('+currentUser.rol+')';
+}
 
 function doChangePass(){
   if(!currentUser)return;
@@ -3372,16 +3382,6 @@ function doChangePass(){
     .catch(function(e){
       alert('Error al enviar el email: '+e.message);
     });
-}
-  /* Lector: ocultar botones de edición */
-  if(isLector){
-    var style=document.createElement('style');
-    style.textContent='#btnNew,#btnNewComb,.btn.pri,.btn.dan,.plist-addbtn,#btnSave,#btnDelete,#btnSeasonAdd,#btnSeasonDel,.season-add,.season-del,.campo-foto-btn{pointer-events:none!important;opacity:.4!important;}';
-    document.head.appendChild(style);
-  }
-  /* Mostrar nombre de usuario */
-  var syncLbl=document.getElementById('syncLbl');
-  if(syncLbl)syncLbl.textContent=currentUser.nombre+' ('+currentUser.rol+')';
 }
 
 function doLogout(){
