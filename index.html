@@ -580,8 +580,13 @@ button,input,select,textarea{font-family:inherit}
     <button class="season-del" id="btnSeasonDel" title="Eliminar temporada">&minus;</button>
   </div>
   <button class="hbtn" id="btnPrint" onclick="activeCombined==='AB+AC'?printCombinedPDF():printTeamPDF()" title="Imprimir PDF">&#128438; PDF</button>
-  <button class="hbtn" id="btnAudit" style="display:none" onclick="openAudit()">&#128196; Auditoría</button>
-  <button class="hbtn" id="btnUsers" style="display:none" onclick="openUsers()">&#128101; Usuarios</button>
+  <div id="btnAdminWrap" style="display:none;position:relative;">
+    <button class="hbtn" onclick="toggleAdminMenu()" id="btnAdmin">&#9881; Admin &#9660;</button>
+    <div id="adminMenu" style="display:none;position:absolute;top:36px;right:0;background:#fff;border:1px solid #dfe1e6;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);min-width:160px;z-index:999;overflow:hidden;">
+      <button onclick="openUsers();toggleAdminMenu()" style="width:100%;padding:10px 14px;text-align:left;border:none;background:none;cursor:pointer;font-size:12px;font-weight:600;color:#1a1d23;display:flex;align-items:center;gap:8px;border-bottom:1px solid #eaecf0;">&#128101; Usuarios</button>
+      <button onclick="openAudit();toggleAdminMenu()" style="width:100%;padding:10px 14px;text-align:left;border:none;background:none;cursor:pointer;font-size:12px;font-weight:600;color:#1a1d23;display:flex;align-items:center;gap:8px;">&#128196; Auditoría</button>
+    </div>
+  </div>
   <button class="hbtn" id="btnChangePass" style="display:none" onclick="doChangePass()">&#128274; Mi clave</button>
   <button class="hbtn" id="btnLogout" style="display:none" onclick="doLogout()">&#x2192; Salir</button>
   <button class="hbtn-icon" id="darkBtn" onclick="toggleDark()">&#9790;</button>
@@ -3436,8 +3441,7 @@ function applyRoleUI(){
   if(!currentUser)return;
   var isAdmin=currentUser.rol==='admin';
   var isLector=currentUser.rol==='lector';
-  document.getElementById('btnAudit').style.display=isAdmin?'inline-flex':'none';
-  document.getElementById('btnUsers').style.display=isAdmin?'inline-flex':'none';
+  document.getElementById('btnAdminWrap').style.display=isAdmin?'flex':'none';
   document.getElementById('btnChangePass').style.display='inline-flex';
   document.getElementById('btnLogout').style.display='inline-flex';
   /* Lector: ocultar botones de edición */
@@ -3478,8 +3482,7 @@ function showLoginScreen(){
   document.getElementById('appScreen').style.display='none';
   document.getElementById('homeScreen').style.display='none';
   document.getElementById('auditScreen').style.display='none';
-  document.getElementById('btnAudit').style.display='none';
-  document.getElementById('btnUsers').style.display='none';
+  document.getElementById('btnAdminWrap').style.display='none';
   document.getElementById('btnChangePass').style.display='none';
   document.getElementById('btnLogout').style.display='none';
   document.getElementById('loginEmail').value='';
@@ -3506,6 +3509,18 @@ function logAudit(tipoAccion,modulo,idEntidad,campo,valorAnterior,valorNuevo,des
     descripcionCambio:String(descripcion||'')
   }).catch(function(e){console.warn('logAudit error',e);});
 }
+
+function toggleAdminMenu(){
+  var m=document.getElementById('adminMenu');
+  m.style.display=m.style.display==='none'?'block':'none';
+}
+document.addEventListener('click',function(e){
+  var wrap=document.getElementById('btnAdminWrap');
+  if(wrap&&!wrap.contains(e.target)){
+    var m=document.getElementById('adminMenu');
+    if(m)m.style.display='none';
+  }
+});
 
 /* ══ GESTIÓN DE USUARIOS ══ */
 function openUsers(){
