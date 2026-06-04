@@ -489,6 +489,9 @@ button,input,select,textarea{font-family:inherit}
       <button id="btnLogin" style="padding:11px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;">
         Iniciar sesión
       </button>
+      <button id="btnForgot" type="button" style="background:none;border:none;color:#2563eb;font-size:12px;cursor:pointer;padding:4px 0;text-decoration:underline;text-align:center;">
+        ¿Olvidaste tu contraseña?
+      </button>
     </div>
     <div id="loginLoading" style="display:none;text-align:center;color:#5a6170;font-size:12px;margin-top:10px;">Verificando...</div>
   </div>
@@ -3288,6 +3291,29 @@ var currentUser=null;  /* {uid, nombre, email, rol} */
 
 /* ── LOGIN ── */
 document.getElementById('btnLogin').addEventListener('click',doLogin);
+document.getElementById('btnForgot').addEventListener('click',function(){
+  var email=(document.getElementById('loginEmail').value||'').trim();
+  if(!email){
+    var errEl=document.getElementById('loginError');
+    errEl.textContent='Escribe tu email arriba y pulsa este botón.';
+    errEl.style.display='block';
+    document.getElementById('loginEmail').focus();
+    return;
+  }
+  firebase.auth().sendPasswordResetEmail(email)
+    .then(function(){
+      var errEl=document.getElementById('loginError');
+      errEl.style.cssText='display:block;background:#d1fae5;color:#065f46;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:12px;';
+      errEl.textContent='✓ Email enviado a '+email+'. Revisa tu bandeja de entrada (y spam).';
+    })
+    .catch(function(e){
+      var errEl=document.getElementById('loginError');
+      errEl.style.cssText='display:block;background:#fee2e2;color:#dc2626;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:12px;';
+      var msg='No se encontró ninguna cuenta con ese email.';
+      if(e.code==='auth/invalid-email')msg='Email no válido.';
+      errEl.textContent=msg;
+    });
+});
 document.getElementById('loginPass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 document.getElementById('loginEmail').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
