@@ -472,14 +472,8 @@ button,input,select,textarea{font-family:inherit}
 </head>
 <body>
 
-<!-- ══ PANTALLA CARGA ══ -->
-<div id="loadingScreen" style="position:fixed;inset:0;background:var(--rm-blue);z-index:9998;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
-  <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" style="width:64px;height:64px;object-fit:contain;border-radius:50%;background:#fff;padding:4px;">
-  <div style="color:#fff;font-size:14px;font-weight:600;">Cargando...</div>
-</div>
-
 <!-- ══ PANTALLA LOGIN ══ -->
-<div id="loginScreen" style="display:none;position:fixed;inset:0;background:var(--rm-blue);z-index:9999;align-items:center;justify-content:center;">
+<div id="loginScreen" style="display:none;position:fixed;inset:0;background:var(--rm-blue);z-index:9999;flex-direction:column;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:12px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.25);">
     <div style="text-align:center;margin-bottom:24px;">
       <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" style="width:56px;height:56px;object-fit:contain;margin-bottom:12px;">
@@ -3442,7 +3436,6 @@ function loadUserProfile(uid){
 }
 
 function onAuthSuccess(){
-  document.getElementById('loadingScreen').style.display='none';
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('loginLoading').style.display='none';
   document.getElementById('btnLogin').disabled=false;
@@ -3493,7 +3486,6 @@ function doLogout(){
 }
 
 function showLoginScreen(){
-  document.getElementById('loadingScreen').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('appScreen').style.display='none';
   document.getElementById('homeScreen').style.display='none';
@@ -3793,18 +3785,7 @@ setSync('connecting');
 
 firebase.auth().onAuthStateChanged(function(fbUser){
   if(fbUser){
-    /* Intentar cargar perfil con timeout de 8 segundos */
-    var timeout=setTimeout(function(){
-      console.warn('loadUserProfile timeout');
-      showLoginScreen();
-    },8000);
-    loadUserProfile(fbUser.uid)
-      .then(function(){clearTimeout(timeout);})
-      .catch(function(e){
-        clearTimeout(timeout);
-        console.error('loadUserProfile error',e);
-        showLoginScreen();
-      });
+    loadUserProfile(fbUser.uid).catch(function(){showLoginScreen();});
   }else{
     showLoginScreen();
   }
