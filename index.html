@@ -3375,7 +3375,8 @@ document.getElementById('btnForgot').addEventListener('click',function(){
 document.getElementById('loginPass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 document.getElementById('loginEmail').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
-var _loginFromButton=false; /* solo loguear cuando el usuario pulsa el botón */
+var _loginFromButton=false;
+var _pendingAdminRestore=false;
 
 function doLogin(){
   var email=(document.getElementById('loginEmail').value||'').trim();
@@ -3537,20 +3538,25 @@ function inviteUser(){
   var email=(document.getElementById('newUserEmail').value||'').trim();
   var rol=document.getElementById('newUserRol').value;
   var msgEl=document.getElementById('userInviteMsg');
-  msgEl.style.display='none';
 
   if(!nombre||!email){
     msgEl.style.cssText='display:block;background:#fee2e2;color:#dc2626;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:10px;';
     msgEl.textContent='Rellena nombre y email.';return;
   }
 
-  /* Crear usuario en Firebase Auth con contraseña temporal aleatoria */
-  var tempPass='Tmp_'+Math.random().toString(36).slice(2,10)+'!';
+  msgEl.style.cssText='display:block;background:#f0f4ff;color:#2563eb;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:10px;';
+  msgEl.textContent='Creando usuario...';
+
+  /* Guardar el admin actual antes de que cambie */
+  var adminUser=firebase.auth().currentUser;
+
+  /* Crear usuario en Auth con contraseña temporal */
+  var tempPass='Tmp_'+Math.random().toString(36).slice(2,10)+'!1';
   firebase.auth().createUserWithEmailAndPassword(email,tempPass)
     .then(function(cred){
-      var uid=cred.user.uid;
-      /* Guardar perfil en Firestore */
-      return db.collection('users').doc(uid).set({
+      var newUid=cred.user.uid;
+      /* Guardar perfil en Firestore usando el uid del nuevo usuario */
+      return db.collection('users').doc(newUid).set({
         nombre:nombre,
         email:email,
         rol:rol,
@@ -3561,15 +3567,20 @@ function inviteUser(){
         /* Mandar email de reset para que cree su propia contraseña */
         return firebase.auth().sendPasswordResetEmail(email);
       }).then(function(){
-        /* Cerrar sesión del nuevo usuario y restaurar la del admin */
-        /* El admin NO pierde su sesión porque createUserWithEmailAndPassword
-           no hace signIn automático en Firebase compat SDK si ya hay sesión */
-        logAudit('crear','usuarios',nombre,'rol','',rol,currentUser.nombre+' invitó a '+nombre+' ('+email+') como '+rol);
-        msgEl.style.cssText='display:block;background:#d1fae5;color:#065f46;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:10px;';
-        msgEl.textContent='✓ Invitación enviada a '+email+'. Recibirá un email para crear su contraseña.';
-        document.getElementById('newUserName').value='';
-        document.getElementById('newUserEmail').value='';
-        loadUsersList();
+        /* Volver a iniciar sesión como admin */
+        return firebase.auth().signOut();
+      }).then(function(){
+        /* Restaurar sesión del admin */
+        if(adminUser&&adminUser.email){
+          /* No podemos re-autenticar sin contraseña, pero onAuthStateChanged
+             detectará que no hay sesión y mostrará login.
+             Solución: guardar que hay que recargar tras crear usuario */
+          _pendingAdminRestore=true;
+          showLoginScreen();
+          var errEl=document.getElementById('loginError');
+          errEl.style.cssText='display:block;background:#d1fae5;color:#065f46;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:12px;';
+          errEl.textContent='✓ Usuario '+nombre+' creado. Recibirá email para crear su contraseña. Vuelve a iniciar sesión.';
+        }
       });
     })
     .catch(function(e){
