@@ -1125,9 +1125,9 @@ var TEAMS=[
 ];
 /* Equipos temporales — aparecen en team bar solo si tienen jugadores */
 var TEMP_TEAMS=[
-  {key:'RMC2',name:'RMC 2 (transición)',from:'JA'},
-  {key:'AA1', name:'Alevín A1 (AB→)',  from:'AB'},
-  {key:'AA2', name:'Alevín A2 (AC→)',  from:'AC'}
+  {key:'RMC2',name:'RMC 2 (transicion)',from:'JA'},
+  {key:'AA1',name:'Alevin A1 (AB->)',from:'AB'},
+  {key:'AA2',name:'Alevin A2 (AC->)',from:'AC'}
 ];
 
 /* ══ ESTADOS ══ */
@@ -1483,9 +1483,9 @@ var CONFIRM_EMPTY={
 };
 /* Nombre para equipos temporales */
 var TEMP_NAMES={
-  'RMC2':'RMC 2 (transición)',
-  'AA1' :'Alevín A1 (transición)',
-  'AA2' :'Alevín A2 (transición)'
+  'RMC2':'RMC 2 (transicion)',
+  'AA1' :'Alevin A1 (transicion)',
+  'AA2' :'Alevin A2 (transicion)'
 };
 
 function _buildConfirmPlayers(players){
@@ -1559,19 +1559,13 @@ function confirmarDefinitiva(tk){
   var nextSzn=_nextSeason(activeSzn);
   var emptyTeams=CONFIRM_EMPTY[tk]||[];
 
-  var msg='¿Confirmar plantilla de '+tk+'?
+  var msg='Confirmar plantilla de '+tk+'?\n\n'
+    +'Definitiva '+activeSzn+': Fichados, Renovados y Promocionados.\n'
+    +(destTk?'Provisional '+nextSzn+': '+destName+'.\n':'')
+    +(emptyTeams.length?'Se crean vacios: '+emptyTeams.join(', ')+' en '+nextSzn+'.\n':'')
+    +'Cambios en Provisional NO afectan a Definitiva.';
 
-'
-    +'✓ Definitiva '+activeSzn+': solo Fichados, Renovados y Promocionados.
-'
-    +(destTk?'✓ Provisional '+nextSzn+' → '+destName+'.
-':'')
-    +(emptyTeams.length?'✓ Se crearán vacíos: '+emptyTeams.join(', ')+' en '+nextSzn+'.
-':'')
-    +'
-Los cambios posteriores en Provisional NO afectarán a Definitiva.';
-
-  if(!confirm(msg))return;
+    if(!confirm(msg))return;
 
   var src=null;
   try{var r=localStorage.getItem('plt_cache_'+activeSzn.replace('/','_')+'_'+tk);if(r)src=JSON.parse(r);}catch(e){}
@@ -1595,9 +1589,7 @@ Los cambios posteriores en Provisional NO afectarán a Definitiva.';
 
     /* 2. Escribir Provisional temporada siguiente */
     var pending=1+(emptyTeams.length);
-    function checkDone(){pending--;if(pending===0){setSync('saved');alert('✓ '+tk+' confirmado.
-- Definitiva '+activeSzn+': '+confirmPlayers.length+' jugadores.
-'+(destTk?'- Provisional '+nextSzn+' '+destName+': '+confirmPlayers.length+' jugadores.':''));renderTeamBar();}}
+    function checkDone(){pending--;if(pending===0){setSync('saved');alert('OK: '+tk+' confirmado. Definitiva '+activeSzn+': '+confirmPlayers.length+' jugadores.'+(destTk?' Provisional '+nextSzn+' '+destName+': '+confirmPlayers.length+' jugadores.':''));renderTeamBar();}}
 
     if(destTk){
       _writeProvisionalNextSeason(destTk,confirmPlayers,activeSzn,checkDone);
@@ -2586,7 +2578,7 @@ function bindModal(){
         }
         localStorage.setItem('plt_cache_'+destDocId,JSON.stringify(cached));
       }catch(e){}
-      alert('✓ '+p.name+' movido a '+destTeam.name+'.');
+      alert('OK: '+p.name+' movido a '+destTeam.name+'.');
       document.getElementById('edModal').style.display='none';
       selectedId=null;
       renderAll();
@@ -4304,7 +4296,7 @@ function renderCfgTemporales(body){
           state={players:[]};renderAll();loadTeam();
         }
         renderTeamBar();renderCfg();
-        alert('✓ '+tt.key+' eliminado.');
+        alert('OK: '+tt.key+' eliminado.');
       }).catch(function(e){console.error(e);alert('Error al eliminar.');});
     });
     row.appendChild(info);row.appendChild(del);body.appendChild(row);
