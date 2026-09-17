@@ -1081,6 +1081,7 @@ button,input,select,textarea{font-family:inherit}
     </div>
     <div class="ed-modal-f">
       <button class="btn dan sm" id="btnDelete" style="display:none">Eliminar</button>
+      <button class="btn sm" id="btnMoverEquipo" style="display:none;background:#7c3aed;color:#fff;border-color:#5b21b6;">&#8594; Mover</button>
       <span style="flex:1"></span>
       <button class="btn gho sm" id="edCancel">Cancelar</button>
       <button class="btn pri" id="btnSave">Guardar</button>
@@ -1099,6 +1100,7 @@ button,input,select,textarea{font-family:inherit}
       <button class="cfg-tab active" data-tab="plantillas">&#128101; Plantillas</button>
       <button class="cfg-tab" data-tab="colores">&#127912; Colores</button>
       <button class="cfg-tab" data-tab="zonas">&#9638; Zonas</button>
+      <button class="cfg-tab" data-tab="temporales">&#9203; Temporales</button>
     </div>
     <div class="cfg-body" id="cfgBody"></div>
   </div>
@@ -1120,6 +1122,12 @@ var TEAMS=[
   {key:'BA',name:'Benjam\xedn A'},{key:'BB',name:'Benjam\xedn B'},
   {key:'PA',name:'Prebenjam\xedn A'},{key:'PB',name:'Prebenjam\xedn B'},
   {key:'DB',name:'Debutante'}
+];
+/* Equipos temporales — aparecen en team bar solo si tienen jugadores */
+var TEMP_TEAMS=[
+  {key:'RMC2',name:'RMC 2 (transición)',from:'JA'},
+  {key:'AA1', name:'Alevín A1 (AB→)',  from:'AB'},
+  {key:'AA2', name:'Alevín A2 (AC→)',  from:'AC'}
 ];
 
 /* ══ ESTADOS ══ */
@@ -1446,35 +1454,181 @@ function setMode(mode){
   renderAll();loadTeam();
 }
 
-function _buildDefPlayers(players){
-  /* Copia excluyendo bajas y futuribles */
+/* ══ PROGRESIÓN DE CONFIRMACIÓN ══ */
+var CONFIRM_PROMO={
+  /* De qué equipo → a qué equipo en temporada siguiente (Provisional) */
+  'DB' :'PB',
+  'PB' :'PA',
+  'PA' :'BB',
+  'BB' :'BA',
+  'BA' :'AB',   /* AC se crea vacío */
+  'AB' :'AA1',  /* temporal */
+  'AC' :'AA2',  /* temporal */
+  'AA' :'IB',
+  'IB' :'IA',
+  'IA' :'CB',
+  'CB' :'CA',
+  'CA' :'JC',
+  'JC' :'JB',
+  'JB' :'JA',
+  'JA' :'RMC2', /* temporal */
+  'RMC':'RMC',
+  'CAS':'CAS'
+};
+/* Equipos que se crean vacíos como efecto colateral de otra confirmación */
+var CONFIRM_EMPTY={
+  'BA' :['AC'],   /* BA→AB, AC se crea vacío */
+  'AB' :['AA'],   /* AB→AA1, AA se crea vacío (espera AA1+AA2) */
+  'AC' :['AA']    /* AC→AA2, AA se crea vacío (merge si ya existe) */
+};
+/* Nombre para equipos temporales */
+var TEMP_NAMES={
+  'RMC2':'RMC 2 (transición)',
+  'AA1' :'Alevín A1 (transición)',
+  'AA2' :'Alevín A2 (transición)'
+};
+
+function _buildConfirmPlayers(players){
+  /* Solo Fichados, Renovados y Promocionados */
+  var allowed={fichaje:1,renovado:1,promocion:1};
   return players
-    .filter(function(p){return p.status!=='baja'&&p.status!=='futurible';})
-    .map(function(p){return JSON.parse(JSON.stringify(p));});
+    .filter(function(p){return allowed[p.status]||p.status==='promocion';})
+    .map(function(p){
+      var np=JSON.parse(JSON.stringify(p));
+      np.onPitch=false;
+      np.detectedZoneId='';np.detectedZoneShort='';np.detectedZoneLabel='Sin zona';
+      np.licencia=np.licencia||'';
+      return np;
+    });
+}
+
+function _nextSeason(szn){
+  /* '2024/2025' → '2025/2026' */
+  var parts=szn.split('/');
+  var y2=parseInt(parts[1]||parts[0])+1;
+  var y1=y2-1;
+  return y1+'/'+y2;
+}
+
+function _writeProvisionalNextSeason(destTk, players, szn, onDone){
+  var nextSzn=_nextSeason(szn);
+  var nextDocId=nextSzn.replace('/','_')+'_'+destTk;
+  /* Merge por ID — no duplicar jugadores */
+  db.collection('campogramas').doc(nextDocId).get().then(function(snap){
+    var existing=snap.exists?(snap.data().players||[]):[];
+    var existingIds={};existing.forEach(function(p){existingIds[p.id]=true;});
+    var toAdd=players.filter(function(p){return!existingIds[p.id];});
+    var merged=existing.concat(toAdd);
+    var data={
+      teamKey:nextDocId,version:1,
+      players:merged,necesidades:'',observaciones:'',
+      ts:firebase.firestore.FieldValue.serverTimestamp()
+    };
+    return db.collection('campogramas').doc(nextDocId).set(data);
+  }).then(function(){
+    /* Guardar temporada siguiente en lista si no existe */
+    if(seasons.indexOf(nextSzn)===-1){
+      seasons.push(nextSzn);
+      try{localStorage.setItem(SZN_KEY,JSON.stringify(seasons));}catch(e){}
+      db.collection('config').doc('global')
+        .set({seasons:seasons,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
+        .catch(function(){});
+      renderSeasonSel();
+    }
+    if(onDone)onDone();
+  }).catch(function(e){console.error('_writeProvisionalNextSeason error',e);if(onDone)onDone();});
+}
+
+function _writeEmptyTeam(tk, szn, onDone){
+  var nextSzn=_nextSeason(szn);
+  var nextDocId=nextSzn.replace('/','_')+'_'+tk;
+  db.collection('campogramas').doc(nextDocId).get().then(function(snap){
+    if(snap.exists&&snap.data().players&&snap.data().players.length){
+      if(onDone)onDone();return; /* Ya tiene jugadores, no tocar */
+    }
+    return db.collection('campogramas').doc(nextDocId).set({
+      teamKey:nextDocId,version:1,players:[],necesidades:'',observaciones:'',
+      ts:firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }).then(function(){if(onDone)onDone();}).catch(function(){if(onDone)onDone();});
 }
 
 function confirmarDefinitiva(tk){
-  if(!confirm('¿Confirmar plantilla definitiva de '+tk+'?\n\nSe excluirán Bajas y Futuribles.\nLos cambios posteriores en Provisional NO afectarán a Definitiva.'))return;
+  var destTk=CONFIRM_PROMO[tk];
+  var destName=destTk?(TEMP_NAMES[destTk]||destTk):'—';
+  var nextSzn=_nextSeason(activeSzn);
+  var emptyTeams=CONFIRM_EMPTY[tk]||[];
+
+  var msg='¿Confirmar plantilla de '+tk+'?
+
+'
+    +'✓ Definitiva '+activeSzn+': solo Fichados, Renovados y Promocionados.
+'
+    +(destTk?'✓ Provisional '+nextSzn+' → '+destName+'.
+':'')
+    +(emptyTeams.length?'✓ Se crearán vacíos: '+emptyTeams.join(', ')+' en '+nextSzn+'.
+':'')
+    +'
+Los cambios posteriores en Provisional NO afectarán a Definitiva.';
+
+  if(!confirm(msg))return;
+
   var src=null;
   try{var r=localStorage.getItem('plt_cache_'+activeSzn.replace('/','_')+'_'+tk);if(r)src=JSON.parse(r);}catch(e){}
   if(!src||!src.players||!src.players.length){alert('No hay jugadores en Provisional para '+tk);return;}
-  var defPlayers=_buildDefPlayers(src.players);
-  var defDocId=activeSzn.replace('/','_')+'_'+tk+'_DEF';
-  var defData={teamKey:defDocId,version:1,players:defPlayers,necesidades:src.necesidades||'',observaciones:src.observaciones||'',confirmedAt:firebase.firestore.FieldValue.serverTimestamp(),ts:firebase.firestore.FieldValue.serverTimestamp()};
+
+  var confirmPlayers=_buildConfirmPlayers(src.players);
   setSync('saving');
-  db.collection('campogramas').doc(defDocId).set(defData)
-    .then(function(){
-      try{localStorage.setItem('plt_cache_'+defDocId,JSON.stringify({players:defPlayers,necesidades:defData.necesidades,observaciones:defData.observaciones}));}catch(e){}
-      setSync('saved');
-      alert('✓ Plantilla definitiva de '+tk+' confirmada ('+defPlayers.length+' jugadores).');
-      renderTeamBar();
-    })
-    .catch(function(e){console.error(e);setSync('error');alert('Error al confirmar. Intenta de nuevo.');});
+
+  /* 1. Escribir Definitiva temporada actual */
+  var defDocId=activeSzn.replace('/','_')+'_'+tk+'_DEF';
+  var defData={
+    teamKey:defDocId,version:1,
+    players:confirmPlayers,
+    necesidades:src.necesidades||'',observaciones:src.observaciones||'',
+    confirmedAt:firebase.firestore.FieldValue.serverTimestamp(),
+    ts:firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  db.collection('campogramas').doc(defDocId).set(defData).then(function(){
+    try{localStorage.setItem('plt_cache_'+defDocId,JSON.stringify({players:confirmPlayers,necesidades:defData.necesidades,observaciones:defData.observaciones}));}catch(e){}
+
+    /* 2. Escribir Provisional temporada siguiente */
+    var pending=1+(emptyTeams.length);
+    function checkDone(){pending--;if(pending===0){setSync('saved');alert('✓ '+tk+' confirmado.
+- Definitiva '+activeSzn+': '+confirmPlayers.length+' jugadores.
+'+(destTk?'- Provisional '+nextSzn+' '+destName+': '+confirmPlayers.length+' jugadores.':''));renderTeamBar();}}
+
+    if(destTk){
+      _writeProvisionalNextSeason(destTk,confirmPlayers,activeSzn,checkDone);
+    } else {
+      checkDone();
+    }
+    emptyTeams.forEach(function(etk){_writeEmptyTeam(etk,activeSzn,checkDone);});
+
+  }).catch(function(e){console.error(e);setSync('error');alert('Error al confirmar. Intenta de nuevo.');});
 }
 
 function actualizarDefinitiva(tk){
-  if(!confirm('¿Actualizar plantilla definitiva de '+tk+' con los datos actuales de Provisional?\n\nSe excluirán Bajas y Futuribles.\nEsto sobreescribirá la Definitiva actual.'))return;
-  confirmarDefinitiva(tk);
+  if(!confirm('¿Actualizar la plantilla definitiva de '+tk+'?\n\nSobreescribirá la Definitiva actual con los datos de Provisional (filtrado Fichados+Renovados+Promocionados).\nLa Provisional de la temporada siguiente NO se modifica.'))return;
+  /* Solo actualizar Definitiva, no temporada siguiente */
+  var src=null;
+  try{var r=localStorage.getItem('plt_cache_'+activeSzn.replace('/','_')+'_'+tk);if(r)src=JSON.parse(r);}catch(e){}
+  if(!src||!src.players||!src.players.length){alert('No hay jugadores en Provisional para '+tk);return;}
+  var confirmPlayers=_buildConfirmPlayers(src.players);
+  var defDocId=activeSzn.replace('/','_')+'_'+tk+'_DEF';
+  setSync('saving');
+  db.collection('campogramas').doc(defDocId).set({
+    teamKey:defDocId,version:1,players:confirmPlayers,
+    necesidades:src.necesidades||'',observaciones:src.observaciones||'',
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+    ts:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    try{localStorage.setItem('plt_cache_'+defDocId,JSON.stringify({players:confirmPlayers,necesidades:src.necesidades||'',observaciones:src.observaciones||''}));}catch(e){}
+    setSync('saved');
+    alert('✓ Definitiva de '+tk+' actualizada ('+confirmPlayers.length+' jugadores).');
+    renderTeamBar();
+  }).catch(function(e){console.error(e);setSync('error');});
 }
 
 function loadTeam(){
@@ -1624,7 +1778,29 @@ function renderTeamBar(){
     }
   });
 
-  var t=TEAMS.find(function(x){return x.key===activeTeam;});
+  /* ── Equipos temporales: mostrar si tienen jugadores en szn activa ── */
+  TEMP_TEAMS.forEach(function(tt){
+    var cached=null;
+    try{var rr=localStorage.getItem('plt_cache_'+activeSzn.replace('/','_')+'_'+tt.key);if(rr)cached=JSON.parse(rr);}catch(e){}
+    if(!cached||!cached.players||!cached.players.length)return; /* Ocultar si vacío */
+    var isActive=(tt.key===activeTeam&&activeCombined!=='AB+AC');
+    var bTemp=document.createElement('button');
+    bTemp.className='team-btn'+(isActive?' active':'');
+    bTemp.style.cssText='border-style:dashed;opacity:.85;';
+    bTemp.textContent=tt.key;bTemp.title=tt.name+' (temporal)';
+    bTemp.addEventListener('click',function(){
+      if(tt.key===activeTeam&&activeCombined!=='AB+AC')return;
+      activeCombined=null;
+      activeTeam=tt.key;localStorage.setItem(ATM_KEY,activeTeam);
+      state={players:[]};selectedId=null;activeFilters=['all'];syncFilterBtns();
+      document.getElementById('viewCombined').style.display='none';
+      document.getElementById('viewNormal').style.display='block';
+      renderAll();loadTeam();
+    });
+    bar.appendChild(bTemp);
+  });
+
+  var t=TEAMS.find(function(x){return x.key===activeTeam;})||TEMP_TEAMS.find(function(x){return x.key===activeTeam;});
   var nm=t?t.name:'\u2014';
   if(activeCombined!=='AB+AC'){
     document.getElementById('teamName').firstChild.textContent=nm;
@@ -1816,8 +1992,10 @@ function isPromocionado(p){
 
 /* Comprobar si un jugador pasa el filtro activo */
 function isDefExcluded(p){
-  /* En Definitiva, bajas y futuribles nunca aparecen */
-  return activeMode==='definitiva'&&(p.status==='baja'||p.status==='futurible');
+  /* En Definitiva solo aparecen Fichados, Renovados y Promocionados */
+  if(activeMode!=='definitiva')return false;
+  var allowed={fichaje:1,renovado:1,promocion:1};
+  return !allowed[p.status];
 }
 function passesFilter(p){
   if(isDefExcluded(p))return false;
@@ -2226,6 +2404,10 @@ function openModal(pid){
     }
   }
   document.querySelectorAll('.status-btn').forEach(function(b){b.classList.toggle('active',b.dataset.status===p.status);});
+  /* Botón mover — solo en equipos temporales */
+  var isTempTeam=TEMP_TEAMS.some(function(tt){return tt.key===activeTeam;});
+  var btnMover=document.getElementById('btnMoverEquipo');
+  if(btnMover)btnMover.style.display=isTempTeam?'inline-flex':'none';
   document.getElementById('edModal').style.display='flex';
   setTimeout(function(){document.getElementById('fName').focus();},80);
 }
@@ -2359,6 +2541,57 @@ function bindModal(){
     }
   });
   document.getElementById('btnNew').addEventListener('click',function(){openModal(null);});
+
+  /* Botón mover jugador a otro equipo */
+  document.getElementById('btnMoverEquipo').addEventListener('click',function(){
+    var p=getPlayer(selectedId);if(!p)return;
+    /* Construir opciones: todos los equipos menos el actual */
+    var allTeams=TEAMS.concat(TEMP_TEAMS);
+    var opts=allTeams.filter(function(t){return t.key!==activeTeam;});
+    var optsHtml=opts.map(function(t){return '<option value="'+t.key+'">'+t.name+'</option>';}).join('');
+    var dest=prompt('Mover a equipo:\n'+opts.map(function(t,i){return (i+1)+'. '+t.name+' ('+t.key+')';}).join('\n')+'\n\nEscribe la clave del equipo (ej: RMC):');
+    if(!dest)return;
+    dest=dest.trim().toUpperCase();
+    var destTeam=allTeams.find(function(t){return t.key===dest;});
+    if(!destTeam){alert('Equipo no encontrado: '+dest);return;}
+    if(!confirm('¿Mover "'+p.name+'" de '+activeTeam+' a '+destTeam.name+'?\n\nEl jugador desaparecerá de '+activeTeam+'.'))return;
+
+    /* 1. Quitar del equipo actual */
+    state.players=state.players.filter(function(x){return x.id!==p.id;});
+    persist();
+
+    /* 2. Añadir al equipo destino (merge por ID) */
+    var destDocId=activeSzn.replace('/','_')+'_'+dest;
+    db.collection('campogramas').doc(destDocId).get().then(function(snap){
+      var destState=snap.exists?snap.data():{players:[],necesidades:'',observaciones:''};
+      var destPlayers=destState.players||[];
+      /* No duplicar */
+      if(!destPlayers.some(function(x){return x.id===p.id;})){
+        var np=JSON.parse(JSON.stringify(p));
+        np.onPitch=false;np.detectedZoneId='';np.detectedZoneShort='';np.detectedZoneLabel='Sin zona';
+        destPlayers.push(np);
+      }
+      return db.collection('campogramas').doc(destDocId).set({
+        teamKey:destDocId,version:1,players:destPlayers,
+        necesidades:destState.necesidades||'',observaciones:destState.observaciones||'',
+        ts:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }).then(function(){
+      try{
+        var cached=null;try{var rr=localStorage.getItem('plt_cache_'+destDocId);if(rr)cached=JSON.parse(rr);}catch(e){}
+        if(!cached)cached={players:[],necesidades:'',observaciones:''};
+        if(!cached.players.some(function(x){return x.id===p.id;})){
+          var np2=JSON.parse(JSON.stringify(p));np2.onPitch=false;
+          cached.players.push(np2);
+        }
+        localStorage.setItem('plt_cache_'+destDocId,JSON.stringify(cached));
+      }catch(e){}
+      alert('✓ '+p.name+' movido a '+destTeam.name+'.');
+      document.getElementById('edModal').style.display='none';
+      selectedId=null;
+      renderAll();
+    }).catch(function(e){console.error(e);alert('Error al mover jugador.');});
+  });
   /* Botón añadir en vista combinada — pregunta equipo y añade sin poner en campo */
   document.addEventListener('click',function(e){
     if(e.target&&e.target.id==='btnNewComb'){
@@ -2943,6 +3176,7 @@ function renderCfg(){
   if(activeCfgTab==='plantillas')renderCfgPlantillas(body);
   else if(activeCfgTab==='colores')renderCfgColores(body);
   else if(activeCfgTab==='zonas')renderCfgZonas(body);
+  else if(activeCfgTab==='temporales')renderCfgTemporales(body);
 }
 function renderCfgPlantillas(body){
   var tabs=document.createElement('div');tabs.className='pt-team-tabs';
@@ -4036,6 +4270,66 @@ function zonasFromLines(ft){return getZonas(ft);}
 function regenZonas(ft){return getZonas(ft);}
 
 /* ── RENDER CONFIGURACIÓN ZONAS ── */
+function renderCfgTemporales(body){
+  body.innerHTML='';
+  var title=document.createElement('div');
+  title.className='cfg-section-title';
+  title.textContent='Equipos temporales activos en '+activeSzn;
+  body.appendChild(title);
+
+  var found=false;
+  TEMP_TEAMS.forEach(function(tt){
+    var docKey=activeSzn.replace('/','_')+'_'+tt.key;
+    var cached=null;
+    try{var rr=localStorage.getItem('plt_cache_'+docKey);if(rr)cached=JSON.parse(rr);}catch(e){}
+    var cnt=cached&&cached.players?cached.players.length:0;
+    if(!cnt)return; /* No mostrar si está vacío */
+    found=true;
+
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:6px;';
+    var info=document.createElement('div');
+    info.innerHTML='<strong style="font-size:12px;">'+tt.key+'</strong>'
+      +' <span style="font-size:11px;color:var(--text-mut);">'+tt.name+'</span>'
+      +'<div style="font-size:10px;color:var(--rm-blue);margin-top:2px;">'+cnt+' jugadores</div>';
+    var del=document.createElement('button');
+    del.className='btn dan sm';del.textContent='Eliminar equipo';
+    del.style.cssText='font-size:10px;';
+    del.addEventListener('click',function(){
+      if(!confirm('¿Eliminar el equipo temporal '+tt.key+'?\n\nSolo hazlo cuando todos los jugadores hayan sido movidos a sus equipos definitivos.\n\nEsta acción no se puede deshacer.'))return;
+      db.collection('campogramas').doc(docKey).delete().then(function(){
+        try{localStorage.removeItem('plt_cache_'+docKey);}catch(e){}
+        if(activeTeam===tt.key){
+          activeTeam='CAS';localStorage.setItem(ATM_KEY,activeTeam);
+          state={players:[]};renderAll();loadTeam();
+        }
+        renderTeamBar();renderCfg();
+        alert('✓ '+tt.key+' eliminado.');
+      }).catch(function(e){console.error(e);alert('Error al eliminar.');});
+    });
+    row.appendChild(info);row.appendChild(del);body.appendChild(row);
+  });
+
+  if(!found){
+    var empty=document.createElement('div');
+    empty.style.cssText='text-align:center;padding:24px;font-size:12px;color:var(--text-mut);font-style:italic;';
+    empty.textContent='No hay equipos temporales activos en esta temporada.';
+    body.appendChild(empty);
+  }
+
+  /* También mostrar temporales de otras temporadas */
+  var otherTitle=document.createElement('div');
+  otherTitle.className='cfg-section-title';
+  otherTitle.style.marginTop='16px';
+  otherTitle.textContent='Otras temporadas';
+  body.appendChild(otherTitle);
+
+  var otherHint=document.createElement('div');
+  otherHint.style.cssText='font-size:11px;color:var(--text-mut);padding:6px;';
+  otherHint.textContent='Los equipos temporales de otras temporadas se gestionan cambiando la temporada activa en el header.';
+  body.appendChild(otherHint);
+}
+
 function renderCfgZonas(body){
   body.innerHTML='';
   var wrap=document.createElement('div');wrap.className='zed-wrap';
