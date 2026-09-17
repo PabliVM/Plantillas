@@ -630,6 +630,7 @@ button,input,select,textarea{font-family:inherit}
       <div class="stat-sep"></div>
       <div class="stat-sep"></div>
       <div class="stat-pill">Promocionados <strong id="statProm">0</strong></div>
+      <div class="stat-pill">Licencias <strong id="statLic">0</strong></div>
       <div class="stat-sep"></div>
 <div class="stat-pill" style="gap:3px;"><div style="width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2);overflow:hidden;flex-shrink:0;background:#eee;"><img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/Madrile%C3%B1a.png" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"></div><strong id="statMad">0</strong></div>
       <div class="stat-pill" style="gap:3px;"><div style="width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2);overflow:hidden;flex-shrink:0;background:#eee;"><img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/Espa%C3%B1ola.png" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"></div><strong id="statEsp">0</strong></div>
@@ -1059,6 +1060,13 @@ button,input,select,textarea{font-family:inherit}
         </select>
         <span style="font-size:10px;color:var(--text-mut);margin-top:3px;">El jugador se copia al equipo destino con estado Promoci&#243;n (cian). En este equipo no cambia nada.</span>
       </div>
+      <div class="frow" id="fLicenciaRow">
+        <label style="color:#7c3aed;font-weight:700;">&#127183; Licencia de equipo inferior</label>
+        <select id="fLicencia" style="width:100%;padding:7px 9px;font-size:13px;border:1px solid #7c3aed;border-radius:var(--rs);background:var(--surface);color:var(--text);">
+          <option value="">— Sin licencia especial (equipo actual) —</option>
+        </select>
+        <span style="font-size:10px;color:var(--text-mut);margin-top:3px;">Solo si el jugador tiene licencia de un equipo inferior al actual. Ej: est&#225; en Cadete A pero tiene licencia de Cadete B.</span>
+      </div>
     </div>
     <div class="ed-modal-f">
       <button class="btn dan sm" id="btnDelete" style="display:none">Eliminar</button>
@@ -1207,7 +1215,7 @@ function flushSave(){
 }
 
 /* Campos que se sincronizan entre equipos (no status ni onPitch) */
-var SYNC_FIELDS=['name','isPor','res','lat','proc','birthYear','comment','yearsInClub','selecciones'];
+var SYNC_FIELDS=['name','isPor','res','lat','proc','birthYear','comment','yearsInClub','selecciones','licencia'];
 
 function syncMirroredPlayers(players){
   /* Buscar jugadores que tienen espejo: los promovidos (promovido=true) en este equipo */
@@ -1645,6 +1653,7 @@ document.getElementById('btnSeasonAdd').addEventListener('click',function(){
         np.onPitch=false;np.detectedZoneId='';np.detectedZoneShort='';np.detectedZoneLabel='Sin zona';
         /* Sumar 1 año en el club si tiene */
         if(np.yearsInClub)np.yearsInClub=parseInt(np.yearsInClub)+1;
+        np.licencia=''; /* reset licencia al promocionar de temporada */
         /* Cambiar status de fichaje/futurible a renovado al ascender */
         if(np.status==='fichaje'||np.status==='futurible'||np.status==='destacados')np.status='renovado';
         /* Repartir entre destinos (si hay varios, todos reciben copia) */
@@ -1791,6 +1800,7 @@ function renderCampo(){
     chip.innerHTML=renderSelectionIcons(p)+'<span class="pchip-text">'+esc(p.name||'')+'</span>'
       +((p.proc&&(p.status==='fichaje'||p.status==='futurible'))?'<span class="pchip-proc">'+esc(p.proc)+'</span>':'')
       +(p.birthYear?'<span class="pchip-proc" style="color:#1e3a5f;font-weight:900;font-size:11px;">'+p.birthYear+'</span>':'')
+      +(p.licencia?'<span class="pchip-proc" style="color:#c4b5fd;font-weight:800;font-size:8px;">LIC.'+esc(p.licencia)+'</span>':'')
       +footHtmlFor(p.lat||'');
     var xBtn=document.createElement('button');xBtn.className='chip-remove-btn';xBtn.textContent='\xd7';
     xBtn.addEventListener('pointerdown',function(e){e.stopPropagation();});
@@ -1874,13 +1884,14 @@ function renderRoster(){
         var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;display:flex;align-items:center;gap:6px;';
         var byLabel=p.birthYear?'<span style="font-size:9px;color:#1e3a5f;font-weight:800;flex-shrink:0;">'+p.birthYear+'</span>':'';
         var cmtEmoji=p.comment?'<span title="'+esc(p.comment)+'" style="font-size:12px;flex-shrink:0;cursor:help;">&#128172;</span>':'';
+        var licBadge=p.licencia?'<span title="Licencia '+esc(p.licencia)+'" style="font-size:8px;font-weight:800;background:#ede9fe;color:#7c3aed;border:1px solid #c4b5fd;border-radius:3px;padding:1px 4px;flex-shrink:0;">LIC.'+esc(p.licencia)+'</span>':'';
         /* Icono de tipo de promoción */
         var promoIcon='';
         if(p.status==='promocion')promoIcon='<span title="Promoci\xf3n deportiva" style="font-size:10px;color:#0891b2;flex-shrink:0;">\u2B06</span>';
         else if(p.birthYear&&genYear&&parseInt(p.birthYear)>parseInt(genYear))promoIcon='<span title="Promoci\xf3n por generaci\xf3n" style="font-size:10px;color:#7c3aed;flex-shrink:0;">&#127380;</span>';
         info.innerHTML=posBadge
           +'<span style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">'+esc(p.name||'(sin nombre)')+'</span>'
-          +byLabel+cmtEmoji+promoIcon+enCampo;
+          +byLabel+licBadge+cmtEmoji+promoIcon+enCampo;
         var pen=document.createElement('button');pen.className='ritem-edit';pen.title='Editar';pen.textContent='\u270f';
         pen.addEventListener('click',function(e){e.stopPropagation();openModal(p.id);});
         item.appendChild(info);item.appendChild(pen);
@@ -1944,13 +1955,14 @@ function renderPlist(){
     var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
     var enCampo=p.onPitch?'<span style="color:#16a34a;font-size:9px;font-weight:700;"> \u2713</span>':'';
     var byTxt=p.birthYear?'<span style="font-size:9px;color:#1e3a5f;font-weight:800;margin-left:4px;">'+p.birthYear+'</span>':'';
+    var licTxt=p.licencia?'<span style="font-size:8px;font-weight:800;background:#ede9fe;color:#7c3aed;border:1px solid #c4b5fd;border-radius:3px;padding:1px 4px;margin-left:3px;">LIC.'+esc(p.licencia)+'</span>':'';
     var cmtIcon=p.comment?'<span title="'+esc(p.comment)+'" style="font-size:11px;margin-left:3px;" >&#128172;</span>':'';
     var yrsLabel='';
     if(p.yearsInClub){
       var yrsText=p.yearsInClub===1?'1 a\xf1o':p.yearsInClub+' a\xf1os';
       yrsLabel='<span style="font-size:9px;background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 5px;font-weight:700;margin-left:4px;flex-shrink:0;">'+yrsText+'</span>';
     }
-    info.innerHTML='<div class="plist-name" style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;">'+esc(p.name||'(sin nombre)')+byTxt+cmtIcon+yrsLabel+enCampo+'</div>';
+    info.innerHTML='<div class="plist-name" style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;">'+esc(p.name||'(sin nombre)')+byTxt+licTxt+cmtIcon+yrsLabel+enCampo+'</div>';
     var btn=document.createElement('button');btn.className='plist-addbtn'+(p.onPitch?' in':'');
     btn.textContent=p.onPitch?'Sacar':'+ Campo';
     btn.addEventListener('click',function(e){e.stopPropagation();if(p.onPitch){p.onPitch=false;}else{p.onPitch=true;selectedId=p.id;}persist();renderAll();});
@@ -2001,6 +2013,7 @@ function renderStats(){
   document.getElementById('statMP').textContent=enCampo.filter(function(p){return p.res==='MP';}).length;
   /* Promocionado = jugadores con estado 'promocion' */
   document.getElementById('statProm').textContent=enCampo.filter(function(p){return p.status==='promocion'||p.birthYear;}).length;
+  document.getElementById('statLic').textContent=state.players.filter(function(p){return p.licencia&&p.licencia!=='';}).length;
   document.getElementById('statMad').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('madrilena')>=0;}).length;
   document.getElementById('statEsp').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('espanola')>=0;}).length;
   document.getElementById('statInt').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('internacional')>=0;}).length;
@@ -2042,7 +2055,7 @@ function showProcRow(status){
 function openModal(pid){
   var isNew=!pid;
   if(isNew){
-    var p={id:uid(),name:'',status:'renovado',isPor:false,res:'',proc:'',lat:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona',selecciones:[],birthYear:null,comment:'',yearsInClub:null};
+    var p={id:uid(),name:'',status:'renovado',isPor:false,res:'',proc:'',lat:'',onPitch:false,x:50,y:59,detectedZoneId:'',detectedZoneShort:'',detectedZoneLabel:'Sin zona',selecciones:[],birthYear:null,comment:'',yearsInClub:null,licencia:''};
     state.players.push(p);selectedId=p.id;persist();
     logAudit('crear','jugadores',p.name||'Nuevo jugador','','',activeTeam,currentUser?currentUser.nombre+' añadió jugador "'+esc(p.name||'Nuevo jugador')+'" al '+activeTeam:'');
     document.getElementById('edModalTitle').textContent='Nuevo jugador';
@@ -2063,6 +2076,7 @@ function openModal(pid){
   document.getElementById('fBirthYear').value=p.birthYear||'';
   document.getElementById('fComment').value=p.comment||'';
   var fyEl=document.getElementById('fYearsInClub');if(fyEl)fyEl.value=p.yearsInClub||'';
+  var licEl=document.getElementById('fLicencia');if(licEl)licEl.value=p.licencia||'';
   /* Selector mover — todos los equipos menos el activo */
   var moveSel=document.getElementById('fMoveTeam');
   if(moveSel){
@@ -2200,6 +2214,15 @@ function bindModal(){
   });
   document.getElementById('fProc').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.proc=this.value;persist();}});
   document.getElementById('fBirthYear').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.birthYear=this.value?parseInt(this.value):null;persist();}});
+  /* Licencia */
+  (function(){
+    var sel=document.getElementById('fLicencia');
+    sel.innerHTML='<option value="">— Sin licencia especial (equipo actual) —</option>';
+    TEAMS.forEach(function(t){
+      var o=document.createElement('option');o.value=t.key;o.textContent=t.name+' ('+t.key+')';sel.appendChild(o);
+    });
+    sel.addEventListener('change',function(){var p=getPlayer(selectedId);if(p){p.licencia=this.value;persist();}});
+  })();
   var fyInput=document.getElementById('fYearsInClub');
   if(fyInput)fyInput.addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.yearsInClub=this.value?parseInt(this.value):null;persist();}});
   document.getElementById('fComment').addEventListener('input',function(){var p=getPlayer(selectedId);if(p){p.comment=this.value;persist();}});
