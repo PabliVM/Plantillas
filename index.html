@@ -1495,8 +1495,7 @@ function _buildConfirmPlayers(players){
     .filter(function(p){return allowed[p.status]||p.status==='promocion';})
     .map(function(p){
       var np=JSON.parse(JSON.stringify(p));
-      np.onPitch=false;
-      np.detectedZoneId='';np.detectedZoneShort='';np.detectedZoneLabel='Sin zona';
+      /* Mantener posición en campo igual que en Provisional */
       np.licencia=np.licencia||'';
       return np;
     });
