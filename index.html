@@ -38,6 +38,11 @@ button,input,select,textarea{font-family:inherit}
 .hbtn:hover{background:rgba(255,255,255,.28)}
 .hbtn-icon{width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.12);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:background var(--tr);}
 .hbtn-icon:hover{background:rgba(255,255,255,.28)}
+.mode-toggle{display:flex;align-items:center;background:rgba(0,0,0,.25);border-radius:20px;padding:2px;gap:2px;flex-shrink:0;}
+.mode-btn{padding:3px 12px;font-size:11px;font-weight:700;border:none;border-radius:16px;cursor:pointer;background:transparent;color:rgba(255,255,255,.6);transition:all .2s;letter-spacing:.3px;}
+.mode-btn.active{background:#fff;color:var(--rm-blue);box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.mode-btn:hover:not(.active){color:#fff;background:rgba(255,255,255,.15);}
+.def-banner{background:#7c3aed;color:#fff;font-size:11px;font-weight:700;text-align:center;padding:4px;letter-spacing:.5px;position:sticky;top:52px;z-index:99;}
 .sync-indicator{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:rgba(255,255,255,.8);padding:3px 9px;border-radius:12px;background:rgba(255,255,255,.1);white-space:nowrap;flex-shrink:0;}
 .sync-indicator.saving{background:rgba(255,255,255,.18);}
 .sync-indicator.error{background:rgba(220,38,38,.7);}
@@ -570,6 +575,10 @@ button,input,select,textarea{font-family:inherit}
 <header class="header">
   <div class="hlogo"><img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" onerror="this.parentNode.textContent='RM'"></div>
   <span class="htitle">Confecci&oacute;n de Plantillas</span>
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="btnModeProvisional" onclick="setMode('provisional')">PROVISIONAL</button>
+    <button class="mode-btn" id="btnModeDefinitiva" onclick="setMode('definitiva')">DEFINITIVA</button>
+  </div>
   <button class="hbtn" id="btnCfg">&#9881; Config y Plantillas</button>
   <div class="sync-indicator" id="syncEl"><span class="sync-dot"></span><span id="syncLbl">Conectando&hellip;</span></div>
   <span class="hspacer"></span>
@@ -604,12 +613,14 @@ button,input,select,textarea{font-family:inherit}
 
 <div id="appScreen" style="display:none">
 <div class="team-bar" id="teamBar"></div>
+<div id="defBanner" class="def-banner" style="display:none;">&#9679; PLANTILLA DEFINITIVA — Los cambios aqu&iacute; son independientes de Provisional</div>
 <div id="viewNormal"><!-- vista normal -->
 
 <div class="main">
   <!-- ESTADÍSTICAS -->
   <div class="summary-bar">
     <div class="summary-name" id="teamName">&mdash;<small id="teamKey">&mdash;</small></div>
+    <div id="confirmarDefZone" style="display:flex;align-items:center;gap:6px;flex-shrink:0;"></div>
     <div style="display:flex;align-items:center;gap:6px;font-size:11px;">
       <label style="color:var(--text-mut);font-weight:600;">Generaci&oacute;n:</label>
       <input type="number" id="genYearInput" min="1990" max="2030" placeholder="Ej: 2012"
@@ -1174,6 +1185,7 @@ function chipSt(status,isPor){
 var SZN_KEY='plt_seasons',ASZN_KEY='plt_aszn';
 var seasons=(function(){try{var s=localStorage.getItem(SZN_KEY);if(s)return JSON.parse(s);}catch(e){}var y=new Date().getFullYear();return[y+'/'+(y+1)];})();
 var activeSzn=localStorage.getItem(ASZN_KEY)||seasons[seasons.length-1];
+var activeMode=localStorage.getItem('plt_mode')||'provisional'; /* 'provisional' | 'definitiva' */
 if(seasons.indexOf(activeSzn)===-1)activeSzn=seasons[seasons.length-1];
 function saveSeasons(){
   try{localStorage.setItem(SZN_KEY,JSON.stringify(seasons));}catch(e){}
@@ -1183,7 +1195,7 @@ function saveSeasons(){
 
 /* ══ PERSISTENCIA ══ */
 var saveTimer=null,saveInFlight=false,pendingSave=false;
-function docId(tk){return activeSzn.replace('/','_')+'_'+tk;}
+function docId(tk){var base=activeSzn.replace('/','_')+'_'+tk;return(activeMode==='definitiva'?base+'_DEF':base);}
 function teamDoc(tk){return db.collection('campogramas').doc(docId(tk));}
 var localVersions={};
 function persist(){
@@ -1402,6 +1414,69 @@ var selectedZonaId=null;
 function uid(){return'p_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
 function getPlayer(id){return state.players.find(function(p){return p.id===id})}
 
+/* ══ MODO PROVISIONAL / DEFINITIVA ══ */
+function setMode(mode){
+  if(activeMode===mode)return;
+  activeMode=mode;
+  localStorage.setItem('plt_mode',mode);
+  /* Toggle botones */
+  document.getElementById('btnModeProvisional').classList.toggle('active',mode==='provisional');
+  document.getElementById('btnModeDefinitiva').classList.toggle('active',mode==='definitiva');
+  /* Banner */
+  document.getElementById('defBanner').style.display=mode==='definitiva'?'block':'none';
+  /* Config solo en provisional */
+  document.getElementById('btnCfg').style.display=mode==='provisional'?'flex':'none';
+  /* Ocultar filtros baja/futurible en Definitiva */
+  document.querySelectorAll('.cfilter-btn[data-filter="baja"],.cfilter-btn[data-filter="futurible"]').forEach(function(b){
+    b.style.display=mode==='definitiva'?'none':'';
+  });
+  /* Si el filtro activo incluía baja/futurible, resetear a 'all' */
+  if(mode==='definitiva'){
+    activeFilters=activeFilters.filter(function(f){return f!=='baja'&&f!=='futurible';});
+    if(!activeFilters.length)activeFilters=['all'];
+    syncFilterBtns();
+  }
+  /* Reset y recargar */
+  state={players:[]};selectedId=null;
+  if(mode==='definitiva'&&activeCombined==='AB+AC'){
+    activeCombined=null;activeTeam='AB';localStorage.setItem(ATM_KEY,activeTeam);
+    document.getElementById('viewCombined').style.display='none';
+    document.getElementById('viewNormal').style.display='block';
+  }
+  renderAll();loadTeam();
+}
+
+function _buildDefPlayers(players){
+  /* Copia excluyendo bajas y futuribles */
+  return players
+    .filter(function(p){return p.status!=='baja'&&p.status!=='futurible';})
+    .map(function(p){return JSON.parse(JSON.stringify(p));});
+}
+
+function confirmarDefinitiva(tk){
+  if(!confirm('¿Confirmar plantilla definitiva de '+tk+'?\n\nSe excluirán Bajas y Futuribles.\nLos cambios posteriores en Provisional NO afectarán a Definitiva.'))return;
+  var src=null;
+  try{var r=localStorage.getItem('plt_cache_'+activeSzn.replace('/','_')+'_'+tk);if(r)src=JSON.parse(r);}catch(e){}
+  if(!src||!src.players||!src.players.length){alert('No hay jugadores en Provisional para '+tk);return;}
+  var defPlayers=_buildDefPlayers(src.players);
+  var defDocId=activeSzn.replace('/','_')+'_'+tk+'_DEF';
+  var defData={teamKey:defDocId,version:1,players:defPlayers,necesidades:src.necesidades||'',observaciones:src.observaciones||'',confirmedAt:firebase.firestore.FieldValue.serverTimestamp(),ts:firebase.firestore.FieldValue.serverTimestamp()};
+  setSync('saving');
+  db.collection('campogramas').doc(defDocId).set(defData)
+    .then(function(){
+      try{localStorage.setItem('plt_cache_'+defDocId,JSON.stringify({players:defPlayers,necesidades:defData.necesidades,observaciones:defData.observaciones}));}catch(e){}
+      setSync('saved');
+      alert('✓ Plantilla definitiva de '+tk+' confirmada ('+defPlayers.length+' jugadores).');
+      renderTeamBar();
+    })
+    .catch(function(e){console.error(e);setSync('error');alert('Error al confirmar. Intenta de nuevo.');});
+}
+
+function actualizarDefinitiva(tk){
+  if(!confirm('¿Actualizar plantilla definitiva de '+tk+' con los datos actuales de Provisional?\n\nSe excluirán Bajas y Futuribles.\nEsto sobreescribirá la Definitiva actual.'))return;
+  confirmarDefinitiva(tk);
+}
+
 function loadTeam(){
   if(unsubscribeSnapshot){unsubscribeSnapshot();unsubscribeSnapshot=null;}
   try{var r=localStorage.getItem('plt_cache_'+docId(activeTeam));if(r){state=JSON.parse(r);state.players.forEach(function(p){if(p.onPitch)detectAndUpdateZone(p);});renderAll();}}catch(e){}
@@ -1567,6 +1642,27 @@ function renderTeamBar(){
     }
     updateGenYearAge();
     document.getElementById('campoTitle').textContent=nm;
+
+    /* Botón Confirmar/Actualizar Definitiva — solo en Provisional */
+    var btnZone=document.getElementById('confirmarDefZone');
+    if(btnZone){
+      btnZone.innerHTML='';
+      if(activeMode==='provisional'&&activeCombined!=='AB+AC'){
+        var defDoc=activeSzn.replace('/','_')+'_'+activeTeam+'_DEF';
+        /* Verificar si ya existe definitiva para este equipo */
+        var cached=null;try{var r=localStorage.getItem('plt_cache_'+defDoc);if(r)cached=JSON.parse(r);}catch(e){}
+        var btnCfmLabel=cached&&cached.players&&cached.players.length?'&#10003; Actualizar Definitiva':'&#128274; Confirmar Definitiva';
+        var btnCfm=document.createElement('button');
+        btnCfm.className='btn sm';
+        btnCfm.style.cssText='background:#7c3aed;color:#fff;border-color:#5b21b6;font-size:10px;padding:4px 10px;';
+        btnCfm.innerHTML=btnCfmLabel;
+        btnCfm.addEventListener('click',function(){
+          if(cached&&cached.players&&cached.players.length) actualizarDefinitiva(activeTeam);
+          else confirmarDefinitiva(activeTeam);
+        });
+        btnZone.appendChild(btnCfm);
+      }
+    }
   }
 }
 
@@ -1719,7 +1815,12 @@ function isPromocionado(p){
 }
 
 /* Comprobar si un jugador pasa el filtro activo */
+function isDefExcluded(p){
+  /* En Definitiva, bajas y futuribles nunca aparecen */
+  return activeMode==='definitiva'&&(p.status==='baja'||p.status==='futurible');
+}
 function passesFilter(p){
+  if(isDefExcluded(p))return false;
   if(activeFilters[0]==='all')return true;
   if(activeFilters.indexOf('promocion')>=0&&isPromocionado(p))return true;
   return activeFilters.indexOf(p.status)>=0;
@@ -1789,6 +1890,7 @@ function renderCampo(){
   var cont=document.getElementById('campoPlayers');cont.innerHTML='';
   state.players.forEach(function(p){
     if(!p.onPitch)return;
+    if(isDefExcluded(p))return;
     var visible=passesFilter(p);
     var pos=document.createElement('div');pos.className='player-pos';
     pos.style.left=p.x+'%';pos.style.top=p.y*(100/118)+'%';pos.dataset.id=p.id;
@@ -1813,6 +1915,7 @@ function renderCampo(){
 
 /* ══ RENDER ROSTER ══ */
 /* ══ RENDER ROSTER — COL DER: 5 bloques con scroll individual ══ */
+function _defVisible(p){return !isDefExcluded(p);}
 function renderRoster(){
   var body=document.getElementById('rosterTodos');body.innerHTML='';
   var ORDER=['baja','duda','fichaje','futurible','destacados','renovado'];
@@ -1827,6 +1930,7 @@ function renderRoster(){
   };
   var grupos={renovado:[],fichaje:[],futurible:[],duda:[],baja:[],destacados:[]};
   state.players.forEach(function(p){
+    if(isDefExcluded(p))return;
     if(grupos[p.status])grupos[p.status].push(p);
   });
 
@@ -1835,6 +1939,7 @@ function renderRoster(){
   var promoSet={};  /* para evitar duplicados por id */
   var promoPlayers=[];
   state.players.forEach(function(p){
+    if(isDefExcluded(p))return;
     if(promoSet[p.id])return;
     /* Excluir jugadores ya promovidos desde este equipo (tienen flag promovido=true) */
     if(p.promovido)return;
@@ -1910,7 +2015,9 @@ function renderRoster(){
   }
 
   /* Renderizar en orden: baja, duda, fichaje, PROMOCIONADOS, futurible, destacados, renovado */
-  var ORDER_FINAL=['baja','duda','fichaje','__promo__','futurible','destacados','renovado'];
+  var ORDER_FINAL=activeMode==='definitiva'
+    ?['duda','fichaje','__promo__','destacados','renovado']
+    :['baja','duda','fichaje','__promo__','futurible','destacados','renovado'];
   ORDER_FINAL.forEach(function(st){
     if(st==='__promo__'){
       renderBloque('promocion',promoPlayers,{bg:'#06b6d4',text:'#fff',border:'#0891b2'},'Promocionados');
@@ -1973,7 +2080,7 @@ function renderPlist(){
 
   /* ── FALTAN POR PONER: todos sin campo, drag desde aquí ── */
   var faltan=document.getElementById('rosterFaltan');faltan.innerHTML='';
-  var sinCampo=state.players.filter(function(p){return!p.onPitch;});
+  var sinCampo=state.players.filter(function(p){return!p.onPitch&&!isDefExcluded(p);});
   document.getElementById('cntFaltan').textContent=sinCampo.length;
   if(!sinCampo.length){
     faltan.innerHTML='<div class="plist-empty">\u2713 Todos en el campo</div>';
@@ -2000,6 +2107,7 @@ function renderPlist(){
 /* ══ STATS — jugadores en campo filtrados por activeFilters ══ */
 function renderStats(){
   var enCampo=state.players.filter(function(p){
+    if(isDefExcluded(p))return false;
     if(!p.onPitch)return false;
     return passesFilter(p);
   });
@@ -2013,7 +2121,7 @@ function renderStats(){
   document.getElementById('statMP').textContent=enCampo.filter(function(p){return p.res==='MP';}).length;
   /* Promocionado = jugadores con estado 'promocion' */
   document.getElementById('statProm').textContent=enCampo.filter(function(p){return p.status==='promocion'||p.birthYear;}).length;
-  document.getElementById('statLic').textContent=state.players.filter(function(p){return p.licencia&&p.licencia!=='';}).length;
+  document.getElementById('statLic').textContent=state.players.filter(function(p){return p.licencia&&p.licencia!==''&&!isDefExcluded(p);}).length;
   document.getElementById('statMad').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('madrilena')>=0;}).length;
   document.getElementById('statEsp').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('espanola')>=0;}).length;
   document.getElementById('statInt').textContent=enCampo.filter(function(p){return(p.selecciones||[]).indexOf('internacional')>=0;}).length;
@@ -2979,7 +3087,7 @@ function printTeamPDF(){
   var POS_ORDER=['PO','LD','CD','CI','CT','LI','MC','ID','II','IN','ED','EI','DC'];
   function P(){
     var allowed={'renovado':1,'fichaje':1,'duda':1};
-    var activos=state.players.filter(function(p){return allowed[p.status];});
+    var activos=state.players.filter(function(p){return allowed[p.status]&&!isDefExcluded(p);});
     activos.sort(function(a,b){
       var pa=a.isPor?'PO':(a.detectedZoneShort||'');var pb=b.isPor?'PO':(b.detectedZoneShort||'');
       return (POS_ORDER.indexOf(pa)<0?999:POS_ORDER.indexOf(pa))-(POS_ORDER.indexOf(pb)<0?999:POS_ORDER.indexOf(pb));
@@ -3332,6 +3440,15 @@ try{bindInnerTabs();}catch(e){}
 try{bindZonas();}catch(e){console.error('bindZonas',e);}
 try{renderSeasonSel();}catch(e){}
 try{renderTeamBar();}catch(e){}
+try{
+  document.getElementById('btnModeProvisional').classList.toggle('active',activeMode==='provisional');
+  document.getElementById('btnModeDefinitiva').classList.toggle('active',activeMode==='definitiva');
+  document.getElementById('defBanner').style.display=activeMode==='definitiva'?'block':'none';
+  document.getElementById('btnCfg').style.display=activeMode==='provisional'?'flex':'none';
+  document.querySelectorAll('.cfilter-btn[data-filter="baja"],.cfilter-btn[data-filter="futurible"]').forEach(function(b){
+    b.style.display=activeMode==='definitiva'?'none':'';
+  });
+}catch(e){}
 
 document.getElementById('txtNecesidades').addEventListener('input',function(){if(state){state.necesidades=this.value.slice(0,500);persist();}});
 document.getElementById('txtObservaciones').addEventListener('input',function(){if(state){state.observaciones=this.value.slice(0,500);persist();}});
