@@ -1800,7 +1800,7 @@ function renderCampo(){
     chip.innerHTML=renderSelectionIcons(p)+'<span class="pchip-text">'+esc(p.name||'')+'</span>'
       +((p.proc&&(p.status==='fichaje'||p.status==='futurible'))?'<span class="pchip-proc">'+esc(p.proc)+'</span>':'')
       +(p.birthYear?'<span class="pchip-proc" style="color:#1e3a5f;font-weight:900;font-size:11px;">'+p.birthYear+'</span>':'')
-      +(p.licencia?'<span class="pchip-proc" style="color:#c4b5fd;font-weight:800;font-size:8px;">LIC.'+esc(p.licencia)+'</span>':'')
+      +(p.licencia?'<span class="pchip-proc" style="color:#c4b5fd;font-weight:900;font-size:10px;letter-spacing:.3px;">'+esc(p.licencia)+'</span>':'')
       +footHtmlFor(p.lat||'');
     var xBtn=document.createElement('button');xBtn.className='chip-remove-btn';xBtn.textContent='\xd7';
     xBtn.addEventListener('pointerdown',function(e){e.stopPropagation();});
