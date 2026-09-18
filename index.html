@@ -606,6 +606,9 @@ button,input,select,textarea{font-family:inherit}
         <div class="home-title">Confecci&oacute;n de Plantillas</div>
         <div class="home-sub">Selecciona un equipo para gestionar su plantilla</div>
       </div>
+      <div style="margin-left:auto;">
+        <div id="homeModeChip" style="font-size:13px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;border-radius:8px;padding:7px 16px;text-align:center;line-height:1.4;">&mdash;</div>
+      </div>
     </div>
     <div class="home-section-title">EQUIPOS</div>
     <div class="home-grid" id="homeGrid"></div>
@@ -680,7 +683,6 @@ button,input,select,textarea{font-family:inherit}
                     <div id="campoModeIndicator" style="font-size:9px;font-weight:900;letter-spacing:.4px;text-transform:uppercase;border-radius:4px;padding:2px 7px;line-height:1.4;display:none;background:#ffd400;color:#1a1d23;"></div>
                   </div>
                   <div id="campoGen" style="font-size:10px;color:rgba(255,255,255,.55);font-weight:600;margin-top:1px;"></div>
-                  <div id="campoSznLabel" style="font-size:9px;color:rgba(255,255,200,.6);font-weight:600;margin-top:0;letter-spacing:.3px;"></div>
                 </div>
               </div>
               <div style="display:flex;align-items:center;gap:8px">
@@ -1726,15 +1728,13 @@ function renderHomeGrid(){
   var modeLabel=isDef?'DEFINITIVA':'PROVISIONAL';
   var modeColor=isDef?'#7c3aed':'var(--rm-blue)';
   /* Cabecera de modo+temporada en la home */
-  var existingBadge=document.getElementById('homeModeBar');
-  if(existingBadge)existingBadge.remove();
-  var modeBar=document.createElement('div');
-  modeBar.id='homeModeBar';
-  modeBar.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;';
-  modeBar.innerHTML='<span style="font-size:11px;font-weight:700;color:var(--text-mut);">Viendo:</span>'
-    +'<span style="font-size:12px;font-weight:900;background:'+modeColor+';color:#fff;border-radius:5px;padding:3px 10px;letter-spacing:.5px;">'+modeLabel+'</span>'
-    +'<span style="font-size:12px;font-weight:700;color:var(--text-sec);">'+activeSzn+'</span>';
-  grid.before(modeBar);
+  /* Actualizar chip en home-header */
+  var chip=document.getElementById('homeModeChip');
+  if(chip){
+    chip.textContent=modeLabel+' · '+activeSzn;
+    chip.style.background=modeColor;
+    chip.style.color='#fff';
+  }
 
   TEAMS.forEach(function(t){
     var cached=null;
@@ -1906,11 +1906,9 @@ function renderTeamBar(){
     /* Indicador en header del campo */
     var cmi=document.getElementById('campoModeIndicator');
     if(cmi){
-      cmi.textContent=activeMode==='definitiva'?'DEFINITIVA':'PROVISIONAL';
+      cmi.textContent=(activeMode==='definitiva'?'DEFINITIVA':'PROVISIONAL')+' · '+activeSzn;
       cmi.style.display='inline-block';
     }
-    var csl=document.getElementById('campoSznLabel');
-    if(csl) csl.textContent=activeSzn;
   }
 }
 
@@ -2759,10 +2757,10 @@ function renderCombinedView(){
     var modeEl=document.getElementById('comb-mode'+tk);
     var sznEl=document.getElementById('comb-szn'+tk);
     if(modeEl){
-      modeEl.textContent=activeMode==='definitiva'?'DEFINITIVA':'PROVISIONAL';
+      modeEl.textContent=(activeMode==='definitiva'?'DEFINITIVA':'PROVISIONAL')+' · '+activeSzn;
       modeEl.style.display='inline-block';
     }
-    if(sznEl) sznEl.textContent=activeSzn;
+    if(sznEl) sznEl.textContent='';
   });
   var POS_ORDER=['PO','LD','CD','CI','CT','LI','MC','ID','II','IN','ED','EI','DC'];
 
@@ -4425,150 +4423,131 @@ function showFlujoModal(){
 function renderCfgFlujo(body){
   body.innerHTML='';
   body.style.padding='0';
-  var wrap=document.createElement('div');
-  wrap.style.cssText='padding:16px;';
-  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.setAttribute('width','100%');
-  svg.setAttribute('viewBox','0 0 640 820');
-  svg.setAttribute('role','img');
-  svg.innerHTML=`
-  <title>Flujo de confirmacion de plantillas</title>
-  <defs>
-    <marker id="fa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </marker>
-  </defs>
 
-  <!-- TITULO -->
-  <text x="320" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)" font-family="var(--font)">Flujo de confirmacion de plantillas</text>
+  var H='font-family:system-ui,sans-serif;';
+  var html='<div style="padding:20px 24px;'+H+'">';
 
-  <!-- ══ COLUMNA IZQUIERDA: PROVISIONAL ACTUAL ══ -->
-  <text x="160" y="58" text-anchor="middle" font-size="11" font-weight="700" fill="#2563eb" font-family="var(--font)" letter-spacing=".5">PROVISIONAL 2024/25</text>
+  /* ── TÍTULO ── */
+  html+='<div style="text-align:center;margin-bottom:20px;">'
+    +'<div style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.3px;">Flujo de Confirmación</div>'
+    +'<div style="font-size:12px;color:var(--text-mut);margin-top:4px;">Qué pasa con cada jugador al pulsar "Confirmar Definitiva"</div>'
+    +'</div>';
 
-  <!-- Bloque provisional -->
-  <rect x="30" y="68" width="260" height="200" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
-  <text x="160" y="90" text-anchor="middle" font-size="12" font-weight="700" fill="#1e3a5f" font-family="var(--font)">Cadete A — Todos los estados</text>
+  /* ── PASO 1: PROVISIONAL ── */
+  html+='<div style="background:#eff6ff;border:2px solid #2563eb;border-radius:12px;padding:16px;margin-bottom:12px;">'
+    +'<div style="font-size:11px;font-weight:800;color:#1d4ed8;letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px;">① PROVISIONAL — Todos los estados disponibles</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+  var estados=[
+    {bg:'#f1f5f9',bd:'#cbd5e1',tx:'#1e293b',lb:'Renovados'},
+    {bg:'#77ED85',bd:'#4ade80',tx:'#003300',lb:'Fichados'},
+    {bg:'#3b82f6',bd:'#2563eb',tx:'#fff',   lb:'Futuribles'},
+    {bg:'#f59e0b',bd:'#d97706',tx:'#1a1d23',lb:'Dudas'},
+    {bg:'#7c3aed',bd:'#5b21b6',tx:'#fff',   lb:'Destacados'},
+    {bg:'#e53e3e',bd:'#c53030',tx:'#fff',   lb:'Bajas'},
+    {bg:'#06b6d4',bd:'#0891b2',tx:'#fff',   lb:'Promoción'},
+  ];
+  estados.forEach(function(e){
+    html+='<span style="background:'+e.bg+';border:1.5px solid '+e.bd+';color:'+e.tx
+      +';border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;">'+e.lb+'</span>';
+  });
+  html+='</div></div>';
 
-  <!-- Items en Provisional -->
-  <rect x="50" y="102" width="110" height="22" rx="5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
-  <text x="105" y="117" text-anchor="middle" font-size="11" fill="#1e293b" font-family="var(--font)">Renovados</text>
-  <rect x="170" y="102" width="100" height="22" rx="5" fill="#77ED85" stroke="#4ade80" stroke-width="1"/>
-  <text x="220" y="117" text-anchor="middle" font-size="11" fill="#003300" font-family="var(--font)">Fichados</text>
-  <rect x="50" y="132" width="100" height="22" rx="5" fill="#3b82f6" stroke="#2563eb" stroke-width="1"/>
-  <text x="100" y="147" text-anchor="middle" font-size="11" fill="#fff" font-family="var(--font)">Futuribles</text>
-  <rect x="160" y="132" width="110" height="22" rx="5" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
-  <text x="215" y="147" text-anchor="middle" font-size="11" fill="#1a1d23" font-family="var(--font)">Dudas</text>
-  <rect x="50" y="162" width="110" height="22" rx="5" fill="#7c3aed" stroke="#5b21b6" stroke-width="1"/>
-  <text x="105" y="177" text-anchor="middle" font-size="11" fill="#fff" font-family="var(--font)">Destacados</text>
-  <rect x="170" y="162" width="100" height="22" rx="5" fill="#e53e3e" stroke="#c53030" stroke-width="1"/>
-  <text x="220" y="177" text-anchor="middle" font-size="11" fill="#fff" font-family="var(--font)">Bajas</text>
-  <rect x="50" y="192" width="110" height="22" rx="5" fill="#06b6d4" stroke="#0891b2" stroke-width="1"/>
-  <text x="105" y="207" text-anchor="middle" font-size="11" fill="#fff" font-family="var(--font)">Promocion</text>
-  <rect x="170" y="192" width="100" height="22" rx="5" fill="#f97316" stroke="#ea580c" stroke-width="1"/>
-  <text x="220" y="207" text-anchor="middle" font-size="11" fill="#fff" font-family="var(--font)">Promovidos</text>
+  /* ── FLECHA CONFIRMAR ── */
+  html+='<div style="text-align:center;margin:8px 0;">'
+    +'<div style="display:inline-flex;align-items:center;gap:10px;">'
+    +'<div style="width:1px;height:16px;background:#7c3aed;margin:0 auto;"></div>'
+    +'</div>'
+    +'<div style="display:inline-block;background:#7c3aed;color:#ffd400;font-size:11px;font-weight:900;'
+    +'letter-spacing:.5px;border-radius:8px;padding:6px 20px;margin:4px 0;">🔒 CONFIRMAR DEFINITIVA</div>'
+    +'<div style="display:flex;justify-content:center;gap:120px;margin-top:6px;font-size:10px;font-weight:800;">'
+    +'<span style="color:#1d4ed8;">▼</span><span style="color:#059669;">▼</span>'
+    +'</div>'
+    +'</div>';
 
-  <!-- Boton confirmar -->
-  <rect x="90" y="234" width="140" height="28" rx="8" fill="#7c3aed" stroke="#5b21b6" stroke-width="1"/>
-  <text x="160" y="252" text-anchor="middle" font-size="12" font-weight="700" fill="#ffd400" font-family="var(--font)">CONFIRMAR DEFINITIVA</text>
+  /* ── DOS COLUMNAS: DEF + PROV SIGUIENTE ── */
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">';
 
-  <!-- ══ FLECHA CENTRAL HACIA ABAJO ══ -->
-  <line x1="160" y1="262" x2="160" y2="302" stroke="#7c3aed" stroke-width="2" marker-end="url(#fa)"/>
-  <text x="165" y="285" font-size="10" fill="var(--text-mut)" font-family="var(--font)">al confirmar...</text>
+  /* — DEFINITIVA — */
+  html+='<div style="background:#ede9fe;border:2px solid #7c3aed;border-radius:12px;padding:14px;">'
+    +'<div style="font-size:11px;font-weight:800;color:#3c3489;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;">② DEFINITIVA · misma temporada</div>'
 
-  <!-- ══ DOS FLECHAS: izq → DEFINITIVA, der → PROV. SIGUIENTE ══ -->
-  <!-- fork left -->
-  <path d="M160 302 L160 320 L100 320 L100 345" fill="none" stroke="#1d4ed8" stroke-width="1.5" marker-end="url(#fa)"/>
-  <!-- fork right -->
-  <path d="M160 302 L160 320 L450 320 L450 345" fill="none" stroke="#059669" stroke-width="1.5" marker-end="url(#fa)"/>
+    +'<div style="font-size:10px;font-weight:700;color:#3c3489;margin-bottom:5px;">✓ PASAN TAL CUAL</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">'
+    +'<span style="background:#f1f5f9;border:1.5px solid #cbd5e1;color:#1e293b;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;">Renovados</span>'
+    +'<span style="background:#77ED85;border:1.5px solid #4ade80;color:#003300;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;">Fichados</span>'
+    +'<span style="background:#06b6d4;border:1.5px solid #0891b2;color:#fff;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;">Promoción</span>'
+    +'</div>'
 
-  <!-- Etiquetas forks -->
-  <text x="60" y="318" font-size="10" font-weight="700" fill="#1d4ed8" font-family="var(--font)">DEFINITIVA 2024/25</text>
-  <text x="390" y="318" font-size="10" font-weight="700" fill="#059669" font-family="var(--font)">PROVISIONAL 2025/26</text>
+    +'<div style="font-size:10px;font-weight:700;color:#3c3489;margin-bottom:5px;">⟳ SE TRANSFORMAN</div>'
+    +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">'
+    +'<span style="background:#f59e0b;border:1.5px solid #d97706;color:#1a1d23;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;">Dudas</span>'
+    +'<span style="font-size:14px;color:#7c3aed;">→</span>'
+    +'<span style="background:#f1f5f9;border:1.5px solid #cbd5e1;color:#1e293b;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;">Renovados</span>'
+    +'</div>'
 
-  <!-- ══ BLOQUE DEFINITIVA ══ -->
-  <rect x="20" y="345" width="240" height="210" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
-  <text x="140" y="367" text-anchor="middle" font-size="12" font-weight="700" fill="#3c3489" font-family="var(--font)">Cadete A DEFINITIVA</text>
-  <text x="140" y="383" text-anchor="middle" font-size="10" fill="#534ab7" font-family="var(--font)">Solo los que tienen sitio</text>
+    +'<div style="font-size:10px;font-weight:700;color:#c53030;margin-bottom:5px;">✕ SE EXCLUYEN</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:4px;">'
+    +'<span style="background:#fee2e2;border:1.5px solid #fca5a5;color:#991b1b;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;text-decoration:line-through;">Bajas</span>'
+    +'<span style="background:#dbeafe;border:1.5px solid #93c5fd;color:#1e40af;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;text-decoration:line-through;">Futuribles</span>'
+    +'<span style="background:#ede9fe;border:1.5px solid #c4b5fd;color:#4c1d95;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;text-decoration:line-through;">Destacados</span>'
+    +'</div>'
+    +'</div>';
 
-  <!-- Items que PASAN -->
-  <text x="38" y="404" font-size="10" font-weight="700" fill="#3c3489" font-family="var(--font)">PASAN:</text>
-  <rect x="38" y="410" width="100" height="20" rx="5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
-  <text x="88" y="424" text-anchor="middle" font-size="10" fill="#1e293b" font-family="var(--font)">Renovados</text>
-  <rect x="146" y="410" width="96" height="20" rx="5" fill="#77ED85" stroke="#4ade80" stroke-width="1"/>
-  <text x="194" y="424" text-anchor="middle" font-size="10" fill="#003300" font-family="var(--font)">Fichados</text>
-  <rect x="38" y="438" width="100" height="20" rx="5" fill="#06b6d4" stroke="#0891b2" stroke-width="1"/>
-  <text x="88" y="452" text-anchor="middle" font-size="10" fill="#fff" font-family="var(--font)">Promocion</text>
-  <rect x="146" y="438" width="96" height="20" rx="5" fill="#f97316" stroke="#ea580c" stroke-width="1"/>
-  <text x="194" y="452" text-anchor="middle" font-size="10" fill="#fff" font-family="var(--font)">Promovidos</text>
+  /* — PROVISIONAL SIGUIENTE — */
+  html+='<div style="background:#ecfdf5;border:2px solid #059669;border-radius:12px;padding:14px;">'
+    +'<div style="font-size:11px;font-weight:800;color:#065f46;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;">③ PROVISIONAL · temporada siguiente</div>'
 
-  <!-- Transformacion Dudas -->
-  <line x1="68" y1="466" x2="68" y2="480" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#fa)"/>
-  <rect x="38" y="480" width="100" height="20" rx="5" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
-  <text x="88" y="494" text-anchor="middle" font-size="10" fill="#1a1d23" font-family="var(--font)">Dudas</text>
-  <line x1="138" y1="490" x2="150" y2="490" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#fa)"/>
-  <rect x="150" y="480" width="96" height="20" rx="5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
-  <text x="198" y="494" text-anchor="middle" font-size="10" fill="#1e293b" font-family="var(--font)">→ Renovados</text>
+    +'<div style="background:#d1fae5;border-radius:8px;padding:8px 10px;margin-bottom:8px;">'
+    +'<div style="font-size:10px;font-weight:800;color:#065f46;margin-bottom:4px;">⭐ TODOS PASAN COMO RENOVADOS</div>'
+    +'<div style="font-size:10px;color:#047857;">Renovados · Fichados · Dudas → todos se convierten en <strong>Renovados</strong> en el equipo destino.</div>'
+    +'</div>'
 
-  <!-- Items que NO pasan -->
-  <line x1="140" y1="506" x2="140" y2="516" stroke="var(--border)" stroke-width="1"/>
-  <text x="38" y="530" font-size="10" font-weight="700" fill="#c53030" font-family="var(--font)">SE EXCLUYEN:</text>
-  <rect x="38" y="536" width="88" height="20" rx="5" fill="#e53e3e" stroke="#c53030" stroke-width="1" opacity=".6"/>
-  <text x="82" y="550" text-anchor="middle" font-size="10" fill="#fff" font-family="var(--font)" text-decoration="line-through">Bajas</text>
-  <rect x="132" y="536" width="88" height="20" rx="5" fill="#3b82f6" stroke="#2563eb" stroke-width="1" opacity=".6"/>
-  <text x="176" y="550" text-anchor="middle" font-size="10" fill="#fff" font-family="var(--font)" text-decoration="line-through">Futuribles</text>
-  <rect x="38" y="562" width="88" height="20" rx="5" fill="#7c3aed" stroke="#5b21b6" stroke-width="1" opacity=".6"/>
-  <text x="82" y="576" text-anchor="middle" font-size="10" fill="#fff" font-family="var(--font)" text-decoration="line-through">Destacados</text>
+    +'<div style="font-size:10px;font-weight:700;color:#c53030;margin-bottom:5px;">✕ NO PASAN</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">'
+    +'<span style="background:#fee2e2;border:1.5px solid #fca5a5;color:#991b1b;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;text-decoration:line-through;">Bajas</span>'
+    +'<span style="background:#dbeafe;border:1.5px solid #93c5fd;color:#1e40af;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;text-decoration:line-through;">Futuribles</span>'
+    +'<span style="background:#ede9fe;border:1.5px solid #c4b5fd;color:#4c1d95;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;text-decoration:line-through;">Destacados</span>'
+    +'</div>'
 
-  <!-- ══ BLOQUE PROVISIONAL SIGUIENTE ══ -->
-  <rect x="330" y="345" width="280" height="210" rx="10" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
-  <text x="470" y="367" text-anchor="middle" font-size="12" font-weight="700" fill="#065f46" font-family="var(--font)">Cadete B PROVISIONAL</text>
-  <text x="470" y="383" text-anchor="middle" font-size="10" fill="#059669" font-family="var(--font)">Temporada 2025/26</text>
+    +'<div style="font-size:10px;font-weight:700;color:#065f46;margin-bottom:4px;">📐 POSICIONES EN CAMPO</div>'
+    +'<div style="font-size:10px;color:#047857;">Los jugadores mantienen su posición en el campo exactamente como estaban en Provisional.</div>'
+    +'</div>';
 
-  <text x="348" y="404" font-size="10" font-weight="700" fill="#065f46" font-family="var(--font)">TODOS PASAN COMO RENOVADOS:</text>
+  html+='</div>';
 
-  <rect x="348" y="410" width="110" height="20" rx="5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
-  <text x="403" y="424" text-anchor="middle" font-size="10" fill="#1e293b" font-family="var(--font)">Renovados →</text>
-  <rect x="466" y="410" width="126" height="20" rx="5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
-  <text x="529" y="424" text-anchor="middle" font-size="10" fill="#1e293b" font-family="var(--font)">RENOVADOS</text>
+  /* ── PROGRESIÓN ── */
+  html+='<div style="background:var(--surface-alt,#f8f9fa);border:1px solid var(--border,#e2e8f0);border-radius:12px;padding:14px;">'
+    +'<div style="font-size:11px;font-weight:800;color:var(--text);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;">④ PROGRESIÓN DE EQUIPOS</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:10px;">'
+    +'<div>'
+    +'<div style="color:var(--text-mut);font-weight:700;margin-bottom:4px;">CATEGORÍAS INFERIORES</div>'
+    +'<div style="display:flex;flex-direction:column;gap:2px;color:var(--text);">'
+    +'<span>DB → PB → PA → BB → BA</span>'
+    +'<span>BA → <strong>AB</strong> (AC se crea vacío)</span>'
+    +'<span>AB → <span style="background:#fef3c7;border-radius:3px;padding:1px 4px;color:#92400e;font-weight:700;">AA1</span> (temporal)</span>'
+    +'<span>AC → <span style="background:#fef3c7;border-radius:3px;padding:1px 4px;color:#92400e;font-weight:700;">AA2</span> (temporal)</span>'
+    +'<span>AA1 + AA2 → <strong>AA</strong> (fusión manual)</span>'
+    +'</div></div>'
+    +'<div>'
+    +'<div style="color:var(--text-mut);font-weight:700;margin-bottom:4px;">CATEGORÍAS SUPERIORES</div>'
+    +'<div style="display:flex;flex-direction:column;gap:2px;color:var(--text);">'
+    +'<span>AA → IB → IA → CB → CA</span>'
+    +'<span>CA → JC → JB → JA</span>'
+    +'<span>JA → <span style="background:#fef3c7;border-radius:3px;padding:1px 4px;color:#92400e;font-weight:700;">RMC2</span> (temporal)</span>'
+    +'<span>RMC2 → RMC o Castilla <em>(manual)</em></span>'
+    +'<span>RMC → RMC &nbsp;|&nbsp; Castilla → Castilla</span>'
+    +'</div></div>'
+    +'</div>'
 
-  <rect x="348" y="438" width="110" height="20" rx="5" fill="#77ED85" stroke="#4ade80" stroke-width="1"/>
-  <text x="403" y="452" text-anchor="middle" font-size="10" fill="#003300" font-family="var(--font)">Fichados →</text>
-  <rect x="466" y="438" width="126" height="20" rx="5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
-  <text x="529" y="452" text-anchor="middle" font-size="10" fill="#1e293b" font-family="var(--font)">RENOVADOS</text>
+    +'<div style="margin-top:10px;background:#fef3c7;border:1px solid #d97706;border-radius:8px;padding:8px 12px;font-size:10px;color:#78350f;">'
+    +'<strong>Equipos temporales (AA1, AA2, RMC2):</strong> Aparecen en el team bar solo si tienen jugadores. '
+    +'Se eliminan desde <em>Config → Temporales</em> cuando estén vacíos. '
+    +'Los jugadores se mueven individualmente desde el modal de cada jugador (botón → Mover).'
+    +'</div>'
+    +'</div>';
 
-  <rect x="348" y="466" width="110" height="20" rx="5" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
-  <text x="403" y="480" text-anchor="middle" font-size="10" fill="#1a1d23" font-family="var(--font)">Dudas →</text>
-  <rect x="466" y="466" width="126" height="20" rx="5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
-  <text x="529" y="480" text-anchor="middle" font-size="10" fill="#1e293b" font-family="var(--font)">RENOVADOS</text>
-
-  <text x="348" y="506" font-size="10" font-weight="700" fill="#c53030" font-family="var(--font)">NO PASAN:</text>
-  <rect x="348" y="512" width="88" height="20" rx="5" fill="#e53e3e" stroke="#c53030" stroke-width="1" opacity=".6"/>
-  <text x="392" y="526" text-anchor="middle" font-size="10" fill="#fff" font-family="var(--font)" text-decoration="line-through">Bajas</text>
-  <rect x="444" y="512" width="88" height="20" rx="5" fill="#3b82f6" stroke="#2563eb" stroke-width="1" opacity=".6"/>
-  <text x="488" y="526" text-anchor="middle" font-size="10" fill="#fff" font-family="var(--font)" text-decoration="line-through">Futuribles</text>
-  <rect x="348" y="538" width="88" height="20" rx="5" fill="#7c3aed" stroke="#5b21b6" stroke-width="1" opacity=".6"/>
-  <text x="392" y="552" text-anchor="middle" font-size="10" fill="#fff" font-family="var(--font)" text-decoration="line-through">Destacados</text>
-
-  <!-- ══ PROGRESION DE EQUIPOS ══ -->
-  <rect x="20" y="580" width="600" height="220" rx="10" fill="var(--surface-alt,#fafbfc)" stroke="var(--border,#dfe1e6)" stroke-width="1"/>
-  <text x="320" y="600" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" font-family="var(--font)">Progresion de equipos al confirmar</text>
-
-  <!-- Progresion col izq -->
-  <text x="50" y="622" font-size="10" fill="var(--text)" font-family="var(--font)">DB → PB → PA → BB → BA → AB</text>
-  <text x="50" y="640" font-size="10" fill="var(--text)" font-family="var(--font)">AB → AA1 (temporal)    AC → AA2 (temporal)</text>
-  <text x="50" y="658" font-size="10" fill="var(--text)" font-family="var(--font)">AA1 + AA2 → AA (fusion manual)</text>
-  <text x="50" y="676" font-size="10" fill="var(--text)" font-family="var(--font)">AA → IB → IA → CB → CA → JC → JB → JA</text>
-  <text x="50" y="694" font-size="10" fill="var(--text)" font-family="var(--font)">JA → RMC2 (temporal, se mueve a RMC o Castilla)</text>
-  <text x="50" y="712" font-size="10" fill="var(--text)" font-family="var(--font)">RMC → RMC    |    Castilla → Castilla</text>
-
-  <!-- Equipos temporales nota -->
-  <rect x="30" y="724" width="580" height="64" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1"/>
-  <text x="320" y="742" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e" font-family="var(--font)">Equipos temporales (AA1, AA2, RMC2)</text>
-  <text x="320" y="758" text-anchor="middle" font-size="10" fill="#78350f" font-family="var(--font)">Aparecen en el equipo bar solo si tienen jugadores.</text>
-  <text x="320" y="772" text-anchor="middle" font-size="10" fill="#78350f" font-family="var(--font)">Cuando esten vacios se eliminan desde Config → Temporales.</text>
-  `;
-  wrap.appendChild(svg);
-  body.appendChild(wrap);
+  html+='</div>';
+  body.innerHTML=html;
 }
 
 function renderCfgZonas(body){
@@ -5027,7 +5006,7 @@ function renderZedPanel(panelEl,refs){
 
 </script>
 <div id="flujoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:center;justify-content:center;padding:16px;">
-  <div style="background:var(--surface);border-radius:12px;width:100%;max-width:700px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.3);">
+  <div style="background:var(--surface);border-radius:12px;width:100%;max-width:780px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.3);">
     <div style="background:var(--rm-blue);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <span style="font-size:14px;font-weight:700;color:#fff;">&#10132; Flujo de Plantillas</span>
       <button onclick="document.getElementById('flujoModal').style.display='none'" style="width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">&times;</button>
