@@ -1471,7 +1471,12 @@ function setMode(mode){
     document.getElementById('viewCombined').style.display='none';
     document.getElementById('viewNormal').style.display='block';
   }
-  renderAll();loadTeam();
+  /* Si estamos en home, actualizar el grid */
+  if(document.getElementById('homeScreen').style.display!=='none'){
+    renderHomeGrid();
+  } else {
+    renderAll();loadTeam();
+  }
 }
 
 /* ══ PROGRESIÓN DE CONFIRMACIÓN ══ */
@@ -1922,7 +1927,12 @@ function renderSeasonSel(){
 }
 document.getElementById('seasonSel').addEventListener('change',function(){
   activeSzn=this.value;localStorage.setItem(ASZN_KEY,activeSzn);
-  state={players:[]};selectedId=null;renderAll();loadTeam();updateGenYearAge();
+  state={players:[]};selectedId=null;updateGenYearAge();
+  if(document.getElementById('homeScreen').style.display!=='none'){
+    renderHomeGrid();
+  } else {
+    renderAll();loadTeam();
+  }
 });
 document.getElementById('btnSeasonAdd').addEventListener('click',function(){
   var last=seasons[seasons.length-1];var y=parseInt(last.split('/')[1]||last)+1;var next=y+'/'+(y+1);
@@ -4509,11 +4519,18 @@ function renderCfgFlujo(body){
     +'<span style="background:#ede9fe;border:1.5px solid #c4b5fd;color:#4c1d95;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;text-decoration:line-through;">Destacados</span>'
     +'</div>'
 
-    +'<div style="font-size:10px;font-weight:700;color:#065f46;margin-bottom:4px;">📐 POSICIONES EN CAMPO</div>'
-    +'<div style="font-size:10px;color:#047857;">Los jugadores mantienen su posición en el campo exactamente como estaban en Provisional.</div>'
     +'</div>';
 
   html+='</div>';
+
+  /* ── POSICIONES EN CAMPO (cuadro unificado) ── */
+  html+='<div style="display:flex;align-items:center;gap:12px;background:#f0f9ff;border:1.5px solid #38bdf8;border-radius:10px;padding:12px 16px;margin-bottom:12px;">'
+    +'<div style="font-size:22px;flex-shrink:0;">📐</div>'
+    +'<div>'
+    +'<div style="font-size:11px;font-weight:800;color:#0369a1;margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px;">Posiciones en campo — aplica a ambas</div>'
+    +'<div style="font-size:11px;color:#0c4a6e;">Tanto en <strong>Definitiva</strong> como en <strong>Provisional de la temporada siguiente</strong>, los jugadores mantienen su posición en el campo exactamente como estaban en Provisional.</div>'
+    +'</div>'
+    +'</div>';
 
   /* ── PROGRESIÓN ── */
   html+='<div style="background:var(--surface-alt,#f8f9fa);border:1px solid var(--border,#e2e8f0);border-radius:12px;padding:14px;">'
