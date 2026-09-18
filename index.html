@@ -619,7 +619,7 @@ button,input,select,textarea{font-family:inherit}
 <div class="main">
   <!-- ESTADÍSTICAS -->
   <div class="summary-bar">
-    <div class="summary-name" id="teamName">&mdash;<small id="teamKey">&mdash;</small><div id="modeIndicator" style="display:inline-block;margin-top:5px;font-size:11px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;border-radius:5px;padding:3px 9px;line-height:1.3;">&mdash;</div></div>
+    <div class="summary-name" id="teamName">&mdash;<small id="teamKey">&mdash;</small><div id="modeIndicator" style="display:none;">&mdash;</div></div>
     <div id="confirmarDefZone" style="display:flex;align-items:center;gap:6px;flex-shrink:0;"></div>
     <div style="display:flex;align-items:center;gap:6px;font-size:11px;">
       <label style="color:var(--text-mut);font-weight:600;">Generaci&oacute;n:</label>
@@ -674,7 +674,10 @@ button,input,select,textarea{font-family:inherit}
                   style="width:28px;height:28px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;flex-shrink:0;"
                   onerror="this.style.display='none'">
                 <div>
-                  <div class="campo-hdr-title" id="campoTitle">&mdash;</div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="campo-hdr-title" id="campoTitle">&mdash;</div>
+                    <div id="campoModeIndicator" style="font-size:9px;font-weight:900;letter-spacing:.4px;text-transform:uppercase;border-radius:4px;padding:2px 7px;line-height:1.4;display:none;background:#ffd400;color:#1a1d23;"></div>
+                  </div>
                   <div id="campoGen" style="font-size:10px;color:rgba(255,255,255,.55);font-weight:600;margin-top:1px;"></div>
                 </div>
               </div>
@@ -1860,6 +1863,14 @@ function renderTeamBar(){
       mi.style.color=modeColor;
       mi.style.background=modeBg;
       mi.style.borderColor=modeBorder;
+    }
+    /* Indicador en header del campo */
+    var cmi=document.getElementById('campoModeIndicator');
+    if(cmi){
+      cmi.textContent=activeMode==='definitiva'?'DEFINITIVA':'PROVISIONAL';
+      cmi.style.display='inline-block';
+      cmi.style.background='#ffd400';
+      cmi.style.color='#1a1d23';
     }
   }
 }
