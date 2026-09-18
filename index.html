@@ -619,8 +619,7 @@ button,input,select,textarea{font-family:inherit}
 <div class="main">
   <!-- ESTADÍSTICAS -->
   <div class="summary-bar">
-    <div class="summary-name" id="teamName">&mdash;<small id="teamKey">&mdash;</small></div>
-    <div id="modeIndicator" style="font-size:13px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;color:var(--rm-blue);white-space:nowrap;flex-shrink:0;background:var(--rm-blue-bg);border:2px solid var(--rm-blue);border-radius:6px;padding:4px 12px;line-height:1.3;text-align:center;">&mdash;</div>
+    <div class="summary-name" id="teamName">&mdash;<small id="teamKey">&mdash;</small><div id="modeIndicator" style="display:inline-block;margin-top:5px;font-size:11px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;border-radius:5px;padding:3px 9px;line-height:1.3;">&mdash;</div></div>
     <div id="confirmarDefZone" style="display:flex;align-items:center;gap:6px;flex-shrink:0;"></div>
     <div style="display:flex;align-items:center;gap:6px;font-size:11px;">
       <label style="color:var(--text-mut);font-weight:600;">Generaci&oacute;n:</label>
@@ -1436,12 +1435,12 @@ function setMode(mode){
   /* Config solo en provisional */
   document.getElementById('btnCfg').style.display=mode==='provisional'?'flex':'none';
   /* Ocultar filtros baja/futurible en Definitiva */
-  document.querySelectorAll('.cfilter-btn[data-filter="baja"],.cfilter-btn[data-filter="futurible"]').forEach(function(b){
+  document.querySelectorAll('.cfilter-btn[data-filter="baja"],.cfilter-btn[data-filter="futurible"],.cfilter-btn[data-filter="duda"],.cfilter-btn[data-filter="destacados"]').forEach(function(b){
     b.style.display=mode==='definitiva'?'none':'';
   });
-  /* Si el filtro activo incluía baja/futurible, resetear a 'all' */
+  /* Si el filtro activo incluia estados excluidos en Definitiva, resetear a 'all' */
   if(mode==='definitiva'){
-    activeFilters=activeFilters.filter(function(f){return f!=='baja'&&f!=='futurible';});
+    activeFilters=activeFilters.filter(function(f){return f!=='baja'&&f!=='futurible'&&f!=='duda'&&f!=='destacados';});
     if(!activeFilters.length)activeFilters=['all'];
     syncFilterBtns();
   }
@@ -3699,7 +3698,7 @@ try{
   document.getElementById('btnModeDefinitiva').classList.toggle('active',activeMode==='definitiva');
   document.getElementById('defBanner').style.display=activeMode==='definitiva'?'block':'none';
   document.getElementById('btnCfg').style.display=activeMode==='provisional'?'flex':'none';
-  document.querySelectorAll('.cfilter-btn[data-filter="baja"],.cfilter-btn[data-filter="futurible"]').forEach(function(b){
+  document.querySelectorAll('.cfilter-btn[data-filter="baja"],.cfilter-btn[data-filter="futurible"],.cfilter-btn[data-filter="duda"],.cfilter-btn[data-filter="destacados"]').forEach(function(b){
     b.style.display=activeMode==='definitiva'?'none':'';
   });
 }catch(e){}
