@@ -620,6 +620,7 @@ button,input,select,textarea{font-family:inherit}
   <!-- ESTADÍSTICAS -->
   <div class="summary-bar">
     <div class="summary-name" id="teamName">&mdash;<small id="teamKey">&mdash;</small></div>
+    <div id="modeIndicator" style="font-size:13px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;color:var(--rm-blue);white-space:nowrap;flex-shrink:0;background:var(--rm-blue-bg);border:2px solid var(--rm-blue);border-radius:6px;padding:4px 12px;line-height:1.3;text-align:center;">&mdash;</div>
     <div id="confirmarDefZone" style="display:flex;align-items:center;gap:6px;flex-shrink:0;"></div>
     <div style="display:flex;align-items:center;gap:6px;font-size:11px;">
       <label style="color:var(--text-mut);font-weight:600;">Generaci&oacute;n:</label>
@@ -1488,14 +1489,29 @@ var TEMP_NAMES={
   'AA2' :'Alevin A2 (transicion)'
 };
 
-function _buildConfirmPlayers(players){
-  /* Solo Fichados, Renovados y Promocionados */
-  var allowed={fichaje:1,renovado:1,promocion:1};
+function _buildNextSeasonPlayers(players){
+  /* Para Provisional temporada siguiente: todos Renovados */
+  var allowed={fichaje:1,renovado:1,promocion:1,duda:1};
   return players
-    .filter(function(p){return allowed[p.status]||p.status==='promocion';})
+    .filter(function(p){return allowed[p.status];})
     .map(function(p){
       var np=JSON.parse(JSON.stringify(p));
-      /* Mantener posición en campo igual que en Provisional */
+      np.status='renovado';
+      np.licencia=np.licencia||'';
+      return np;
+    });
+}
+
+function _buildConfirmPlayers(players){
+  /* Fichados, Renovados, Promocionados y Dudas (→ Renovados). Excluir el resto. */
+  var allowed={fichaje:1,renovado:1,promocion:1,duda:1};
+  return players
+    .filter(function(p){return allowed[p.status];})
+    .map(function(p){
+      var np=JSON.parse(JSON.stringify(p));
+      /* Dudas pasan a Renovados */
+      if(np.status==='duda') np.status='renovado';
+      /* Mantener posicion en campo */
       np.licencia=np.licencia||'';
       return np;
     });
@@ -1591,7 +1607,7 @@ function confirmarDefinitiva(tk){
     function checkDone(){pending--;if(pending===0){setSync('saved');alert('OK: '+tk+' confirmado. Definitiva '+activeSzn+': '+confirmPlayers.length+' jugadores.'+(destTk?' Provisional '+nextSzn+' '+destName+': '+confirmPlayers.length+' jugadores.':''));renderTeamBar();}}
 
     if(destTk){
-      _writeProvisionalNextSeason(destTk,confirmPlayers,activeSzn,checkDone);
+      _writeProvisionalNextSeason(destTk,_buildNextSeasonPlayers(src.players),activeSzn,checkDone);
     } else {
       checkDone();
     }
@@ -1829,6 +1845,19 @@ function renderTeamBar(){
         });
         btnZone.appendChild(btnCfm);
       }
+    }
+
+    /* Indicador grande temporada + modo */
+    var mi=document.getElementById('modeIndicator');
+    if(mi){
+      var modeLabel=activeMode==='definitiva'?'DEFINITIVA':'PROVISIONAL';
+      var modeColor=activeMode==='definitiva'?'#7c3aed':'var(--rm-blue)';
+      var modeBg=activeMode==='definitiva'?'#ede9fe':'var(--rm-blue-bg)';
+      var modeBorder=activeMode==='definitiva'?'#7c3aed':'var(--rm-blue)';
+      mi.innerHTML=activeSzn+'<br>'+modeLabel;
+      mi.style.color=modeColor;
+      mi.style.background=modeBg;
+      mi.style.borderColor=modeBorder;
     }
   }
 }
