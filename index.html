@@ -1527,12 +1527,13 @@ function _nextSeason(szn){
 function _writeProvisionalNextSeason(destTk, players, szn, onDone){
   var nextSzn=_nextSeason(szn);
   var nextDocId=nextSzn.replace('/','_')+'_'+destTk;
+  var merged=[];
   /* Merge por ID — no duplicar jugadores */
   db.collection('campogramas').doc(nextDocId).get().then(function(snap){
     var existing=snap.exists?(snap.data().players||[]):[];
     var existingIds={};existing.forEach(function(p){existingIds[p.id]=true;});
     var toAdd=players.filter(function(p){return!existingIds[p.id];});
-    var merged=existing.concat(toAdd);
+    merged=existing.concat(toAdd);
     var data={
       teamKey:nextDocId,version:1,
       players:merged,necesidades:'',observaciones:'',
@@ -1540,6 +1541,8 @@ function _writeProvisionalNextSeason(destTk, players, szn, onDone){
     };
     return db.collection('campogramas').doc(nextDocId).set(data);
   }).then(function(){
+    /* Actualizar cache local para que la temporada siguiente funcione sin recargar */
+    try{localStorage.setItem('plt_cache_'+nextDocId,JSON.stringify({players:merged,necesidades:'',observaciones:''}));}catch(e){}
     /* Guardar temporada siguiente en lista si no existe */
     if(seasons.indexOf(nextSzn)===-1){
       seasons.push(nextSzn);
