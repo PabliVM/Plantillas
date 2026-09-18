@@ -679,6 +679,7 @@ button,input,select,textarea{font-family:inherit}
                     <div id="campoModeIndicator" style="font-size:9px;font-weight:900;letter-spacing:.4px;text-transform:uppercase;border-radius:4px;padding:2px 7px;line-height:1.4;display:none;background:#ffd400;color:#1a1d23;"></div>
                   </div>
                   <div id="campoGen" style="font-size:10px;color:rgba(255,255,255,.55);font-weight:600;margin-top:1px;"></div>
+                  <div id="campoSznLabel" style="font-size:9px;color:rgba(255,255,200,.6);font-weight:600;margin-top:0;letter-spacing:.3px;"></div>
                 </div>
               </div>
               <div style="display:flex;align-items:center;gap:8px">
@@ -892,7 +893,13 @@ button,input,select,textarea{font-family:inherit}
               <div class="campo-hdr">
                 <div style="display:flex;align-items:center;gap:6px;">
                   <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" style="width:22px;height:22px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;" onerror="this.style.display='none'">
-                  <div class="campo-hdr-title">ALEVÍN B</div>
+                  <div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                      <div class="campo-hdr-title">ALEVÍN B</div>
+                      <div id="comb-modeAB" style="font-size:9px;font-weight:900;letter-spacing:.4px;text-transform:uppercase;border-radius:4px;padding:2px 6px;background:#ffd400;color:#1a1d23;display:none;"></div>
+                    </div>
+                    <div id="comb-sznAB" style="font-size:9px;color:rgba(255,255,200,.6);font-weight:600;margin-top:1px;"></div>
+                  </div>
                 </div>
                 <div class="campo-hdr-count" id="comb-countAB">0+0P</div>
               </div>
@@ -950,7 +957,13 @@ button,input,select,textarea{font-family:inherit}
               <div class="campo-hdr">
                 <div style="display:flex;align-items:center;gap:6px;">
                   <img src="https://raw.githubusercontent.com/PabliVM/Plantillas/main/rm.png" alt="RM" style="width:22px;height:22px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;" onerror="this.style.display='none'">
-                  <div class="campo-hdr-title">ALEVÍN C</div>
+                  <div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                      <div class="campo-hdr-title">ALEVÍN C</div>
+                      <div id="comb-modeAC" style="font-size:9px;font-weight:900;letter-spacing:.4px;text-transform:uppercase;border-radius:4px;padding:2px 6px;background:#ffd400;color:#1a1d23;display:none;"></div>
+                    </div>
+                    <div id="comb-sznAC" style="font-size:9px;color:rgba(255,255,200,.6);font-weight:600;margin-top:1px;"></div>
+                  </div>
                 </div>
                 <div class="campo-hdr-count" id="comb-countAC">0+0P</div>
               </div>
@@ -1695,12 +1708,37 @@ function showApp(teamKey){
   document.getElementById('btnHome').style.display='inline-flex';
   renderTeamBar();renderAll();loadTeam();
 }
+function _homeDocKey(tk){
+  /* Lee el doc correcto segun modo activo */
+  var base=activeSzn.replace('/','_')+'_'+tk;
+  return activeMode==='definitiva'?base+'_DEF':base;
+}
+function _homeFilterCnt(players){
+  /* En Definitiva solo cuenta los visibles */
+  if(activeMode!=='definitiva')return players.length;
+  var allowed={fichaje:1,renovado:1,promocion:1};
+  return players.filter(function(p){return allowed[p.status];}).length;
+}
 function renderHomeGrid(){
   var grid=document.getElementById('homeGrid');grid.innerHTML='';
+  var isDef=activeMode==='definitiva';
+  var modeLabel=isDef?'DEFINITIVA':'PROVISIONAL';
+  var modeColor=isDef?'#7c3aed':'var(--rm-blue)';
+  /* Cabecera de modo+temporada en la home */
+  var existingBadge=document.getElementById('homeModeBar');
+  if(existingBadge)existingBadge.remove();
+  var modeBar=document.createElement('div');
+  modeBar.id='homeModeBar';
+  modeBar.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;';
+  modeBar.innerHTML='<span style="font-size:11px;font-weight:700;color:var(--text-mut);">Viendo:</span>'
+    +'<span style="font-size:12px;font-weight:900;background:'+modeColor+';color:#fff;border-radius:5px;padding:3px 10px;letter-spacing:.5px;">'+modeLabel+'</span>'
+    +'<span style="font-size:12px;font-weight:700;color:var(--text-sec);">'+activeSzn+'</span>';
+  grid.before(modeBar);
+
   TEAMS.forEach(function(t){
     var cached=null;
-    try{var r=localStorage.getItem('plt_cache_'+activeSzn.replace('/','_')+'_'+t.key);if(r)cached=JSON.parse(r);}catch(e){}
-    var cnt=cached&&cached.players?cached.players.length:0;
+    try{var r=localStorage.getItem('plt_cache_'+_homeDocKey(t.key));if(r)cached=JSON.parse(r);}catch(e){}
+    var cnt=cached&&cached.players?_homeFilterCnt(cached.players):0;
     var card=document.createElement('div');card.className='home-team-card';
     card.innerHTML='<div class="home-team-key">'+t.key+'</div><div class="home-team-name">'+t.name+'</div>'
       +(cnt?'<div class="home-team-cnt">'+cnt+' jugadores</div>':'<div class="home-team-cnt" style="color:var(--text-mut)">Sin jugadores</div>');
@@ -1709,14 +1747,14 @@ function renderHomeGrid(){
     /* Insertar tarjeta AB+AC después de AA */
     if(t.key==='AA'){
       var cachedAB=null,cachedAC=null;
-      try{var rAB=localStorage.getItem('plt_cache_'+activeSzn.replace('/','_')+'_AB');if(rAB)cachedAB=JSON.parse(rAB);}catch(e){}
-      try{var rAC=localStorage.getItem('plt_cache_'+activeSzn.replace('/','_')+'_AC');if(rAC)cachedAC=JSON.parse(rAC);}catch(e){}
-      var cntAB=(cachedAB&&cachedAB.players?cachedAB.players.length:0);
-      var cntAC=(cachedAC&&cachedAC.players?cachedAC.players.length:0);
+      try{var rAB=localStorage.getItem('plt_cache_'+_homeDocKey('AB'));if(rAB)cachedAB=JSON.parse(rAB);}catch(e){}
+      try{var rAC=localStorage.getItem('plt_cache_'+_homeDocKey('AC'));if(rAC)cachedAC=JSON.parse(rAC);}catch(e){}
+      var cntAB=cachedAB&&cachedAB.players?_homeFilterCnt(cachedAB.players):0;
+      var cntAC=cachedAC&&cachedAC.players?_homeFilterCnt(cachedAC.players):0;
       var comb=document.createElement('div');comb.className='home-team-card';
       comb.style.borderColor='var(--rm-blue)';
       comb.innerHTML='<div class="home-team-key" style="color:var(--rm-blue);">AB+AC</div>'
-        +'<div class="home-team-name">Alevín B + C</div>'
+        +'<div class="home-team-name">Alev\xedn B + C</div>'
         +'<div class="home-team-cnt">AB: '+cntAB+' · AC: '+cntAC+'</div>';
       comb.addEventListener('click',function(){
         document.getElementById('homeScreen').style.display='none';
@@ -1726,8 +1764,7 @@ function renderHomeGrid(){
         localStorage.setItem('plt_last_view','combined');
         document.getElementById('viewNormal').style.display='none';
         document.getElementById('viewCombined').style.display='block';
-        renderTeamBar();
-        renderCombinedView();
+        renderTeamBar();renderCombinedView();
       });
       grid.appendChild(comb);
     }
@@ -1870,9 +1907,9 @@ function renderTeamBar(){
     if(cmi){
       cmi.textContent=activeMode==='definitiva'?'DEFINITIVA':'PROVISIONAL';
       cmi.style.display='inline-block';
-      cmi.style.background='#ffd400';
-      cmi.style.color='#1a1d23';
     }
+    var csl=document.getElementById('campoSznLabel');
+    if(csl) csl.textContent=activeSzn;
   }
 }
 
@@ -2716,6 +2753,16 @@ function dragFromRoster(ev,pid){
 
 /* ══ VISTA COMBINADA AB+AC ══ */
 function renderCombinedView(){
+  /* Actualizar badge modo+temporada en AB y AC */
+  ['AB','AC'].forEach(function(tk){
+    var modeEl=document.getElementById('comb-mode'+tk);
+    var sznEl=document.getElementById('comb-szn'+tk);
+    if(modeEl){
+      modeEl.textContent=activeMode==='definitiva'?'DEFINITIVA':'PROVISIONAL';
+      modeEl.style.display='inline-block';
+    }
+    if(sznEl) sznEl.textContent=activeSzn;
+  });
   var POS_ORDER=['PO','LD','CD','CI','CT','LI','MC','ID','II','IN','ED','EI','DC'];
 
   /* Verificar si hay cache local para AB y AC */
