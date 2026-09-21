@@ -1644,14 +1644,26 @@ function confirmarDefinitiva(tk){
 }
 
 function actualizarDefinitiva(tk){
-  if(!confirm('¿Actualizar la plantilla definitiva de '+tk+'?\n\nSobreescribirá la Definitiva actual con los datos de Provisional (filtrado Fichados+Renovados+Promocionados).\nLa Provisional de la temporada siguiente NO se modifica.'))return;
-  /* Solo actualizar Definitiva, no temporada siguiente */
+  var destTk=CONFIRM_PROMO[tk];
+  var nextSzn=_nextSeason(activeSzn);
+  var nextDocId=nextSzn.replace('/','_')+'_'+(destTk||'');
+
+  var msg='Actualizar plantilla definitiva de '+tk+'?\n\n'
+    +'1. Sobreescribe Definitiva '+activeSzn+' de '+tk+'.\n'
+    +(destTk?'2. Merge en Provisional '+nextSzn+' de '+destTk+' (nuevos fichajes se conservan).\n':'')
+    +'\nLos jugadores iran en campo como en Provisional actual.';
+  if(!confirm(msg))return;
+
   var src=null;
   try{var r=localStorage.getItem('plt_cache_'+activeSzn.replace('/','_')+'_'+tk);if(r)src=JSON.parse(r);}catch(e){}
   if(!src||!src.players||!src.players.length){alert('No hay jugadores en Provisional para '+tk);return;}
+
   var confirmPlayers=_buildConfirmPlayers(src.players);
+  var nextPlayers=_buildNextSeasonPlayers(src.players);
   var defDocId=activeSzn.replace('/','_')+'_'+tk+'_DEF';
   setSync('saving');
+
+  /* 1. Sobreescribir Definitiva */
   db.collection('campogramas').doc(defDocId).set({
     teamKey:defDocId,version:1,players:confirmPlayers,
     necesidades:src.necesidades||'',observaciones:src.observaciones||'',
@@ -1659,9 +1671,46 @@ function actualizarDefinitiva(tk){
     ts:firebase.firestore.FieldValue.serverTimestamp()
   }).then(function(){
     try{localStorage.setItem('plt_cache_'+defDocId,JSON.stringify({players:confirmPlayers,necesidades:src.necesidades||'',observaciones:src.observaciones||''}));}catch(e){}
-    setSync('saved');
-    alert('✓ Definitiva de '+tk+' actualizada ('+confirmPlayers.length+' jugadores).');
-    renderTeamBar();
+
+    /* 2. Merge en Provisional temporada siguiente */
+    if(!destTk){
+      setSync('saved');
+      alert('OK: Definitiva de '+tk+' actualizada ('+confirmPlayers.length+' jugadores).');
+      renderTeamBar();
+      return;
+    }
+
+    db.collection('campogramas').doc(nextDocId).get().then(function(snap){
+      var existing=snap.exists?(snap.data().players||[]):[];
+      /* Merge: actualizar por ID los que vienen de Provisional, conservar los que no están */
+      var fromProvIds={};
+      nextPlayers.forEach(function(p){fromProvIds[p.id]=p;});
+      /* Jugadores que ya estaban en destino y NO vienen de esta Provisional — conservar */
+      var onlyInDest=existing.filter(function(p){return !fromProvIds[p.id];});
+      /* Resultado: los de Provisional (actualizados) + los nuevos del destino */
+      var merged=nextPlayers.concat(onlyInDest);
+      var data={
+        teamKey:nextDocId,version:1,players:merged,
+        necesidades:snap.exists?(snap.data().necesidades||''):'',
+        observaciones:snap.exists?(snap.data().observaciones||''):'',
+        ts:firebase.firestore.FieldValue.serverTimestamp()
+      };
+      return db.collection('campogramas').doc(nextDocId).set(data).then(function(){
+        try{localStorage.setItem('plt_cache_'+nextDocId,JSON.stringify({players:merged,necesidades:data.necesidades,observaciones:data.observaciones}));}catch(e){}
+        /* Crear temporada siguiente si no existe */
+        if(seasons.indexOf(nextSzn)===-1){
+          seasons.push(nextSzn);
+          try{localStorage.setItem(SZN_KEY,JSON.stringify(seasons));}catch(e){}
+          db.collection('config').doc('global').set({seasons:seasons,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});
+          renderSeasonSel();
+        }
+      });
+    }).then(function(){
+      setSync('saved');
+      alert('OK: '+tk+' actualizado.\nDefinitiva '+activeSzn+': '+confirmPlayers.length+' jugadores.\nProvisional '+nextSzn+' ('+destTk+'): merge completado.');
+      renderTeamBar();
+    }).catch(function(e){console.error(e);setSync('error');alert('Error al actualizar provisional siguiente.');});
+
   }).catch(function(e){console.error(e);setSync('error');});
 }
 
