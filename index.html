@@ -2323,7 +2323,7 @@ function renderRoster(){
 
   /* Renderizar en orden: baja, duda, fichaje, PROMOCIONADOS, futurible, destacados, renovado */
   var ORDER_FINAL=activeMode==='definitiva'
-    ?['duda','fichaje','__promo__','destacados','renovado']
+    ?['fichaje','__promo__','renovado']
     :['baja','duda','fichaje','__promo__','futurible','destacados','renovado'];
   ORDER_FINAL.forEach(function(st){
     if(st==='__promo__'){
@@ -3505,8 +3505,12 @@ function printTeamPDF(){
       if(p.status==='promocion'){promoSet[p.id]=true;promoGrp.push(p);return;}
       if(p.birthYear&&genYear&&parseInt(p.birthYear)>parseInt(genYear)){promoSet[p.id]=true;promoGrp.push(p);}
     });
+    /* En Definitiva solo mostrar fichaje, promocion y renovado */
+    var statsToShow=activeMode==='definitiva'
+      ?STATS.filter(function(s){return s.k==='renovado'||s.k==='fichaje'||s.k==='promocion';})
+      :STATS;
     var cols='';
-    STATS.forEach(function(s){
+    statsToShow.forEach(function(s){
       var grp=s.k==='promocion'?promoGrp:state.players.filter(function(p){return p.status===s.k;});
       var rows=!grp.length?'<div style="font-size:6pt;color:#999;font-style:italic;padding:3mm;">Ninguno</div>':'';
       grp.forEach(function(p){
@@ -3525,7 +3529,8 @@ function printTeamPDF(){
         +'<span style="background:rgba(0,0,0,.15);border-radius:8px;padding:0 6px;font-size:7pt;">'+grp.length+'</span></div>'
         +rows+'</div>';
     });
-    return '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3mm;">'+cols+'</div>';
+    var ncols=statsToShow.length;
+    return '<div style="display:grid;grid-template-columns:repeat('+ncols+',1fr);gap:3mm;">'+cols+'</div>';
   }
 
   function doPrint(campoDataUrl){
@@ -3706,7 +3711,8 @@ function printCombinedPDF(){
         +'<span>'+s.l.toUpperCase()+'</span><span style="background:rgba(0,0,0,.15);border-radius:8px;padding:0 6px;font-size:7pt;">'+grp.length+'</span></div>'
         +rows+'</div>';
     });
-    return '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3mm;">'+cols+'</div>';
+    var ncols=statsToShow.length;
+    return '<div style="display:grid;grid-template-columns:repeat('+ncols+',1fr);gap:3mm;">'+cols+'</div>';
   }
 
   /* Capturar ambos campos con html2canvas */
