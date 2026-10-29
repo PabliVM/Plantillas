@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Caritas · Láminas de plantilla</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:13px Arial,Helvetica,sans-serif;background:#eef1ee;color:#1d2b25}
+button,.btn{border:1px solid #c9d3cc;background:#fff;color:#1d2b25;border-radius:6px;padding:7px 10px;font:12px Arial;cursor:pointer;display:inline-block}
+button:hover,.btn:hover{filter:brightness(.95)}
+button:disabled{opacity:.5;cursor:wait}
+.primary{background:#1e4fb4;border-color:#1e4fb4;color:#fff;font-weight:bold}
+.danger{color:#b23a2c}
+input,select,textarea{width:100%;border:1px solid #c9d3cc;border-radius:6px;padding:6px 8px;font:13px Arial;background:#fff;color:#1d2b25}
+label{display:block;font-size:11px;font-weight:bold;color:#56665d;margin:8px 0 3px}
+h3{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#56665d;margin:18px 0 6px;border-top:1px solid #dbe2dc;padding-top:12px}
+h3:first-child{border:0;padding-top:0;margin-top:0}
+#login{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#112f2a}
+#login form{background:#fff;padding:26px;border-radius:10px;width:300px}
+#login h2{margin:0 0 4px}
+#loginErr{color:#b23a2c;font-size:12px;min-height:16px;margin-top:8px}
+#app{display:none;min-height:100vh}
+aside{position:fixed;inset:0 auto 0 0;width:320px;overflow:auto;background:#fff;border-right:1px solid #dbe2dc;padding:16px}
+main{margin-left:320px;padding:18px}
+.row{display:flex;gap:6px;align-items:center}
+.row>*{flex:1}
+.pills{display:flex;flex-wrap:wrap;gap:5px}
+.pill{background:#eef3ef;border-radius:12px;padding:4px 9px;font-size:11px}
+.pill b{font-size:13px}
+.note{font-size:11px;color:#6b7a71;line-height:1.5;margin:4px 0}
+#status{position:sticky;top:0;z-index:5;background:#fffbe6;border:1px solid #efe2a6;border-radius:6px;padding:7px 10px;margin-bottom:10px;font-size:12px}
+#status:empty{display:none}
+#sheet{position:relative;width:100%;max-width:744px;margin:0 auto;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+#cv{width:100%;display:block}
+#hit{position:absolute;inset:0;touch-action:none}
+.t{position:absolute;background:transparent;border:0;padding:0;border-radius:4px;cursor:grab}
+.t.staff{cursor:pointer}
+.t:hover,.t.sel{outline:2px solid #1e4fb4;background:rgba(30,79,180,.06)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;font-size:12px;margin:6px 0}
+.kv span:nth-child(odd){color:#6b7a71}
+.st{display:grid;grid-template-columns:1fr 64px 26px;gap:4px;margin-bottom:4px}
+.st input,.st select{padding:4px 6px;font-size:12px}
+.st button{padding:3px}
+#selThumb{width:66px;height:84px;object-fit:cover;border:1px solid #ccc;background:#eee;display:block;margin:6px 0}
+@media(max-width:800px){aside{position:static;width:auto}main{margin:0;padding:10px}}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <form id="loginForm">
+    <h2>Caritas</h2>
+    <p class="note">Mismo usuario que Plantillas.</p>
+    <label>Email<input id="lEmail" type="email" autocomplete="username" required></label>
+    <label>Contraseña<input id="lPass" type="password" autocomplete="current-password" required></label>
+    <p></p>
+    <button class="primary" type="submit" id="lBtn">Entrar</button>
+    <div id="loginErr"></div>
+  </form>
+</div>
+
+<div id="app">
+  <aside>
+    <h3>Plantilla definitiva</h3>
+    <div class="row">
+      <div><label>Temporada</label><select id="selSzn"></select></div>
+      <div><label>Equipo</label><select id="selTeam"></select></div>
+    </div>
+    <p></p>
+    <button class="primary" id="btnLoad" style="width:100%">Cargar definitiva</button>
+    <div class="pills" id="counts" style="margin-top:10px"></div>
+    <p class="note">Recuento sobre la definitiva completa (colocados o no). Mismo cálculo en pantalla, PDF y PowerPoint.</p>
+
+    <h3>Fotos</h3>
+    <label class="btn" style="width:100%;text-align:center">⬆ Subir varias fotos
+      <input id="bulk" type="file" accept="image/*" multiple hidden></label>
+    <p class="note">Se asignan por nombre de archivo (p. ej. <i>Hugo Mora.jpg</i>). Las fotos quedan asociadas al jugador y se reutilizan en otros equipos y temporadas.</p>
+
+    <h3>Ficha seleccionada</h3>
+    <div id="selPanel"><p class="note">Pulsa una carita en la lámina.</p></div>
+
+    <h3>Cuerpo técnico</h3>
+    <div id="staffList"></div>
+    <div class="row">
+      <button id="addStaffL">+ Izquierda</button>
+      <button id="addStaffR">+ Derecha</button>
+    </div>
+    <p></p>
+    <button id="copyStaff" style="width:100%">Copiar de la temporada anterior</button>
+    <p class="note">Pulsa un técnico en la lámina para subir su foto.</p>
+
+    <h3>Lámina</h3>
+    <label>Título</label><input id="title" maxlength="40">
+    <label>Etiqueta de media pensión</label><input id="mpLabel" maxlength="5">
+    <p></p>
+    <button id="resetPos" style="width:100%">Restablecer posiciones de Plantillas</button>
+
+    <h3>Exportar</h3>
+    <div class="row">
+      <button class="primary" id="btnPdf">↓ PDF</button>
+      <button class="primary" id="btnPptx">↓ PowerPoint</button>
+    </div>
+    <p></p>
+    <button id="btnLogout" style="width:100%">Cerrar sesión</button>
+  </aside>
+  <main>
+    <div id="status"></div>
+    <div id="sheet"><canvas id="cv"></canvas><div id="hit"></div></div>
+  </main>
+</div>
+
+<script>
+/* ══ CONFIG (misma que Plantillas, solo lectura de campogramas) ══ */
+firebase.initializeApp({
+  apiKey:"AIzaSyARi1f_HNmn5qjTmalYsAFVyIFLq77yM1w",
+  authDomain:"plantillas-cd261.firebaseapp.com",
+  databaseURL:"https://plantillas-cd261-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"plantillas-cd261",
+  storageBucket:"plantillas-cd261.firebasestorage.app",
+  messagingSenderId:"56900116092",
+  appId:"1:56900116092:web:4d12b15b00f1d5a6a3b3f9"
+});
+const db=firebase.firestore();
+const TEAMS=[
+  {key:'CAS',name:'RM Castilla'},{key:'RMC',name:'Real Madrid C'},
+  {key:'JA',name:'Juvenil A'},{key:'JB',name:'Juvenil B'},{key:'JC',name:'Juvenil C'},
+  {key:'CA',name:'Cadete A'},{key:'CB',name:'Cadete B'},
+  {key:'IA',name:'Infantil A'},{key:'IB',name:'Infantil B'},
+  {key:'AA',name:'Alevín A'},{key:'AB',name:'Alevín B'},{key:'AC',name:'Alevín C'},
+  {key:'BA',name:'Benjamín A'},{key:'BB',name:'Benjamín B'},
+  {key:'PA',name:'Prebenjamín A'},{key:'PB',name:'Prebenjamín B'},
+  {key:'DB',name:'Debutante'}
+];
+const GEN_OFFSETS={JA:0,JB:1,JC:2,CA:3,CB:4,IA:5,IB:6,AA:7,AB:8,AC:8,BA:9,BB:10,PA:11,PB:12,DB:13};
+const DEF_ALLOWED={fichaje:1,renovado:1,promocion:1}; /* = isDefExcluded de Plantillas */
+const SEL_TAG={internacional:'INT',espanola:'ESP',madrilena:'MAD'};
+const W=744,H=1000,PW=64,PH=80,SW=50,SH=64;
+const F={l:22,r:722,t:58,b:985};
+
+const $=s=>document.querySelector(s);
+let user=null,seasons=[],genCache={};
+let S={szn:'',tk:'',base:'',players:[],genYear:'',lay:emptyLay(),loaded:false};
+let photos={};          /* id -> HTMLImageElement */
+let sel=null;           /* {kind:'p'|'s',id} */
+let remoteOk=true;      /* false si Firestore deniega escritura en colecciones caritas */
+
+function emptyLay(){return{pos:{},labels:{},staff:[],title:''};}
+function status(t){$('#status').textContent=t||'';}
+function norm(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+function sid(){return's_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);}
+function teamName(tk){return(TEAMS.find(t=>t.key===tk)||{name:tk}).name;}
+function mpLabel(){return localStorage.getItem('caritas_mpLabel')||'SEK';}
+
+/* ══ IndexedDB: caché local de fotos ══ */
+const idb=(()=>{
+  let p;
+  function open(){return p||(p=new Promise((res,rej)=>{const r=indexedDB.open('caritas',1);r.onupgradeneeded=()=>r.result.createObjectStore('fotos');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}));}
+  function tx(mode,fn){return open().then(d=>new Promise((res,rej)=>{const t=d.transaction('fotos',mode);const q=fn(t.objectStore('fotos'));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error);}));}
+  return{get:k=>tx('readonly',s=>s.get(k)).catch(()=>null),put:(k,v)=>tx('readwrite',s=>s.put(v,k)).catch(()=>{}),del:k=>tx('readwrite',s=>s.delete(k)).catch(()=>{})};
+})();
+
+/* ══ AUTH ══ */
+firebase.auth().onAuthStateChanged(async fb=>{
+  if(!fb){$('#app').style.display='none';$('#login').style.display='flex';return;}
+  try{
+    const snap=await db.collection('users').doc(fb.uid).get();
+    if(!snap.exists||!snap.data().activo)throw Error('Usuario no autorizado.');
+    user={uid:fb.uid,nombre:snap.data().nombre||'',rol:snap.data().rol||'lector'};
+    $('#login').style.display='none';$('#app').style.display='block';
+    boot();
+  }catch(e){$('#loginErr').textContent=e.message;firebase.auth().signOut();}
+});
+$('#loginForm').onsubmit=e=>{
+  e.preventDefault();$('#lBtn').disabled=true;$('#loginErr').textContent='';
+  firebase.auth().signInWithEmailAndPassword($('#lEmail').value.trim(),$('#lPass').value)
+    .catch(()=>{$('#loginErr').textContent='Email o contraseña incorrectos.';})
+    .finally(()=>{$('#lBtn').disabled=false;});
+};
+$('#btnLogout').onclick=()=>firebase.auth().signOut();
+
+async function boot(){
+  try{
+    const g=await db.collection('config').doc('global').get();
+    seasons=(g.exists&&g.data().seasons)||[];
+    const z=await db.collection('config').doc('zonas').get();
+    if(z.exists){const d=z.data();TEAMS.forEach(t=>{if(d['gen_year_'+t.key])genCache[t.key]=d['gen_year_'+t.key];});}
+  }catch(e){status('No se pudo leer la configuración de Plantillas: '+e.message);}
+  if(!seasons.length){const y=new Date().getFullYear();seasons=[y+'/'+(y+1)];}
+  $('#selSzn').innerHTML=seasons.map(s=>`<option>${s}</option>`).join('');
+  $('#selTeam').innerHTML=TEAMS.map(t=>`<option value="${t.key}">${t.name}</option>`).join('');
+  $('#selSzn').value=localStorage.getItem('caritas_szn')||seasons[seasons.length-1];
+  if(!$('#selSzn').value)$('#selSzn').value=seasons[seasons.length-1];
+  $('#selTeam').value=localStorage.getItem('caritas_tk')||'JA';
+  $('#mpLabel').value=mpLabel();
+  render();
+}
+
+/* Igual que getGenYear de Plantillas */
+function getGenYear(tk){
+  if(genCache[tk])return genCache[tk];
+  if(GEN_OFFSETS[tk]!==undefined&&genCache.JA)return parseInt(genCache.JA)+GEN_OFFSETS[tk];
+  return '';
+}
+
+/* ══ CARGA ══ */
+$('#btnLoad').onclick=loadTeam;
+async function loadTeam(){
+  const szn=$('#selSzn').value,tk=$('#selTeam').value;
+  localStorage.setItem('caritas_szn',szn);localStorage.setItem('caritas_tk',tk);
+  const base=szn.replace('/','_')+'_'+tk;
+  $('#btnLoad').disabled=true;status('Cargando definitiva…');
+  try{
+    const snap=await db.collection('campogramas').doc(base+'_DEF').get();
+    const d=snap.exists?snap.data():{};
+    S={szn,tk,base,players:(d.players||[]).filter(p=>DEF_ALLOWED[p.status]),genYear:getGenYear(tk),lay:emptyLay(),loaded:true};
+    S.lay=await loadLayout(base);
+    sel=null;photos={};
+    render();renderStaffList();renderSel();
+    $('#title').value=S.lay.title||'';
+    status(snap.exists?(S.players.length+' jugadores cargados. Cargando fotos…'):'No hay plantilla definitiva confirmada para '+teamName(tk)+' '+szn+'.');
+    await loadPhotos(allIds());
+    const sinPos=S.players.filter(p=>!S.lay.pos[p.id]&&!(p.onPitch&&isFinite(p.x)&&isFinite(p.y))).length;
+    if(snap.exists)status(sinPos?sinPos+' jugador(es) sin posición en Plantillas: colocados en el centro, arrástralos.':(remoteOk?'':'Guardado solo en este navegador (sin permiso de escritura en Firestore).'));
+  }catch(e){status('Error al cargar: '+e.message);}
+  $('#btnLoad').disabled=false;
+}
+function allIds(){return S.players.map(p=>p.id).concat(S.lay.staff.map(s=>s.id));}
+
+async function loadLayout(base){
+  let lay=null;
+  try{const s=await db.collection('caritas').doc(base).get();if(s.exists)lay=s.data();}catch(e){}
+  if(!lay){try{lay=JSON.parse(localStorage.getItem('caritas_lay_'+base)||'null');}catch(e){}}
+  return Object.assign(emptyLay(),lay||{});
+}
+let saveT=null;
+function saveLayout(){
+  if(!S.loaded)return;
+  const base=S.base,data={pos:S.lay.pos,labels:S.lay.labels,staff:S.lay.staff,title:S.lay.title||''};
+  try{localStorage.setItem('caritas_lay_'+base,JSON.stringify(data));}catch(e){}
+  clearTimeout(saveT);
+  saveT=setTimeout(()=>{
+    db.collection('caritas').doc(base).set(Object.assign({},data,{ts:firebase.firestore.FieldValue.serverTimestamp(),by:user.uid}))
+      .then(()=>{if(!remoteOk){remoteOk=true;status('');}})
+      .catch(e=>{remoteOk=false;status('No se pudo guardar en Firestore ('+e.code+'). Cambios guardados solo en este navegador.');});
+  },700);
+}
+
+/* ══ FOTOS ══ */
+function imgFrom(url){return new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(null);i.src=url;});}
+async function loadPhotos(ids){
+  await Promise.all(ids.map(async id=>{
+    let url=await idb.get(id);
+    try{const s=await db.collection('caritas_fotos').doc(id).get();if(s.exists&&s.data().img){if(s.data().img!==url)idb.put(id,s.data().img);url=s.data().img;}}catch(e){}
+    if(url){const im=await imgFrom(url);if(im)photos[id]=im;}
+  }));
+  render();
+}
+/* Recorte 4:5 (ligero sesgo arriba para conservar la cara) */
+function processPhoto(file){
+  return new Promise((res,rej)=>{
+    const u=URL.createObjectURL(file),im=new Image();
+    im.onload=()=>{
+      const r=PW/PH,sr=im.width/im.height;let sx=0,sy=0,sw=im.width,sh=im.height;
+      if(sr>r){sw=im.height*r;sx=(im.width-sw)/2;}else{sh=im.width/r;sy=(im.height-sh)*0.15;}
+      const c=document.createElement('canvas');c.width=330;c.height=Math.round(330/r);
+      c.getContext('2d').drawImage(im,sx,sy,sw,sh,0,0,c.width,c.height);
+      URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',0.86));
+    };
+    im.onerror=()=>{URL.revokeObjectURL(u);rej(Error('Imagen no válida'));};
+    im.src=u;
+  });
+}
+async function setPhoto(id,name,file){
+  const url=await processPhoto(file);
+  await idb.put(id,url);
+  photos[id]=await imgFrom(url);
+  try{await db.collection('caritas_fotos').doc(id).set({img:url,name:name||'',ts:firebase.firestore.FieldValue.serverTimestamp(),by:user.uid});}
+  catch(e){remoteOk=false;status('Foto guardada solo en este navegador ('+e.code+').');}
+}
+async function removePhoto(id){
+  delete photos[id];await idb.del(id);
+  try{await db.collection('caritas_fotos').doc(id).delete();}catch(e){}
+  render();renderSel();
+}
+function people(){return S.players.map(p=>({id:p.id,name:p.name})).concat(S.lay.staff.map(s=>({id:s.id,name:s.name})));}
+function matchFile(fname){
+  const ft=new Set(norm(fname.replace(/\.[^.]+$/,'')).split(' '));
+  let best=null,bs=0,tie=false;
+  people().forEach(per=>{
+    const nt=norm(per.name).split(' ').filter(t=>t.length>1);if(!nt.length)return;
+    const hit=nt.filter(t=>ft.has(t)).length;
+    const sc=hit===nt.length?100+hit:(hit>=2?hit:0);
+    if(sc>bs){bs=sc;best=per;tie=false;}else if(sc&&sc===bs)tie=true;
+  });
+  return bs&&!tie?best:null;
+}
+$('#bulk').onchange=async e=>{
+  if(!S.loaded){status('Carga primero una plantilla.');return;}
+  const files=[...e.target.files];e.target.value='';
+  const miss=[];let ok=0;
+  for(const f of files){
+    const per=matchFile(f.name);
+    if(!per){miss.push(f.name);continue;}
+    status('Procesando '+f.name+'…');
+    try{await setPhoto(per.id,per.name,f);ok++;}catch(err){miss.push(f.name);}
+  }
+  render();renderSel();
+  status(ok+' foto(s) asignada(s).'+(miss.length?' Sin asignar: '+miss.join(', ')+' — súbelas desde la ficha.':''));
+};
+
+/* ══ RECUENTO ÚNICO (pantalla, PDF y PPTX) ══ */
+function isProm(p){
+  if(p.promovido)return false;
+  if(p.status==='promocion')return true;
+  const g=S.genYear;
+  return !!(p.birthYear&&g&&parseInt(p.birthYear)>parseInt(g));
+}
+function counts(){
+  const ps=S.players,por=ps.filter(p=>p.isPor).length;
+  return{campo:ps.length-por,por,total:ps.length,
+    res:ps.filter(p=>p.res==='R').length,mp:ps.filter(p=>p.res==='MP').length,prom:ps.filter(isProm).length};
+}
+
+/* ══ GEOMETRÍA ══ */
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function posOf(p){
+  const o=S.lay.pos[p.id];if(o)return o;
+  if(p.onPitch&&isFinite(p.x)&&isFinite(p.y))
+    return{x:clamp(p.x/100*W,F.l+PW/2,F.r-PW/2),y:clamp(120+p.y/118*760,F.t+PH/2+6,F.b-90)};
+  const un=S.players.filter(q=>!S.lay.pos[q.id]&&!(q.onPitch&&isFinite(q.x)&&isFinite(q.y)));
+  const i=un.indexOf(p),n=un.length;
+  return{x:W/2+(i-(n-1)/2)*(PW+14),y:(F.t+F.b)/2};
+}
+const PART=new Set(['de','del','la','las','los','el','da','do','dos','das','van','von','di','y']);
+function nameLines(per){
+  const o=S.lay.labels[per.id];if(o)return o;
+  const w=String(per.name||'').trim().split(/\s+/).filter(Boolean);
+  if(w.length<=1)return[w[0]||'',''];
+  let i=w.findIndex((t,k)=>k>0&&PART.has(t.toLowerCase()));
+  if(i<0)i=w.length>=3?w.length-1:1;
+  return[w.slice(0,i).join(' '),w.slice(i).join(' ')];
+}
+function staffBoxes(){
+  const out=[];
+  ['L','R'].forEach(side=>{
+    const list=S.lay.staff.filter(s=>s.side===side);if(!list.length)return;
+    const n=Math.max(list.length,3),bw=n*(SW+4)+6,x0=side==='L'?8:W-8-bw,y0=H-122;
+    out.push({side,x0,y0,bw,list:list.map((s,i)=>({s,x:x0+6+i*(SW+4)+(n-list.length)*(SW+4)/2,y:y0+22}))});
+  });
+  return out;
+}
+function cardInfo(p){
+  const tl=(p.selecciones||[]).map(k=>SEL_TAG[k]).filter(Boolean).join(' ');
+  const tr=p.res==='R'?'R':p.res==='MP'?mpLabel():'';
+  const bl=p.yearsInClub?String(p.yearsInClub):'';
+  const br=p.birthYear?String(p.birthYear).slice(-2):'';
+  const proc=p.status==='fichaje'&&p.proc?'('+p.proc+')':'';
+  return{tl,tr,bl,br,proc};
+}
+function headerInfo(){
+  const c=counts(),g=S.genYear,end=parseInt(String(S.szn).split('/')[1]||0);
+  const s=String(S.szn).split('/');
+  return{
+    gen:g?String(g):'',
+    sum:c.campo+' + '+c.por+' = '+c.total,
+    u:g&&end?'U-'+(end-parseInt(g)):'',
+    title:(S.lay.title||teamName(S.tk)).toUpperCase(),
+    temp:s.length===2?'Temp. '+s[0].slice(-2)+' - '+s[1].slice(-2):S.szn,
+    sub:'Residencia '+c.res+'   ·   Media pensión '+c.mp+'   ·   Promocionados '+c.prom
+  };
+}
+
+/* ══ CAMPO ══ */
+const fieldCache={};
+function fieldLines(g){
+  g.strokeStyle='rgba(255,255,255,.95)';g.lineWidth=3;
+  const {l,r,t,b}=F,cx=W/2,my=(t+b)/2;
+  g.strokeRect(l,t,r-l,b-t);
+  g.beginPath();g.moveTo(l,my);g.lineTo(r,my);g.stroke();
+  g.beginPath();g.arc(cx,my,72,0,Math.PI*2);g.stroke();
+  [[t,1],[b,-1]].forEach(([y,d])=>{
+    g.strokeRect(cx-158,d>0?y:y-150,316,150);
+    g.strokeRect(cx-83,d>0?y:y-48,166,48);
+    g.beginPath();g.arc(cx,y+d*150,46,d>0?0.15*Math.PI:1.15*Math.PI,d>0?0.85*Math.PI:1.85*Math.PI);g.stroke();
+  });
+  [[l,t,0],[r,t,.5],[r,b,1],[l,b,1.5]].forEach(([x,y,a])=>{g.beginPath();g.arc(x,y,14,a*Math.PI,(a+.5)*Math.PI);g.stroke();});
+}
+function fieldCanvas(k){
+  if(fieldCache[k])return fieldCache[k];
+  const c=document.createElement('canvas');c.width=W*k;c.height=H*k;
+  const g=c.getContext('2d');g.setTransform(k,0,0,k,0,0);
+  g.fillStyle='#cfe3d6';g.fillRect(0,0,W,H);
+  const n=18,bh=H/n;
+  for(let i=0;i<n;i++){g.fillStyle=i%2?'rgba(255,255,255,.20)':'rgba(48,100,68,.07)';g.fillRect(0,i*bh,W,bh);}
+  /* textura de hierba: trazos finos agrupados por tono */
+  g.setTransform(1,0,0,1,0,0);
+  let seed=813;const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+  const shades=['rgba(60,115,75,.10)','rgba(255,255,255,.16)','rgba(30,85,55,.07)','rgba(205,232,205,.14)'];
+  const cnt=Math.round(c.width*c.height/16),paths=shades.map(()=>new Path2D());
+  for(let i=0;i<cnt;i++){
+    const x=rnd()*c.width,y=rnd()*c.height,pth=paths[i&3];
+    pth.moveTo(x,y);pth.lineTo(x+(rnd()-.5)*k,y-k*(1+rnd()*2.4));
+  }
+  g.lineWidth=.45*k;paths.forEach((pth,i)=>{g.strokeStyle=shades[i];g.stroke(pth);});
+  g.setTransform(k,0,0,k,0,0);
+  const v=g.createRadialGradient(W/2,H/2,200,W/2,H/2,760);
+  v.addColorStop(0,'rgba(255,255,255,0)');v.addColorStop(1,'rgba(20,60,40,.10)');
+  g.fillStyle=v;g.fillRect(0,0,W,H);
+  fieldLines(g);
+  return fieldCache[k]=c;
+}
+
+/* ══ DIBUJO ══ */
+function txt(g,t,x,y,size,align='center',color='#111'){
+  if(!t)return;
+  g.font=`bold ${size}px Arial, Helvetica, sans-serif`;g.textAlign=align;g.textBaseline='alphabetic';
+  g.lineJoin='round';g.lineWidth=size*.32;g.strokeStyle='rgba(255,255,255,.8)';g.strokeText(t,x,y);
+  g.fillStyle=color;g.fillText(t,x,y);
+}
+function tag(g,t,x,y,size,align){
+  if(!t)return;
+  g.font=`bold ${size}px Arial, Helvetica, sans-serif`;
+  const w=g.measureText(t).width,bx=align==='left'?x:x-w;
+  g.fillStyle='rgba(255,255,255,.9)';g.fillRect(bx-2,y-size,w+4,size+3);
+  g.fillStyle='#111';g.textAlign=align;g.textBaseline='alphabetic';g.fillText(t,x,y);
+}
+function silhouette(g,x,y,w,h){
+  g.fillStyle='#e6e6e6';g.fillRect(x,y,w,h);
+  g.fillStyle='#8c8c8c';
+  g.beginPath();g.ellipse(x+w/2,y+h*.38,w*.2,h*.2,0,0,Math.PI*2);g.fill();
+  g.beginPath();g.ellipse(x+w/2,y+h*1.02,w*.46,h*.4,0,Math.PI,0);g.fill();
+}
+function photoBox(g,id,x,y,w,h,frame){
+  g.save();g.shadowColor='rgba(0,0,0,.28)';g.shadowBlur=6;g.shadowOffsetY=2;
+  g.fillStyle='#fff';g.fillRect(x-frame,y-frame,w+frame*2,h+frame*2);g.restore();
+  const im=photos[id];
+  if(im)g.drawImage(im,x,y,w,h);else silhouette(g,x,y,w,h);
+}
+function drawCard(g,p){
+  const {x,y}=posOf(p),L=x-PW/2,T=y-PH/2,ci=cardInfo(p);
+  photoBox(g,p.id,L,T,PW,PH,4);
+  tag(g,ci.tl,L+1,T+10,10,'left');
+  tag(g,ci.tr,L+PW-1,T+10,10,'right');
+  tag(g,ci.bl,L+1,T+PH-4,11,'left');
+  tag(g,ci.br,L+PW-1,T+PH-4,11,'right');
+  const [a,b]=nameLines(p);
+  txt(g,a.toUpperCase(),x,T+PH+19,12.5);
+  txt(g,b.toUpperCase(),x,T+PH+33,12.5);
+  txt(g,ci.proc,x,T+PH+(b?46:33),10.5);
+}
+function drawStaff(g){
+  staffBoxes().forEach(bx=>{
+    g.fillStyle='rgba(255,255,255,.55)';g.fillRect(bx.x0,bx.y0,bx.bw,H-bx.y0-6);
+    g.fillStyle='#1fa3e0';g.fillRect(bx.x0,bx.y0,bx.bw,18);
+    g.font='bold 10px Arial';g.fillStyle='#fff';g.textAlign='center';g.fillText('CUERPO TÉCNICO',bx.x0+bx.bw/2,bx.y0+13);
+    bx.list.forEach(({s,x,y})=>{
+      photoBox(g,s.id,x,y,SW,SH,0);
+      const [a,b]=nameLines(s);
+      txt(g,a.toUpperCase(),x+SW/2,y+SH+9,7.5);
+      txt(g,b.toUpperCase(),x+SW/2,y+SH+17,7.5);
+    });
+  });
+}
+function drawSheet(g,k){
+  g.setTransform(1,0,0,1,0,0);g.drawImage(fieldCanvas(k),0,0);
+  g.setTransform(k,0,0,k,0,0);
+  if(!S.loaded){txt(g,'Elige temporada y equipo y pulsa «Cargar definitiva»',W/2,H/2-90,16);return;}
+  const h=headerInfo();
+  txt(g,h.gen,14,24,17,'left');
+  txt(g,h.sum,96,24,17,'left');
+  txt(g,h.u,212,24,17,'left');
+  txt(g,h.title,W/2+40,26,24);
+  txt(g,h.temp,W-14,24,19,'right');
+  g.font='bold 11px Arial';const sw=g.measureText(h.sub).width+20;
+  g.fillStyle='rgba(255,255,255,.75)';g.fillRect(W/2-sw/2,33,sw,17);
+  g.fillStyle='#1d2b25';g.textAlign='center';g.fillText(h.sub,W/2,45.5);
+  S.players.forEach(p=>drawCard(g,p));
+  drawStaff(g);
+}
+
+/* ══ PREVIEW + ARRASTRE ══ */
+const PK=2,cv=$('#cv');cv.width=W*PK;cv.height=H*PK;
+function paint(){drawSheet(cv.getContext('2d'),PK);}
+function render(){
+  paint();renderCounts();
+  const hit=$('#hit');hit.replaceChildren();
+  if(!S.loaded)return;
+  const pct=(v,t)=>v/t*100+'%';
+  S.players.forEach(p=>{
+    const b=document.createElement('button');b.className='t'+(sel&&sel.id===p.id?' sel':'');b.title=p.name;
+    const place=()=>{const {x,y}=posOf(p);Object.assign(b.style,{left:pct(x-PW/2-6,W),top:pct(y-PH/2-6,H),width:pct(PW+12,W),height:pct(PH+52,H)});};
+    place();
+    b.onpointerdown=e=>{
+      e.preventDefault();b.setPointerCapture(e.pointerId);
+      const r=cv.getBoundingClientRect(),o=posOf(p),ox=e.clientX,oy=e.clientY;let moved=false;
+      b.onpointermove=ev=>{
+        const dx=(ev.clientX-ox)*W/r.width,dy=(ev.clientY-oy)*H/r.height;
+        if(!moved&&Math.abs(dx)+Math.abs(dy)<3)return;
+        moved=true;
+        S.lay.pos[p.id]={x:Math.round(clamp(o.x+dx,PW/2+4,W-PW/2-4)),y:Math.round(clamp(o.y+dy,PH/2+56,H-70))};
+        place();paint();
+      };
+      b.onpointerup=()=>{b.onpointermove=null;b.onpointerup=null;if(moved)saveLayout();select('p',p.id);};
+    };
+    hit.append(b);
+  });
+  staffBoxes().forEach(bx=>bx.list.forEach(({s,x,y})=>{
+    const b=document.createElement('button');b.className='t staff'+(sel&&sel.id===s.id?' sel':'');b.title=s.name;
+    Object.assign(b.style,{left:pct(x,W),top:pct(y,H),width:pct(SW,W),height:pct(SH+20,H)});
+    b.onclick=()=>select('s',s.id);
+    hit.append(b);
+  }));
+}
+function renderCounts(){
+  if(!S.loaded){$('#counts').innerHTML='';return;}
+  const c=counts();
+  $('#counts').innerHTML=`<span class="pill">Total <b>${c.campo}+${c.por}=${c.total}</b></span>
+    <span class="pill">Residencia <b>${c.res}</b></span><span class="pill">Media pensión <b>${c.mp}</b></span>
+    <span class="pill">Promocionados <b>${c.prom}</b></span>`;
+}
+function select(kind,id){sel={kind,id};render();renderSel();}
+
+/* ══ PANEL FICHA ══ */
+const STATUS_TXT={fichaje:'Fichaje',renovado:'Renovado',promocion:'Promoción'};
+const LAT_TXT={diestro:'Diestro',zurdo:'Zurdo',ambidiestro:'Ambidiestro'};
+const RES_TXT={R:'Residencia',MP:'Media pensión'};
+function renderSel(){
+  const P=$('#selPanel');P.replaceChildren();
+  if(!sel){P.innerHTML='<p class="note">Pulsa una carita en la lámina.</p>';return;}
+  const per=sel.kind==='p'?S.players.find(p=>p.id===sel.id):S.lay.staff.find(s=>s.id===sel.id);
+  if(!per){sel=null;renderSel();return;}
+  const h=document.createElement('div');
+  const name=document.createElement('b');name.textContent=per.name||'(sin nombre)';h.append(name);
+  const th=document.createElement('img');th.id='selThumb';th.alt='';if(photos[per.id])th.src=photos[per.id].src;h.append(th);
+  const up=document.createElement('label');up.className='btn';up.textContent='Subir / cambiar foto';
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.hidden=true;up.append(inp);
+  inp.onchange=async()=>{if(!inp.files[0])return;status('Procesando foto…');try{await setPhoto(per.id,per.name,inp.files[0]);if(remoteOk)status('Foto guardada.');}catch(e){status(e.message);}render();renderSel();};
+  const rm=document.createElement('button');rm.className='danger';rm.textContent='Quitar foto';rm.onclick=()=>{if(confirm('¿Quitar la foto de '+per.name+'?'))removePhoto(per.id);};
+  const r1=document.createElement('div');r1.className='row';r1.append(up,rm);h.append(r1);
+  if(sel.kind==='p'){
+    const kv=document.createElement('div');kv.className='kv';
+    const rows=[['Posición',per.isPor?'Portero':(per.detectedZoneLabel||per.detectedZoneShort||'—')],['Estado',STATUS_TXT[per.status]||per.status],
+      ['Promocionado',isProm(per)?'Sí':'No'],['Residencia',RES_TXT[per.res]||'Ninguna'],['Lateralidad',LAT_TXT[per.lat]||'—'],
+      ['Selecciones',(per.selecciones||[]).map(k=>SEL_TAG[k]).join(', ')||'—'],['Año nac.',per.birthYear||'—'],['Años club',per.yearsInClub||'—'],
+      ['Procedencia',per.proc||'—'],['Licencia',per.licencia||'—'],['Comentario',per.comment||'—']];
+    rows.forEach(([k,v])=>{const a=document.createElement('span');a.textContent=k;const b=document.createElement('span');b.textContent=v;kv.append(a,b);});
+    h.append(kv);
+    const n=document.createElement('p');n.className='note';n.textContent='Datos de Plantillas (solo lectura). Cámbialos allí.';h.append(n);
+  }
+  const [l1,l2]=nameLines(per);
+  const lab=document.createElement('label');lab.textContent='Nombre en lámina (2 líneas)';h.append(lab);
+  const row=document.createElement('div');row.className='row';
+  const i1=document.createElement('input');i1.value=l1;const i2=document.createElement('input');i2.value=l2;
+  const upd=()=>{S.lay.labels[per.id]=[i1.value,i2.value];saveLayout();render();};
+  i1.oninput=upd;i2.oninput=upd;row.append(i1,i2);h.append(row);
+  const rs=document.createElement('button');rs.textContent='Nombre automático';rs.style.marginTop='6px';
+  rs.onclick=()=>{delete S.lay.labels[per.id];saveLayout();render();renderSel();};h.append(rs);
+  if(sel.kind==='p'&&S.lay.pos[per.id]){
+    const rp=document.createElement('button');rp.textContent='Posición de Plantillas';rp.style.margin='6px 0 0 6px';
+    rp.onclick=()=>{delete S.lay.pos[per.id];saveLayout();render();renderSel();};h.append(rp);
+  }
+  P.append(h);
+}
+
+/* ══ CUERPO TÉCNICO ══ */
+function renderStaffList(){
+  const box=$('#staffList');box.replaceChildren();
+  S.lay.staff.forEach(s=>{
+    const r=document.createElement('div');r.className='st';
+    const n=document.createElement('input');n.value=s.name;n.placeholder='Nombre';
+    n.oninput=()=>{s.name=n.value;saveLayout();render();};
+    const sd=document.createElement('select');sd.innerHTML='<option value="L">Izq.</option><option value="R">Der.</option>';sd.value=s.side;
+    sd.onchange=()=>{s.side=sd.value;saveLayout();render();};
+    const x=document.createElement('button');x.textContent='×';x.className='danger';
+    x.onclick=()=>{if(!confirm('¿Quitar a '+(s.name||'este técnico')+'?'))return;S.lay.staff=S.lay.staff.filter(q=>q!==s);saveLayout();renderStaffList();render();};
+    r.append(n,sd,x);box.append(r);
+  });
+}
+function addStaff(side){
+  if(!S.loaded){status('Carga primero una plantilla.');return;}
+  if(S.lay.staff.filter(s=>s.side===side).length>=5){status('Máximo 5 por lado.');return;}
+  S.lay.staff.push({id:sid(),name:'',side});saveLayout();renderStaffList();render();
+  const ins=$('#staffList').querySelectorAll('input');ins[ins.length-1].focus();
+}
+$('#addStaffL').onclick=()=>addStaff('L');
+$('#addStaffR').onclick=()=>addStaff('R');
+$('#copyStaff').onclick=async()=>{
+  if(!S.loaded)return;
+  const [a,b]=S.szn.split('/').map(Number);const prev=(a-1)+'_'+(b-1)+'_'+S.tk;
+  const lay=await loadLayout(prev);
+  if(!lay.staff.length){status('No hay cuerpo técnico guardado en '+(a-1)+'/'+(b-1)+' para este equipo.');return;}
+  if(S.lay.staff.length&&!confirm('¿Sustituir el cuerpo técnico actual?'))return;
+  S.lay.staff=lay.staff.map(s=>({id:s.id,name:s.name,side:s.side}));
+  saveLayout();renderStaffList();await loadPhotos(S.lay.staff.map(s=>s.id));
+  status(S.lay.staff.length+' técnico(s) copiados con sus fotos.');
+};
+
+/* ══ AJUSTES LÁMINA ══ */
+$('#title').oninput=e=>{S.lay.title=e.target.value;saveLayout();render();};
+$('#mpLabel').oninput=e=>{localStorage.setItem('caritas_mpLabel',e.target.value.trim()||'SEK');render();};
+$('#resetPos').onclick=()=>{if(!S.loaded||!confirm('¿Volver a las posiciones de Plantillas?'))return;S.lay.pos={};saveLayout();render();};
+
+/* ══ EXPORTAR PDF (imagen a alta resolución, sin dependencias) ══ */
+function fileBase(){return 'Caritas_'+S.szn.replace('/','-')+'_'+teamName(S.tk).replace(/\s+/g,'_');}
+function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
+$('#btnPdf').onclick=()=>{
+  if(!S.loaded){status('Carga primero una plantilla.');return;}
+  const k=3,c=document.createElement('canvas');c.width=W*k;c.height=H*k;drawSheet(c.getContext('2d'),k);
+  const raw=atob(c.toDataURL('image/jpeg',.92).split(',')[1]),img=Uint8Array.from(raw,ch=>ch.charCodeAt(0));
+  const enc=new TextEncoder(),parts=[],off=[0];let len=0;
+  const put=s=>{const a=typeof s==='string'?enc.encode(s):s;parts.push(a);len+=a.length;};
+  const obj=(n,s)=>{off[n]=len;put(n+' 0 obj\n'+s+'\nendobj\n');};
+  const pw=(W*.72).toFixed(2),ph=(H*.72).toFixed(2);
+  put('%PDF-1.4\n');
+  obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  obj(3,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+  off[4]=len;
+  put(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.length} >>\nstream\n`);
+  put(img);put('\nendstream\nendobj\n');
+  const st=`q ${pw} 0 0 ${ph} 0 0 cm /Im0 Do Q`;
+  obj(5,`<< /Length ${st.length} >>\nstream\n${st}\nendstream`);
+  const x=len;put('xref\n0 6\n0000000000 65535 f \n');
+  for(let i=1;i<6;i++)put(String(off[i]).padStart(10,'0')+' 00000 n \n');
+  put('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+x+'\n%%EOF');
+  download(new Blob(parts,{type:'application/pdf'}),fileBase()+'.pdf');
+  status('PDF descargado.');
+};
+
+/* ══ EXPORTAR PPTX (editable: textos, fotos y formas) ══ */
+function loadPptx(){
+  if(window.PptxGenJS)return Promise.resolve();
+  return new Promise((res,rej)=>{const s=document.createElement('script');s.src='vendor/pptxgen.js';s.onload=res;s.onerror=()=>rej(Error('No se pudo cargar la librería de PowerPoint.'));document.head.append(s);});
+}
+let silCache=null;
+function silhouetteURL(){
+  if(silCache)return silCache;
+  const c=document.createElement('canvas');c.width=PW*3;c.height=PH*3;const g=c.getContext('2d');g.scale(3,3);silhouette(g,0,0,PW,PH);
+  return silCache=c.toDataURL('image/png');
+}
+$('#btnPptx').onclick=async()=>{
+  if(!S.loaded){status('Carga primero una plantilla.');return;}
+  const btn=$('#btnPptx');btn.disabled=true;status('Generando PowerPoint…');
+  try{
+    await loadPptx();
+    const ppt=new PptxGenJS();
+    ppt.defineLayout({name:'CARITAS',width:W/100,height:H/100});ppt.layout='CARITAS';
+    ppt.author='Caritas';ppt.title=teamName(S.tk)+' '+S.szn;
+    const s=ppt.addSlide(),u=v=>v/100,pt=px=>Math.round(px*.72*10)/10;
+    s.addImage({data:fieldCanvas(2).toDataURL('image/jpeg',.9),x:0,y:0,w:u(W),h:u(H)});
+    const T=(t,x,y,w,h,size,o={})=>{if(!t)return;s.addText(String(t),Object.assign({x:u(x),y:u(y),w:u(w),h:u(h),fontFace:'Arial',bold:true,fontSize:pt(size),color:'111111',align:'center',valign:'middle',margin:0,fit:'none'},o));};
+    const tg=(t,x,y,align)=>{if(!t)return;const w=t.length*6.6+4;T(t,align==='right'?x-w:x,y,w,12,10,{fill:{color:'FFFFFF',transparency:10}});};
+    const h=headerInfo();
+    T(h.gen,8,6,80,26,17,{align:'left'});
+    T(h.sum,96,6,110,26,17,{align:'left'});
+    T(h.u,212,6,60,26,17,{align:'left'});
+    T(h.title,W/2+40-170,4,340,30,24);
+    T(h.temp,W-194,6,180,26,19,{align:'right'});
+    T(h.sub,W/2-230,33,460,17,11,{fill:{color:'FFFFFF',transparency:25},color:'1D2B25'});
+    const frame=(x,y,w,hh,f)=>s.addShape(ppt.ShapeType.rect,{x:u(x-f),y:u(y-f),w:u(w+f*2),h:u(hh+f*2),fill:{color:'FFFFFF'},line:{color:'FFFFFF',width:0},shadow:{type:'outer',blur:3,offset:1,angle:90,color:'000000',opacity:.3}});
+    S.players.forEach(p=>{
+      const {x,y}=posOf(p),L=x-PW/2,Tp=y-PH/2,ci=cardInfo(p),[a,b]=nameLines(p);
+      frame(L,Tp,PW,PH,4);
+      s.addImage({data:photos[p.id]?photos[p.id].src:silhouetteURL(),x:u(L),y:u(Tp),w:u(PW),h:u(PH)});
+      tg(ci.tl,L,Tp,'left');tg(ci.tr,L+PW,Tp,'right');
+      tg(ci.bl,L,Tp+PH-13,'left');tg(ci.br,L+PW,Tp+PH-13,'right');
+      T(a.toUpperCase()+(b?'\n'+b.toUpperCase():''),x-60,Tp+PH+7,120,30,12.5);
+      T(ci.proc,x-70,Tp+PH+(b?37:23),140,13,10.5);
+    });
+    staffBoxes().forEach(bx=>{
+      s.addShape(ppt.ShapeType.rect,{x:u(bx.x0),y:u(bx.y0),w:u(bx.bw),h:u(H-bx.y0-6),fill:{color:'FFFFFF',transparency:45},line:{color:'FFFFFF',width:0}});
+      T('CUERPO TÉCNICO',bx.x0,bx.y0,bx.bw,18,10,{fill:{color:'1FA3E0'},color:'FFFFFF'});
+      bx.list.forEach(({s:st,x,y})=>{
+        const [a,b]=nameLines(st);
+        s.addImage({data:photos[st.id]?photos[st.id].src:silhouetteURL(),x:u(x),y:u(y),w:u(SW),h:u(SH)});
+        T(a.toUpperCase()+(b?'\n'+b.toUpperCase():''),x-4,y+SH+1,SW+8,18,7.5);
+      });
+    });
+    await ppt.writeFile({fileName:fileBase()+'.pptx'});
+    status('PowerPoint descargado (textos, fotos y formas editables).');
+  }catch(e){status('No se pudo exportar el PowerPoint: '+e.message);}
+  btn.disabled=false;
+};
+</script>
+</body>
+</html>
